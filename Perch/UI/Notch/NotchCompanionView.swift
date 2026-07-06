@@ -134,21 +134,21 @@ struct NotchCompanionView: View {
         HStack(spacing: 6) {
             switch checkIn.kind {
             case .status:
-                Button("Log water") { coordinator.logWaterQuick() }
+                Button(action: { coordinator.logWaterQuick() }) { Text("Log water") }
                     .buttonStyle(GhostPillButtonStyle())
-                Button("Took a break") { coordinator.takeBreakQuick() }
+                Button(action: { coordinator.takeBreakQuick() }) { Text("Took a break") }
                     .buttonStyle(GhostPillButtonStyle())
-                Button("Talk") { coordinator.openChat() }
+                Button(action: { coordinator.openChat() }) { Text("Talk") }
                     .buttonStyle(GhostPillButtonStyle())
                 Spacer()
-                Button("All good") { coordinator.respond(.done) }
+                Button(action: { coordinator.respond(.done) }) { Text("All good") }
                     .buttonStyle(PillButtonStyle(accent: accent))
                     .keyboardShortcut("1", modifiers: [])
             case .welcome, .sessionStart:
-                Button("Talk to me") { coordinator.openChat() }
+                Button(action: { coordinator.openChat() }) { Text("Talk to me") }
                     .buttonStyle(GhostPillButtonStyle())
                 Spacer()
-                Button("Let's go") { coordinator.respond(.done) }
+                Button(action: { coordinator.respond(.done) }) { Text("Let's go") }
                     .buttonStyle(PillButtonStyle(accent: accent))
                     .keyboardShortcut("1", modifiers: [])
             default:
