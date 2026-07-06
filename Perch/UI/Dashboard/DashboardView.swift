@@ -4,6 +4,7 @@ import SwiftUI
 struct DashboardView: View {
     @Environment(AppContainer.self) private var container
     @Environment(\.openSettings) private var openSettings
+    @State private var showingAchievements = false
 
     private var accent: [Color] { container.prefs.personality.accentColors }
 
@@ -81,6 +82,13 @@ struct DashboardView: View {
             Spacer()
 
             Button {
+                showingAchievements = true
+            } label: {
+                Image(systemName: "medal.fill")
+            }
+            .buttonStyle(.glass)
+            
+            Button {
                 WindowPresenter.shared.showSettings(container)
                 NSApp.activate(ignoringOtherApps: true)
             } label: {
@@ -92,6 +100,9 @@ struct DashboardView: View {
                     .buttonStyle(.glassProminent)
                     .tint(accent[0])
             }
+        }
+        .sheet(isPresented: $showingAchievements) {
+            AchievementsView()
         }
     }
 
