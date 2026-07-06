@@ -26,7 +26,7 @@ struct AchievementsView: View {
         let totalWater = snap.days.reduce(0) { $0 + $1.waterCount }
         let totalAccepted = snap.days.reduce(0) { $0 + $1.checkInsAccepted }
         let totalActiveHours = snap.days.reduce(0.0) { $0 + $1.activeSeconds } / 3600.0
-        let maxBreaksInDay = snap.days.map { $1.breaksTaken }.max() ?? 0
+        let maxBreaksInDay = snap.days.map { $0.breaksTaken }.max() ?? 0
         
         let acceptedSleep = snap.stats.keys.contains { $0.hasPrefix("sleep_") && snap.stats[$0]?.accepted ?? 0 > 0 }
 
@@ -127,7 +127,7 @@ struct AchievementsView: View {
             }
             .buttonStyle(.plain)
         }
-        .padding(.top, 24)
+        .padding(.top, 40)
         .padding(.horizontal, 24)
     }
 
