@@ -6,7 +6,17 @@ import SwiftUI
 final class WindowPresenter {
 
     static let shared = WindowPresenter()
-    private var windows: [String: NSWindow] = [:]
+    private var windows: [String: NSWindow] = [:] {
+        didSet { updateActivationPolicy() }
+    }
+
+    private func updateActivationPolicy() {
+        if windows.isEmpty {
+            NSApp.setActivationPolicy(.accessory)
+        } else {
+            NSApp.setActivationPolicy(.regular)
+        }
+    }
 
     func showOnboarding(_ container: AppContainer) {
         show(id: "onboarding", size: NSSize(width: 700 * PerchStyle.scale, height: 560 * PerchStyle.scale)) {
