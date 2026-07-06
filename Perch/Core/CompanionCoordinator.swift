@@ -117,7 +117,7 @@ final class CompanionCoordinator {
     // MARK: Responding
 
     func respond(_ response: CheckInResponse) {
-        guard let current, phase == .message || phase == .listening else { return }
+        guard phase == .message || phase == .listening else { return }
         cancelTimeout()
         voice.stopListening(deliver: false)
         respondBackground(response)
@@ -186,9 +186,9 @@ final class CompanionCoordinator {
         }
     }
     
-    private func smartVoiceReply(transcript: String) {
+    private func smartVoiceReply(transcript: String, fallbackIntent: CheckInResponse) {
         guard subscriptions.gate.aiChat, chat.intelligence.isAvailable else {
-            showConfirmation("Got it. I'll leave you to it.")
+            showConfirmation(personality.confirmation(for: fallbackIntent))
             return
         }
         
@@ -216,7 +216,7 @@ final class CompanionCoordinator {
                 self.chat.injectSilentMessage(isUser: true, text: transcript)
                 self.chat.injectSilentMessage(isUser: false, text: cleaned)
             } else {
-                self.showConfirmation("Got it.")
+                self.showConfirmation(self.personality.confirmation(for: fallbackIntent))
             }
         }
     }
