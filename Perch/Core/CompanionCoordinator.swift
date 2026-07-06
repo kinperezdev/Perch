@@ -180,7 +180,6 @@ final class CompanionCoordinator {
                 }
                 
                 let intent = VoiceService.interpret(transcript) ?? .done
-                self.respondBackground(intent)
                 self.smartVoiceReply(transcript: transcript, fallbackIntent: intent)
             }
         }
@@ -188,6 +187,7 @@ final class CompanionCoordinator {
     
     private func smartVoiceReply(transcript: String, fallbackIntent: CheckInResponse) {
         guard subscriptions.gate.aiChat, chat.intelligence.isAvailable else {
+            respondBackground(fallbackIntent)
             showConfirmation(personality.confirmation(for: fallbackIntent))
             return
         }
@@ -197,8 +197,14 @@ final class CompanionCoordinator {
         let prompt = """
         You just asked the user: "\(checkInText)"
         The user replied: "\(transcript)"
-        Generate a very brief, natural 1-sentence acknowledgment (max 10 words) as \(aiName) based on what the user said.
+        
+        Task 1: Generate a very brief, natural 1-sentence acknowledgment (max 10 words) as \(aiName).
         CRITICAL RULE: NEVER ask a question. NEVER say things like "Do you want to proceed?". JUST acknowledge what they said and let them get back to work. JUST a response only.
+        
+        Task 2: Determine their focus status. Append EXACTLY ONE of these tags at the very end of your output:
+        [INTENT: done] (if they are focusing, working, finished the task, or said yes)
+        [INTENT: snoozed] (if they asked for more time, to snooze, or do it later)
+        [INTENT: ignored] (if they are distracted, refusing, annoyed, or stopping)
         """
         
         Task { [weak self] in
@@ -206,6 +212,21 @@ final class CompanionCoordinator {
             if let reply = await self.chat.intelligence.onlineChat(system: "You are \(aiName), a helpful companion.", prompt: prompt) {
                 if Task.isCancelled { return }
                 var cleaned = reply.trimmingCharacters(in: .whitespacesAndNewlines)
+                
+                var decidedIntent = fallbackIntent
+                if cleaned.contains("[INTENT: snoozed]") {
+                    decidedIntent = .snoozed(minutes: 10)
+                    cleaned = cleaned.replacingOccurrences(of: "[INTENT: snoozed]", with: "")
+                } else if cleaned.contains("[INTENT: ignored]") {
+                    decidedIntent = .ignored
+                    cleaned = cleaned.replacingOccurrences(of: "[INTENT: ignored]", with: "")
+                } else if cleaned.contains("[INTENT: done]") {
+                    decidedIntent = .done
+                    cleaned = cleaned.replacingOccurrences(of: "[INTENT: done]", with: "")
+                }
+                self.respondBackground(decidedIntent)
+                
+                cleaned = cleaned.trimmingCharacters(in: .whitespacesAndNewlines)
                 cleaned = cleaned.replacingOccurrences(of: "^(?:\\*+)?\(aiName)(?:\\*+)?\\s*:?(?:\\*+)?\\s*:?\\s*", with: "", options: [.regularExpression, .caseInsensitive])
                 cleaned = cleaned.replacingOccurrences(of: "^:\\s*", with: "", options: .regularExpression)
                 
@@ -217,6 +238,7 @@ final class CompanionCoordinator {
                 self.chat.injectSilentMessage(isUser: true, text: transcript)
                 self.chat.injectSilentMessage(isUser: false, text: cleaned)
             } else {
+                self.respondBackground(fallbackIntent)
                 self.showConfirmation(self.personality.confirmation(for: fallbackIntent))
             }
         }
