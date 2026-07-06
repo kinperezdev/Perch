@@ -198,8 +198,9 @@ final class CompanionCoordinator {
         You just asked the user: "\(checkInText)"
         The user replied: "\(transcript)"
         
-        Task 1: Generate a very brief, natural 1-sentence acknowledgment (max 10 words) as \(aiName).
-        CRITICAL RULE: NEVER ask a question. NEVER say things like "Do you want to proceed?". JUST acknowledge what they said and let them get back to work. JUST a response only.
+        Task 1: Generate a very brief, natural 1-sentence response (max 15 words) as \(aiName).
+        Act as a thoughtful, encouraging guide who wants what is best for the user's focus and wellbeing. Guide them gently based on their reply.
+        CRITICAL RULE: NEVER ask a question. JUST give a supportive, guiding response and let them get back to work.
         
         Task 2: Determine their focus status. Append EXACTLY ONE of these tags at the very end of your output:
         [INTENT: done] (if they are focusing, working, finished the task, or said yes)
