@@ -222,7 +222,7 @@ final class CompanionChatService {
         if let online = await intelligence.onlineChat(system: chatInstructions(), prompt: onlinePrompt),
            !online.isEmpty {
             var cleaned = online.trimmingCharacters(in: .whitespacesAndNewlines)
-            cleaned = cleaned.replacingOccurrences(of: "^(?:\\*\\*)?\\*?\(aiName)\\*?(?:\\*\\*)?:\\s*", with: "", options: [.regularExpression, .caseInsensitive])
+            cleaned = cleaned.replacingOccurrences(of: "^(?:\\*+)?\(aiName)(?:\\*+)?\\s*:?(?:\\*+)?\\s*:?\\s*", with: "", options: [.regularExpression, .caseInsensitive])
             cleaned = cleaned.replacingOccurrences(of: "^:\\s*", with: "", options: .regularExpression)
             return Self.clipped(cleaned)
         }
@@ -237,7 +237,7 @@ final class CompanionChatService {
                     options: GenerationOptions(temperature: 0.7)
                 )
                 var cleaned = response.content.trimmingCharacters(in: .whitespacesAndNewlines)
-                cleaned = cleaned.replacingOccurrences(of: "^(?:\\*\\*)?\\*?\(aiName)\\*?(?:\\*\\*)?:\\s*", with: "", options: [.regularExpression, .caseInsensitive])
+                cleaned = cleaned.replacingOccurrences(of: "^(?:\\*+)?\(aiName)(?:\\*+)?\\s*:?(?:\\*+)?\\s*:?\\s*", with: "", options: [.regularExpression, .caseInsensitive])
                 cleaned = cleaned.replacingOccurrences(of: "^:\\s*", with: "", options: .regularExpression)
                 cleaned = Self.clipped(cleaned)
                 return cleaned.isEmpty ? nil : cleaned

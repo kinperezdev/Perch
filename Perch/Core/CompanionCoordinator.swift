@@ -199,7 +199,7 @@ final class CompanionCoordinator {
             if let reply = await self.chat.intelligence.onlineChat(system: "You are \(aiName), a helpful companion.", prompt: prompt) {
                 if Task.isCancelled { return }
                 var cleaned = reply.trimmingCharacters(in: .whitespacesAndNewlines)
-                cleaned = cleaned.replacingOccurrences(of: "^(?:\\*\\*)?\\*?\(aiName)\\*?(?:\\*\\*)?:\\s*", with: "", options: [.regularExpression, .caseInsensitive])
+                cleaned = cleaned.replacingOccurrences(of: "^(?:\\*+)?\(aiName)(?:\\*+)?\\s*:?(?:\\*+)?\\s*:?\\s*", with: "", options: [.regularExpression, .caseInsensitive])
                 cleaned = cleaned.replacingOccurrences(of: "^:\\s*", with: "", options: .regularExpression)
                 
                 self.showConfirmation(cleaned)
