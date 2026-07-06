@@ -40,8 +40,9 @@ struct PillButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.perchRounded(11.5, weight: .semibold))
-            .foregroundStyle(.black.opacity(0.85))
+            .font(.perchRounded(11.5, weight: .bold))
+            .foregroundStyle(.white)
+            .shadow(color: .black.opacity(0.2), radius: 1, y: 1)
             .padding(.horizontal, 11)
             .padding(.vertical, 5)
             .background(PerchStyle.accentGradient(accent), in: Capsule())
@@ -84,8 +85,9 @@ struct BigActionButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.perchRounded(15, weight: .semibold))
-            .foregroundStyle(.black.opacity(0.85))
+            .font(.perchRounded(15, weight: .bold))
+            .foregroundStyle(.white)
+            .shadow(color: .black.opacity(0.2), radius: 1, y: 1)
             .padding(.horizontal, 28)
             .padding(.vertical, 11)
             .background(PerchStyle.accentGradient(accent), in: Capsule())
