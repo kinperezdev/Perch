@@ -197,7 +197,8 @@ final class CompanionCoordinator {
         let prompt = """
         You just asked the user: "\(checkInText)"
         The user replied: "\(transcript)"
-        Generate a very brief, natural 1-sentence acknowledgment (max 10 words) as \(aiName) based on what the user said. Just acknowledge and do not ask follow-up questions. Let them get back to work.
+        Generate a very brief, natural 1-sentence acknowledgment (max 10 words) as \(aiName) based on what the user said.
+        CRITICAL RULE: NEVER ask a question. NEVER say things like "Do you want to proceed?". JUST acknowledge what they said and let them get back to work. JUST a response only.
         """
         
         Task { [weak self] in
