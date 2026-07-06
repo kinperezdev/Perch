@@ -172,7 +172,7 @@ final class CompanionCoordinator {
                 if let response = VoiceService.interpret(transcript) {
                     self.respond(response)
                 } else if !transcript.isEmpty {
-                    self.transitionToChat(transcript: transcript)
+                    self.smartVoiceReply(transcript: transcript)
                 } else {
                     self.showConfirmation("All good. I'm here.")
                 }
@@ -180,20 +180,39 @@ final class CompanionCoordinator {
         }
     }
     
-    private func transitionToChat(transcript: String) {
-        guard subscriptions.gate.aiChat else {
+    private func smartVoiceReply(transcript: String) {
+        guard subscriptions.gate.aiChat, chat.intelligence.isAvailable else {
             showConfirmation("Got it. I'll leave you to it.")
             return
         }
         
-        if let current = current {
-            chat.injectCheckIn(current.message)
-        } else {
-            chat.openIfNeeded()
-        }
+        let aiName = personality.callName(userName: prefs.userName)
+        let checkInText = current?.message ?? ""
+        let prompt = """
+        You just asked the user: "\(checkInText)"
+        The user replied: "\(transcript)"
+        Generate a very brief, natural 1-sentence acknowledgment (max 10 words) as \(aiName) based on what the user said. Just acknowledge and do not ask follow-up questions. Let them get back to work.
+        """
         
-        reveal(.chat)
-        chat.send(transcript)
+        Task { [weak self] in
+            guard let self else { return }
+            if let reply = await self.chat.intelligence.onlineChat(system: "You are \(aiName), a helpful companion.", prompt: prompt) {
+                if Task.isCancelled { return }
+                var cleaned = reply.trimmingCharacters(in: .whitespacesAndNewlines)
+                cleaned = cleaned.replacingOccurrences(of: "^(?:\\*\\*)?\\*?\(aiName)\\*?(?:\\*\\*)?:\\s*", with: "", options: [.regularExpression, .caseInsensitive])
+                cleaned = cleaned.replacingOccurrences(of: "^:\\s*", with: "", options: .regularExpression)
+                
+                self.showConfirmation(cleaned)
+                self.voice.speakIfAllowed(cleaned)
+                
+                // Inject the exchange into chat silently so it remembers!
+                self.chat.injectCheckIn(checkInText)
+                self.chat.injectSilentMessage(isUser: true, text: transcript)
+                self.chat.injectSilentMessage(isUser: false, text: cleaned)
+            } else {
+                self.showConfirmation("Got it.")
+            }
+        }
     }
 
     // MARK: Quick actions used by the status bubble and menu bar

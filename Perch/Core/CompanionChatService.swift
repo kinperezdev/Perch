@@ -85,6 +85,16 @@ final class CompanionChatService {
         updateSuggestions(for: text)
         scheduleSave()
     }
+    
+    /// Silently adds a message to the chat history without triggering TTS or thinking states.
+    func injectSilentMessage(isUser: Bool, text: String) {
+        messages.append(ChatMessage(isUser: isUser, text: text))
+        if !isUser {
+            currentEmotion = CompanionFaceView.FaceState.inferred(from: text, fallback: .idle)
+            updateSuggestions(for: text)
+        }
+        scheduleSave()
+    }
 
     /// Wipes the current conversation and its saved file. An intentional user action.
     func clear() {
