@@ -34,7 +34,7 @@ struct DashboardView: View {
             }
             .padding(.horizontal, 30)
             .padding(.bottom, 30)
-            .padding(.top, 44)
+            .padding(.top, 56)
         }
         .frame(width: 720 * PerchStyle.scale, height: 380 * PerchStyle.scale)
         .preferredColorScheme(.dark)
