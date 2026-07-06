@@ -307,8 +307,10 @@ final class CompanionCoordinator {
     private static func size(for phase: Phase, metrics: NotchMetrics) -> CGSize {
         let anchor: CGFloat = metrics.hasNotch ? metrics.notchWidth : 185
         switch phase {
-        case .hidden, .message, .listening:
+        case .hidden, .listening:
             return CGSize(width: max(anchor + 40, 250), height: 132)
+        case .message, .chat:
+            return CGSize(width: max(anchor + 240, 440), height: phase == .chat ? 300 : 140)
         case .timer:
             return CGSize(width: max(anchor - 20, 235), height: 94)
         case .confirmation:

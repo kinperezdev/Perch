@@ -51,7 +51,7 @@ struct NotchCompanionView: View {
     /// The chat pulls its header up beside the notch, so it skips the inset.
     private func topPadding(for metrics: NotchMetrics) -> CGFloat {
         guard metrics.hasNotch else { return 10 }
-        return coordinator.phase == .chat ? 4 : metrics.topInset + 3
+        return (coordinator.phase == .chat || coordinator.phase == .message) ? 4 : metrics.topInset + 3
     }
 
     @ViewBuilder
@@ -87,10 +87,11 @@ struct NotchCompanionView: View {
     }
 
     private func messageView(_ checkIn: CheckIn) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(alignment: .top, spacing: 12) {
-                CompanionFaceView(state: faceState(for: checkIn), accent: accent, size: 30)
-                VStack(alignment: .leading, spacing: 3) {
+        let metrics = coordinator.metrics
+        return VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 0) {
+                HStack(spacing: 8) {
+                    CompanionFaceView(state: faceState(for: checkIn), accent: accent, size: 26)
                     HStack(spacing: 5) {
                         Image(systemName: checkIn.kind.symbolName)
                             .font(.system(size: 9, weight: .semibold))
@@ -100,18 +101,30 @@ struct NotchCompanionView: View {
                             .tracking(1.2)
                             .foregroundStyle(.white.opacity(0.45))
                     }
-                    Text(checkIn.message)
-                        .font(.perchRounded(12.5, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.94))
-                        .lineLimit(4)
-                        .fixedSize(horizontal: false, vertical: true)
                 }
-                Spacer(minLength: 8)
-                dismissButton(for: checkIn)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                
+                if metrics.hasNotch {
+                    Color.clear.frame(width: metrics.notchWidth + 12, height: 1)
+                }
+                
+                HStack {
+                    dismissButton(for: checkIn)
+                }
+                .frame(maxWidth: .infinity, alignment: .trailing)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            
-            actions(for: checkIn)
+            .frame(height: metrics.hasNotch ? max(metrics.topInset - 6, 26) : 28)
+            .padding(.horizontal, 4)
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text(checkIn.message)
+                    .font(.perchRounded(12.5, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.94))
+                    .lineLimit(4)
+                    .fixedSize(horizontal: false, vertical: true)
+                actions(for: checkIn)
+            }
+            .padding(.horizontal, 6)
         }
     }
 
