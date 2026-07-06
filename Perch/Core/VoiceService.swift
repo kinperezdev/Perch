@@ -207,8 +207,12 @@ final class VoiceService {
 
     /// Maps a short spoken reply onto a check in response.
     static func interpret(_ transcript: String) -> CheckInResponse? {
-        let text = transcript.lowercased()
+        let text = transcript.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return nil }
+        
+        let words = text.split(separator: " ")
+        if words.count > 4 { return nil }
+
         let snoozeWords = ["later", "snooze", "in a bit", "not now", "busy", "few minutes", "soon", "wait"]
         if snoozeWords.contains(where: text.contains) { return .snoozed(minutes: 10) }
         let doneWords = ["done", "did it", "yes", "yeah", "yep", "okay", "ok", "sure", "finished", "ate", "already", "drank", "got it", "on it", "will do"]
