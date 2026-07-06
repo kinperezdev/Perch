@@ -74,6 +74,10 @@ enum OnlineIntelligence {
             struct SystemInstruction: Encodable { let parts: [Part] }
             let contents: [Content]
             let systemInstruction: SystemInstruction
+            enum CodingKeys: String, CodingKey {
+                case contents
+                case systemInstruction = "system_instruction"
+            }
         }
         struct Reply: Decodable {
             struct Candidate: Decodable {
