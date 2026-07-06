@@ -171,11 +171,29 @@ final class CompanionCoordinator {
                 guard let self else { return }
                 if let response = VoiceService.interpret(transcript) {
                     self.respond(response)
+                } else if !transcript.isEmpty {
+                    self.transitionToChat(transcript: transcript)
                 } else {
-                    self.showConfirmation(transcript.isEmpty ? "All good. I'm here." : "Got it. I'll leave you to it.")
+                    self.showConfirmation("All good. I'm here.")
                 }
             }
         }
+    }
+    
+    private func transitionToChat(transcript: String) {
+        guard subscriptions.gate.aiChat else {
+            showConfirmation("Got it. I'll leave you to it.")
+            return
+        }
+        
+        if let current = current {
+            chat.injectCheckIn(current.message)
+        } else {
+            chat.openIfNeeded()
+        }
+        
+        reveal(.chat)
+        chat.send(transcript)
     }
 
     // MARK: Quick actions used by the status bubble and menu bar

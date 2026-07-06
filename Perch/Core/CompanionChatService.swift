@@ -77,6 +77,15 @@ final class CompanionChatService {
         scheduleSave()
     }
 
+    /// Feeds a proactive check-in into the chat silently, so the AI knows what Perch just asked.
+    func injectCheckIn(_ text: String) {
+        if let last = messages.last, last.text == text, !last.isUser { return }
+        messages.append(ChatMessage(isUser: false, text: text))
+        currentEmotion = CompanionFaceView.FaceState.inferred(from: text, fallback: .idle)
+        updateSuggestions(for: text)
+        scheduleSave()
+    }
+
     /// Wipes the current conversation and its saved file. An intentional user action.
     func clear() {
         messages = []
