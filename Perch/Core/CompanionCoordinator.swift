@@ -186,7 +186,7 @@ final class CompanionCoordinator {
             return
         }
         
-        let aiName = personality.callName(userName: prefs.userName)
+        let aiName = prefs.activePersonality.callName(userName: prefs.userName)
         let checkInText = current?.message ?? ""
         let prompt = """
         You just asked the user: "\(checkInText)"
@@ -346,12 +346,12 @@ final class CompanionCoordinator {
         switch phase {
         case .hidden, .listening:
             return CGSize(width: max(anchor + 40, 250), height: 132)
-        case .message, .chat:
-            return CGSize(width: max(anchor + 240, 440), height: phase == .chat ? 300 : 140)
         case .timer:
             return CGSize(width: max(anchor - 20, 235), height: 94)
         case .confirmation:
             return CGSize(width: max(anchor - 40, 210), height: 58)
+        case .message:
+            return CGSize(width: max(anchor + 240, 440), height: 140)
         case .chat:
             return CGSize(width: max(anchor + 240, 440), height: 300)
         }

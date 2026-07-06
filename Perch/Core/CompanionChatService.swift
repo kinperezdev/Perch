@@ -29,7 +29,7 @@ final class CompanionChatService {
     @ObservationIgnored private var suggestionTask: Task<Void, Never>?
 
     @ObservationIgnored private let prefs: PreferencesStore
-    @ObservationIgnored private let intelligence: CompanionIntelligence
+    @ObservationIgnored let intelligence: CompanionIntelligence
     @ObservationIgnored private let brain: PerchBrain
     @ObservationIgnored private let voice: VoiceService
     @ObservationIgnored private let gateProvider: () -> FeatureGate
