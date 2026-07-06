@@ -163,8 +163,8 @@ final class CompanionChatService {
         if let online = await intelligence.onlineChat(system: chatInstructions(), prompt: onlinePrompt),
            !online.isEmpty {
             var cleaned = online.trimmingCharacters(in: .whitespacesAndNewlines)
-            if cleaned.hasPrefix("\(aiName): ") { cleaned = String(cleaned.dropFirst(aiName.count + 2)) }
-            if cleaned.hasPrefix("\(aiName):") { cleaned = String(cleaned.dropFirst(aiName.count + 1)) }
+            cleaned = cleaned.replacingOccurrences(of: "^(?:\\*\\*)?\\*?\(aiName)\\*?(?:\\*\\*)?:\\s*", with: "", options: [.regularExpression, .caseInsensitive])
+            cleaned = cleaned.replacingOccurrences(of: "^:\\s*", with: "", options: .regularExpression)
             return Self.clipped(cleaned)
         }
 
@@ -177,8 +177,10 @@ final class CompanionChatService {
                     to: contextMessage,
                     options: GenerationOptions(temperature: 0.7)
                 )
-                var cleaned = Self.clipped(response.content.trimmingCharacters(in: .whitespacesAndNewlines))
-                if cleaned.hasPrefix("\(aiName): ") { cleaned = String(cleaned.dropFirst(aiName.count + 2)) }
+                var cleaned = response.content.trimmingCharacters(in: .whitespacesAndNewlines)
+                cleaned = cleaned.replacingOccurrences(of: "^(?:\\*\\*)?\\*?\(aiName)\\*?(?:\\*\\*)?:\\s*", with: "", options: [.regularExpression, .caseInsensitive])
+                cleaned = cleaned.replacingOccurrences(of: "^:\\s*", with: "", options: .regularExpression)
+                cleaned = Self.clipped(cleaned)
                 return cleaned.isEmpty ? nil : cleaned
             } catch {
                 return nil

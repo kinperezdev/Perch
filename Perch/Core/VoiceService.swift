@@ -60,8 +60,16 @@ final class VoiceService {
 
     /// Spoken lines stay short and human: at most two sentences.
     static func spokenClip(_ text: String) -> String {
-        let sentences = text.split(separator: ".", omittingEmptySubsequences: true)
-        guard sentences.count > 2 else { return text }
+        let noEmoji = text.unicodeScalars.filter { scalar in
+            if scalar.properties.isEmoji || scalar.properties.isEmojiPresentation || scalar.value == 0xFE0F {
+                if scalar.value <= 127 { return true }
+                return false
+            }
+            return true
+        }.map(String.init).joined()
+        
+        let sentences = noEmoji.split(separator: ".", omittingEmptySubsequences: true)
+        guard sentences.count > 2 else { return noEmoji }
         return sentences.prefix(2).joined(separator: ".") + "."
     }
 
