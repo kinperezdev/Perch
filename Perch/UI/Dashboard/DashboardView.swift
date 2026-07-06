@@ -32,7 +32,9 @@ struct DashboardView: View {
                 Spacer(minLength: 0)
                 footer
             }
-            .padding(26)
+            .padding(.horizontal, 30)
+            .padding(.bottom, 30)
+            .padding(.top, 44)
         }
         .frame(width: 720 * PerchStyle.scale, height: 380 * PerchStyle.scale)
         .preferredColorScheme(.dark)
