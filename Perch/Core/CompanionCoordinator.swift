@@ -120,6 +120,12 @@ final class CompanionCoordinator {
         guard let current, phase == .message || phase == .listening else { return }
         cancelTimeout()
         voice.stopListening(deliver: false)
+        respondBackground(response)
+        showConfirmation(personality.confirmation(for: response))
+    }
+
+    private func respondBackground(_ response: CheckInResponse) {
+        guard let current else { return }
         lastCheckInAnswered = true
         if isTracked(current.kind) {
             applyResponse?(current.kind, response)
@@ -127,7 +133,6 @@ final class CompanionCoordinator {
         if response.isPositive {
             brain.recordPositiveResponse(kind: current.kind.rawValue)
         }
-        showConfirmation(personality.confirmation(for: response))
     }
 
     func startTimer(seconds: Int = 60) {
@@ -169,13 +174,14 @@ final class CompanionCoordinator {
             self.reveal(.listening)
             self.voice.startListening { [weak self] transcript in
                 guard let self else { return }
-                if let response = VoiceService.interpret(transcript) {
-                    self.respond(response)
-                } else if !transcript.isEmpty {
-                    self.smartVoiceReply(transcript: transcript)
-                } else {
+                if transcript.isEmpty {
                     self.showConfirmation("All good. I'm here.")
+                    return
                 }
+                
+                let intent = VoiceService.interpret(transcript) ?? .done
+                self.respondBackground(intent)
+                self.smartVoiceReply(transcript: transcript, fallbackIntent: intent)
             }
         }
     }
