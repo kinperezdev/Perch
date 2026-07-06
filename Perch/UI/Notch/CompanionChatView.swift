@@ -122,10 +122,15 @@ struct CompanionChatView: View {
     }
 
     private var suggestionChips: some View {
-        let rows = [
-            ["I feel burned out", "I can't focus"],
-            ["I shipped something today", "I don't know what's next"],
-        ]
+        let chips = chat.suggestions.isEmpty ? ["I feel burned out", "I can't focus", "I shipped something today", "I don't know what's next"] : chat.suggestions
+        
+        // Chunk the chips into rows of 2
+        var rows: [[String]] = []
+        for i in stride(from: 0, to: chips.count, by: 2) {
+            let end = min(i + 2, chips.count)
+            rows.append(Array(chips[i..<end]))
+        }
+        
         return VStack(spacing: 6) {
             Text("Whatever's on your mind, I'm here.")
                 .font(.perchRounded(10.5))

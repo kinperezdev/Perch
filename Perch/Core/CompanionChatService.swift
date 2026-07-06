@@ -24,6 +24,9 @@ final class CompanionChatService {
     private(set) var messages: [ChatMessage] = []
     private(set) var isThinking = false
     private(set) var currentEmotion: CompanionFaceView.FaceState = .idle
+    private(set) var suggestions: [String] = []
+
+    @ObservationIgnored private var suggestionTask: Task<Void, Never>?
 
     @ObservationIgnored private let prefs: PreferencesStore
     @ObservationIgnored private let intelligence: CompanionIntelligence
@@ -70,6 +73,7 @@ final class CompanionChatService {
         let daypart = hour < 12 ? "morning" : (hour < 18 ? "afternoon" : "evening")
         let greeting = "Good \(daypart), \(personality.callName(userName: prefs.userName)). " + SupportLibrary.greeting(personality)
         messages.append(ChatMessage(isUser: false, text: greeting))
+        updateSuggestions(for: greeting)
         scheduleSave()
     }
 
@@ -84,6 +88,8 @@ final class CompanionChatService {
     func send(_ rawText: String) {
         let text = rawText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty, !isThinking else { return }
+        suggestionTask?.cancel()
+        suggestions = []
         messages.append(ChatMessage(isUser: true, text: text))
         scheduleSave()
         Task { await respond(to: text) }
@@ -110,7 +116,38 @@ final class CompanionChatService {
         currentEmotion = CompanionFaceView.FaceState.inferred(from: text, fallback: .idle)
         
         voice.speakIfAllowed(text)
+        updateSuggestions(for: text)
         scheduleSave()
+    }
+    
+    private func updateSuggestions(for aiText: String) {
+        suggestionTask?.cancel()
+        guard intelligence.isAvailable, gateProvider().aiChat else {
+            suggestions = ["I'm doing great!", "Just taking a break.", "A bit stressed.", "Back to work."]
+            return
+        }
+        
+        let aiName = prefs.usesCustomPersonality && !prefs.customCompanionName.isEmpty ? prefs.customCompanionName : "Perch"
+        let prompt = """
+        The companion (\(aiName)) just said this to the user:
+        "\(aiText)"
+        
+        Generate exactly 4 short, distinct, natural replies the user might click to respond.
+        Each reply must be under 6 words.
+        Separate them perfectly with the '|' character.
+        Example: I'm feeling great|Just a bit tired|I need a break|Back to work
+        """
+        
+        suggestionTask = Task { [weak self] in
+            guard let self else { return }
+            if let online = await self.intelligence.onlineChat(system: "You generate quick reply suggestions.", prompt: prompt) {
+                if Task.isCancelled { return }
+                let chips = online.split(separator: "|").map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
+                if chips.count >= 2 {
+                    self.suggestions = Array(chips.prefix(4))
+                }
+            }
+        }
     }
 
     // MARK: Persistence
@@ -139,6 +176,9 @@ final class CompanionChatService {
         decoder.dateDecodingStrategy = .iso8601
         if let decoded = try? decoder.decode([ChatMessage].self, from: data) {
             messages = decoded
+            if let last = messages.last, !last.isUser {
+                updateSuggestions(for: last.text)
+            }
         }
     }
 
