@@ -109,7 +109,7 @@ final class PersonalityEngine {
     }
 
     var activePersonality: Personality {
-        prefs.personality
+        prefs.activePersonality
     }
 
     var companionName: String {

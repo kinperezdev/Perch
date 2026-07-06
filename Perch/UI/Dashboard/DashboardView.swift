@@ -6,7 +6,7 @@ struct DashboardView: View {
     @Environment(\.openSettings) private var openSettings
     @State private var showingAchievements = false
 
-    private var accent: [Color] { container.prefs.personality.accentColors }
+    private var accent: [Color] { container.prefs.activePersonality.accentColors }
 
     /// A warm time-of-day mood for the header. Never sad on the dashboard.
     private var contextualFaceState: CompanionFaceView.FaceState {

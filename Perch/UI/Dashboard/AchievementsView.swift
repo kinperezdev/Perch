@@ -13,7 +13,7 @@ struct AchievementsView: View {
     @Environment(AppContainer.self) private var container
     @Environment(\.dismiss) private var dismiss
 
-    private var accent: [Color] { container.prefs.personality.accentColors }
+    private var accent: [Color] { container.prefs.activePersonality.accentColors }
     
     private var unlockedCount: Int {
         achievements.filter { $0.isUnlocked }.count

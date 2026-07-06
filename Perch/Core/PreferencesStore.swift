@@ -23,6 +23,9 @@ final class PreferencesStore {
             save(personality.rawValue, "personality") 
         } 
     }
+    var activePersonality: Personality {
+        usesCustomPersonality ? customBaseStyle : personality
+    }
     var usesCustomPersonality: Bool { didSet { save(usesCustomPersonality, "usesCustomPersonality") } }
     var customCompanionName: String { didSet { save(customCompanionName, "customCompanionName") } }
     var customBaseStyle: Personality { didSet { save(customBaseStyle.rawValue, "customBaseStyle") } }

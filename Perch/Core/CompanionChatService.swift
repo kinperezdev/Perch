@@ -60,7 +60,7 @@ final class CompanionChatService {
     }
 
     private var personality: Personality {
-        prefs.personality
+        prefs.activePersonality
     }
 
     /// Opens the chat, injecting the greeting only when there's no prior history.
@@ -143,27 +143,28 @@ final class CompanionChatService {
     }
 
     private func aiReply(to text: String) async -> String? {
+        let aiName = prefs.usesCustomPersonality && !prefs.customCompanionName.isEmpty ? prefs.customCompanionName : "Perch"
         let formatter = DateFormatter()
         formatter.timeStyle = .short
         let timeString = formatter.string(from: Date())
 
         let priorMessages = messages.dropLast().suffix(6)
         let transcript = priorMessages
-            .map { ($0.isUser ? "User: " : "Perch: ") + $0.text }
+            .map { ($0.isUser ? "User: " : "\(aiName): ") + $0.text }
             .joined(separator: "\n")
             
         let onlinePrompt = """
         \(transcript)
         (System note: Time is \(timeString))
         User: \(text)
-        Perch:
+        \(aiName):
         """.trimmingCharacters(in: .whitespacesAndNewlines)
 
         if let online = await intelligence.onlineChat(system: chatInstructions(), prompt: onlinePrompt),
            !online.isEmpty {
             var cleaned = online.trimmingCharacters(in: .whitespacesAndNewlines)
-            if cleaned.hasPrefix("Perch: ") { cleaned = String(cleaned.dropFirst(7)) }
-            if cleaned.hasPrefix("Perch:") { cleaned = String(cleaned.dropFirst(6)) }
+            if cleaned.hasPrefix("\(aiName): ") { cleaned = String(cleaned.dropFirst(aiName.count + 2)) }
+            if cleaned.hasPrefix("\(aiName):") { cleaned = String(cleaned.dropFirst(aiName.count + 1)) }
             return Self.clipped(cleaned)
         }
 
@@ -177,7 +178,7 @@ final class CompanionChatService {
                     options: GenerationOptions(temperature: 0.7)
                 )
                 var cleaned = Self.clipped(response.content.trimmingCharacters(in: .whitespacesAndNewlines))
-                if cleaned.hasPrefix("Perch: ") { cleaned = String(cleaned.dropFirst(7)) }
+                if cleaned.hasPrefix("\(aiName): ") { cleaned = String(cleaned.dropFirst(aiName.count + 2)) }
                 return cleaned.isEmpty ? nil : cleaned
             } catch {
                 return nil
@@ -210,12 +211,13 @@ final class CompanionChatService {
     }
 
     private func chatInstructions() -> String {
+        let aiName = prefs.usesCustomPersonality && !prefs.customCompanionName.isEmpty ? prefs.customCompanionName : "Perch"
         let call = personality.callName(userName: prefs.userName)
         let brainContext = brain.contextSummary()
-        let memoryBlock = brainContext.isEmpty ? "" : "\n\nWhat Perch remembers about this person:\n\(brainContext)\nUse this context if relevant to the chat."
+        let memoryBlock = brainContext.isEmpty ? "" : "\n\nWhat \(aiName) remembers about this person:\n\(brainContext)\nUse this context if relevant to the chat."
         
         var base = """
-        You are Perch, a small wellbeing companion who lives near the notch of a builder's Mac. \
+        You are \(aiName), a small wellbeing companion who lives near the notch of a builder's Mac. \
         They open this chat to share feelings, stress, wins, doubts, or problems. \
         You speak as \(personality.styleBrief) You may initially address them as "\(call)", but you must pay close attention to how they talk. Naturally adapt your tone, slang, vocabulary, and even the nickname you use to match their vibe and whatever terms they use in conversation. Let your wordings evolve based on the chat.\(memoryBlock)
 

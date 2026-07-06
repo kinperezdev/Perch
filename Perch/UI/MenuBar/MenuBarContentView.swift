@@ -4,7 +4,7 @@ import SwiftUI
 struct MenuBarContentView: View {
     @Environment(AppContainer.self) private var container
 
-    private var accent: [Color] { container.prefs.personality.accentColors }
+    private var accent: [Color] { container.prefs.activePersonality.accentColors }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {

@@ -14,7 +14,7 @@ struct OnboardingView: View {
 
     private let lastPage = 8
 
-    private var accent: [Color] { container.prefs.personality.accentColors }
+    private var accent: [Color] { container.prefs.activePersonality.accentColors }
 
     var body: some View {
         ZStack {
@@ -520,9 +520,9 @@ struct OnboardingView: View {
         VStack(spacing: 14) {
             CompanionFaceView(state: .happy, accent: accent, size: 52)
             kicker("Ready")
-            Text("I've got you, \(container.prefs.personality.callName(userName: container.prefs.userName))")
+            Text("I've got you, \(container.prefs.activePersonality.callName(userName: container.prefs.userName))")
                 .font(.perchRounded(24, weight: .bold))
-            Text("\"\(container.personality.sampleLine(for: container.prefs.personality))\"")
+            Text("\"\(MessageLibrary.sample(personality: container.prefs.activePersonality))\"")
                 .font(.perchRounded(12.5))
                 .italic()
                 .foregroundStyle(.white.opacity(0.7))
