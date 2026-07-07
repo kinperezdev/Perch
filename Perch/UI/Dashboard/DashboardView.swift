@@ -120,7 +120,7 @@ struct DashboardView: View {
         return VStack(spacing: 10) {
             HStack(spacing: 10) {
                 statTile("Focus", value: shortDuration(seconds: container.tracker.focusRunSeconds), symbol: "flame.fill")
-                statTile("Active", value: shortDuration(seconds: today.activeSeconds), symbol: "sum")
+                statTile("Check-ins", value: "\(today.checkInsAccepted)", symbol: "checkmark.circle.fill")
                 statTile("Water", value: "\(today.waterCount)", symbol: "drop.fill")
             }
             HStack(spacing: 10) {

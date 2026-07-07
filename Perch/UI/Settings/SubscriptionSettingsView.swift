@@ -32,6 +32,9 @@ struct SubscriptionSettingsView: View {
                 Button("Restore purchases") {
                     Task { await container.subscriptions.restorePurchases() }
                 }
+                Text("Reinstalled Perch or switched Macs? Restore brings back a plan you already bought.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
                 if container.subscriptions.mode == .demo {
                     Button("Reset demo plan to Free") {
                         container.subscriptions.resetDemoTier()

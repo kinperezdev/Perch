@@ -19,6 +19,9 @@ struct GeneralSettingsView: View {
                 DatePicker("Usual lunch", selection: timeOfDayBinding($prefs.lunchMinutes), displayedComponents: .hourAndMinute)
                 DatePicker("Usual dinner", selection: timeOfDayBinding($prefs.dinnerMinutes), displayedComponents: .hourAndMinute)
                 DatePicker("Usual shower", selection: timeOfDayBinding($prefs.showerMinutes), displayedComponents: .hourAndMinute)
+                Text("These times shape my check ins: meals and shower near their windows, overwork and wind down around your work hours.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
             Section("Quiet hours") {
                 DatePicker("Quiet from", selection: timeOfDayBinding($prefs.quietStartMinutes), displayedComponents: .hourAndMinute)

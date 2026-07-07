@@ -279,7 +279,11 @@ final class ReminderEngine {
         let active = prefs.routines.prefix(gate.maxRoutines)
         for routine in active where routine.enabled && !firedRoutineIDs.contains(routine.id) {
             if (routine.minuteOfDay...(routine.minuteOfDay + 15)).contains(nowMinute) {
-                return (.routine, CheckInContext(routineLabel: routine.label), { [weak self] in self?.firedRoutineIDs.insert(routine.id) })
+                return (
+                    .routine,
+                    CheckInContext(routineLabel: routine.label, customMessage: routine.trimmedMessage),
+                    { [weak self] in self?.firedRoutineIDs.insert(routine.id) }
+                )
             }
         }
         return nil
@@ -290,7 +294,7 @@ final class ReminderEngine {
     func applyResponse(kind: ReminderKind, response: CheckInResponse, context: CheckInContext) {
         let now = Date()
         if kind.isTrackable {
-            memory.recordResponse(kind: kind, response: response)
+            memory.recordResponse(kind: kind, response: response, at: now)
         }
         switch response {
         case .snoozed(let minutes):
@@ -300,7 +304,8 @@ final class ReminderEngine {
             case .water: memory.logWater(at: now)
             case .meal: memory.logMeal(mealName: context.mealName, at: now)
             case .shower: memory.logShower(at: now)
-            case .stretch, .walk, .eyes, .overwork, .meetingRecovery: tracker.creditBreak()
+            case .stretch, .walk, .eyes, .posture, .overwork, .windDown, .sleep, .meetingRecovery, .routine:
+                tracker.creditBreak()
             default: break
             }
         case .ignored, .timedOut:

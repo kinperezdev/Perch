@@ -48,6 +48,9 @@ struct PrivacySettingsView: View {
                     }
                 }
                 Toggle("Also deliver check ins as notifications", isOn: $prefs.notificationsMirror)
+                Text("Calendar unlocks meeting prep and recovery check ins. Notifications catch check ins you miss when the bubble times out.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
             Section("Your memory") {
                 Text("Habit memory, brain memory, and chat history stay in local files on this Mac. You can delete them at any time.")

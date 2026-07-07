@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import QuartzCore
 
 struct NotchMetrics: Equatable {
     var hasNotch = false
@@ -69,7 +70,11 @@ final class NotchPanelController {
             height: height
         )
         if panel.isVisible {
-            panel.setFrame(frame, display: true, animate: true)
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = 0.22
+                context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+                panel.animator().setFrame(frame, display: true)
+            }
         } else {
             panel.setFrame(frame, display: true)
             panel.orderFrontRegardless()

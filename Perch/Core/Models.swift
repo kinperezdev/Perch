@@ -179,6 +179,7 @@ struct CheckInContext {
     var minutesUntil: Int?
     var yesterdaySkipped: Bool = false
     var routineLabel: String?
+    var customMessage: String?
 
     static let empty = CheckInContext()
 }
@@ -303,6 +304,13 @@ struct RoutineReminder: Codable, Identifiable, Hashable {
     var label: String
     var minuteOfDay: Int
     var enabled = true
+    var message: String?
+
+    var trimmedMessage: String? {
+        guard let message else { return nil }
+        let trimmed = message.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+    }
 }
 
 enum ReminderIntensity: String, Codable, CaseIterable, Identifiable {

@@ -39,6 +39,9 @@ struct PersonalitySettingsView: View {
                     }
                 }
                 voicePicker(prefs: prefs)
+                Text("Considering using your own voice? Create a Personal Voice in System Settings, Accessibility, Personal Voice, then pick it here as a voice style.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
             Section("Custom companion") {
                 customPersonalityEditor(prefs: prefs)

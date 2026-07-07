@@ -120,6 +120,7 @@ final class PersonalityEngine {
 
 
     func templateLine(for kind: ReminderKind, context: CheckInContext) -> String {
+        if let custom = customLine(context: context) { return custom }
         let personality = activePersonality
         let variants = MessageLibrary.variants(kind: kind, personality: personality)
         guard !variants.isEmpty else { return "Time for a quick check in." }
@@ -129,6 +130,8 @@ final class PersonalityEngine {
 
 
     func composeLine(for kind: ReminderKind, context: CheckInContext, aiAllowed: Bool, brainContext: String = "") async -> String {
+        // The user's own words are sacred: never let the model rephrase them.
+        if let custom = customLine(context: context) { return custom }
         let fallback = templateLine(for: kind, context: context)
         guard aiAllowed else { return fallback }
         var line = await intelligence.compose(
@@ -159,6 +162,12 @@ final class PersonalityEngine {
     }
 
         // MARK: Private
+
+    private func customLine(context: CheckInContext) -> String? {
+        guard let custom = context.customMessage, !custom.isEmpty else { return nil }
+        let call = activePersonality.callName(userName: prefs.userName)
+        return custom.replacingOccurrences(of: "{name}", with: call)
+    }
 
     private func pickIndex(count: Int, key: String) -> Int {
         guard count > 1 else { return 0 }

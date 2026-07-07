@@ -12,7 +12,10 @@ struct OnboardingView: View {
     @State private var welcomeStage = 0
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
 
-    private let lastPage = 8
+    private let lastPage = 9
+    @State private var newRoutineLabel = ""
+    @State private var newRoutineTime = Date()
+    @State private var newRoutineMessage = ""
 
     private var accent: [Color] { container.prefs.activePersonality.accentColors }
 
@@ -69,8 +72,9 @@ struct OnboardingView: View {
         case 3: customRulesPage
         case 4: rhythmPage
         case 5: carePage
-        case 6: permissionsPage
-        case 7: shortcutPage
+        case 6: routinesPage
+        case 7: permissionsPage
+        case 8: shortcutPage
         default: planPage
         }
     }
@@ -219,7 +223,7 @@ struct OnboardingView: View {
                     container.prefs.usesCustomPersonality = false
                     container.prefs.personality = personality
                 }
-
+                container.voice.preview(MessageLibrary.sample(personality: personality))
             }
         } label: {
             HStack(spacing: 8) {
@@ -309,43 +313,36 @@ struct OnboardingView: View {
 
     private var rhythmPage: some View {
         @Bindable var prefs = container.prefs
-        return VStack(spacing: 18) {
+        return VStack(spacing: 12) {
             kicker("Your rhythm")
             Text("Your usual day")
                 .font(.perchRounded(24, weight: .bold))
             Text("So I know when you're overworking and when meals matter.")
                 .font(.perchRounded(11.5))
                 .foregroundStyle(.secondary)
-            Grid(horizontalSpacing: 24, verticalSpacing: 14) {
-                GridRow {
-                    rhythmPicker("Work starts", selection: timeOfDayBinding($prefs.workStartMinutes))
-                    rhythmPicker("Work ends", selection: timeOfDayBinding($prefs.workEndMinutes))
-                }
-                GridRow {
-                    rhythmPicker("Breakfast", selection: timeOfDayBinding($prefs.breakfastMinutes))
-                    rhythmPicker("Lunch", selection: timeOfDayBinding($prefs.lunchMinutes))
-                }
-                GridRow {
-                    rhythmPicker("Dinner", selection: timeOfDayBinding($prefs.dinnerMinutes))
-                    rhythmPicker("Shower", selection: timeOfDayBinding($prefs.showerMinutes))
+            Form {
+                Section {
+                    DatePicker("Work starts", selection: timeOfDayBinding($prefs.workStartMinutes), displayedComponents: .hourAndMinute)
+                    DatePicker("Work ends", selection: timeOfDayBinding($prefs.workEndMinutes), displayedComponents: .hourAndMinute)
+                    DatePicker("Breakfast", selection: timeOfDayBinding($prefs.breakfastMinutes), displayedComponents: .hourAndMinute)
+                    DatePicker("Lunch", selection: timeOfDayBinding($prefs.lunchMinutes), displayedComponents: .hourAndMinute)
+                    DatePicker("Dinner", selection: timeOfDayBinding($prefs.dinnerMinutes), displayedComponents: .hourAndMinute)
+                    DatePicker("Shower", selection: timeOfDayBinding($prefs.showerMinutes), displayedComponents: .hourAndMinute)
+                    DatePicker("Quiet from", selection: timeOfDayBinding($prefs.quietStartMinutes), displayedComponents: .hourAndMinute)
+                    DatePicker("Quiet until", selection: timeOfDayBinding($prefs.quietEndMinutes), displayedComponents: .hourAndMinute)
+                } footer: {
+                    Text("During quiet hours I go fully silent, no check ins at all.")
+                        .font(.perchRounded(10.5))
+                        .foregroundStyle(.secondary)
                 }
             }
-            .padding(18)
-            .background(.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .formStyle(.grouped)
+            .controlSize(.small)
+            .scrollContentBackground(.hidden)
+            .scrollIndicators(.never)
+            .frame(maxWidth: 500)
+            .padding(.bottom, 16)
         }
-    }
-
-    private func rhythmPicker(_ label: String, selection: Binding<Date>) -> some View {
-        HStack(spacing: 12) {
-            Text(label)
-                .font(.perchRounded(12.5, weight: .medium))
-                .frame(width: 84, alignment: .leading)
-            DatePicker("", selection: selection, displayedComponents: .hourAndMinute)
-                .datePickerStyle(.stepperField)
-                .labelsHidden()
-                .fixedSize()
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
         // MARK: Care
@@ -401,6 +398,111 @@ struct OnboardingView: View {
             )
         }
         .buttonStyle(.plain)
+    }
+
+        // MARK: Routines
+
+    private var routinesPage: some View {
+        @Bindable var prefs = container.prefs
+        return VStack(spacing: 14) {
+            kicker("Your own check ins")
+            Text("Anything else I should remind you about?")
+                .font(.perchRounded(24, weight: .bold))
+            Text("Vitamins, standups, calling home. Write it in your own words and I'll say exactly that. Leave the words blank and I'll phrase it my way. Skip this if you want, you can add more in Settings later.")
+                .font(.perchRounded(11.5))
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: 460)
+            Form {
+                Section {
+                    HStack(spacing: 10) {
+                        TextField("", text: $newRoutineLabel, prompt: Text("e.g. Take vitamins"))
+                            .textFieldStyle(.plain)
+                            .multilineTextAlignment(.leading)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        DatePicker("", selection: $newRoutineTime, displayedComponents: .hourAndMinute)
+                            .labelsHidden()
+                            .fixedSize()
+                        Button("Add") { addOnboardingRoutine(prefs: prefs) }
+                            .disabled(
+                                newRoutineLabel.trimmingCharacters(in: .whitespaces).isEmpty
+                                    || prefs.routines.count >= container.subscriptions.gate.maxRoutines
+                            )
+                    }
+                    TextField(
+                        "",
+                        text: $newRoutineMessage,
+                        prompt: Text("Optional: exactly what I should say")
+                    )
+                    .textFieldStyle(.plain)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    ForEach(prefs.routines) { routine in
+                        onboardingRoutineRow(routine, prefs: prefs)
+                    }
+                } footer: {
+                    if prefs.routines.count >= container.subscriptions.gate.maxRoutines {
+                        Text("Free plan includes \(container.subscriptions.gate.maxRoutines) routines. Pro unlocks more.")
+                            .font(.perchRounded(10.5))
+                            .foregroundStyle(.orange)
+                    }
+                }
+            }
+            .formStyle(.grouped)
+            .scrollContentBackground(.hidden)
+            .scrollIndicators(.never)
+            .frame(maxWidth: 520)
+            .padding(.bottom, 16)
+        }
+    }
+
+    private func onboardingRoutineRow(_ routine: RoutineReminder, prefs: PreferencesStore) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: "checklist")
+                .font(.system(size: 11))
+                .foregroundStyle(accent[0])
+            VStack(alignment: .leading, spacing: 1) {
+                Text(routine.label)
+                    .font(.perchRounded(12, weight: .semibold))
+                if let message = routine.trimmedMessage {
+                    Text("\u{201C}\(message)\u{201D}")
+                        .font(.perchRounded(10))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+            }
+            Spacer()
+            Text(onboardingTimeLabel(routine.minuteOfDay))
+                .font(.perchRounded(11))
+                .foregroundStyle(.secondary)
+                .monospacedDigit()
+            Button {
+                prefs.routines = prefs.routines.filter { $0.id != routine.id }
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 12))
+                    .foregroundStyle(.white.opacity(0.35))
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private func addOnboardingRoutine(prefs: PreferencesStore) {
+        guard prefs.routines.count < container.subscriptions.gate.maxRoutines else { return }
+        let message = newRoutineMessage.trimmingCharacters(in: .whitespacesAndNewlines)
+        let routine = RoutineReminder(
+            label: newRoutineLabel.trimmingCharacters(in: .whitespaces),
+            minuteOfDay: minutesOfDay(newRoutineTime),
+            message: message.isEmpty ? nil : message
+        )
+        prefs.routines = prefs.routines + [routine]
+        newRoutineLabel = ""
+        newRoutineMessage = ""
+    }
+
+    private func onboardingTimeLabel(_ minute: Int) -> String {
+        let date = Calendar.current.date(bySettingHour: minute / 60, minute: minute % 60, second: 0, of: Date()) ?? Date()
+        return date.formatted(date: .omitted, time: .shortened)
     }
 
         // MARK: Permissions
@@ -533,6 +635,14 @@ struct OnboardingView: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 420)
+            HStack(spacing: 6) {
+                Image(systemName: "speaker.wave.2.fill")
+                    .font(.system(size: 10))
+                    .foregroundStyle(accent[0])
+                Text("Want me to speak check ins out loud, even in your own voice? Set it up in Settings, Personality.")
+                    .font(.perchRounded(10.5))
+                    .foregroundStyle(.secondary)
+            }
             HStack(spacing: 12) {
                 Button("See Pro plans") {
                     finish()

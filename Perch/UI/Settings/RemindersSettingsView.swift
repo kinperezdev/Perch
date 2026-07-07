@@ -4,6 +4,7 @@ struct RemindersSettingsView: View {
     @Environment(AppContainer.self) private var container
     @State private var newRoutineLabel = ""
     @State private var newRoutineTime = Date()
+    @State private var newRoutineMessage = ""
 
     var body: some View {
         @Bindable var prefs = container.prefs
@@ -23,6 +24,9 @@ struct RemindersSettingsView: View {
                 ForEach(wellbeingKinds) { kind in
                     kindToggle(kind, prefs: prefs)
                 }
+                Text("Meal and shower times, work hours, and quiet hours are set in General.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
             Section("Schedule awareness") {
                 ForEach(calendarKinds) { kind in
@@ -30,6 +34,10 @@ struct RemindersSettingsView: View {
                 }
                 if !container.subscriptions.gate.calendarAwareness {
                     lockedFootnote
+                } else if !container.calendar.isAuthorized {
+                    Text("These need calendar access to work. Grant it in Privacy.")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
                 }
             }
             Section("Personal routines") {
@@ -44,6 +52,14 @@ struct RemindersSettingsView: View {
                                 || prefs.routines.count >= container.subscriptions.gate.maxRoutines
                         )
                 }
+                TextField(
+                    "In your words",
+                    text: $newRoutineMessage,
+                    prompt: Text("Optional: exactly what Perch should say")
+                )
+                Text("Leave it blank and Perch phrases the reminder in its own personality. Write it and Perch says your exact words. {name} becomes what Perch calls you.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
                 if prefs.routines.count >= container.subscriptions.gate.maxRoutines {
                     Text("Free plan includes \(container.subscriptions.gate.maxRoutines) routines. Pro unlocks more.")
                         .font(.caption)
@@ -105,7 +121,15 @@ struct RemindersSettingsView: View {
                         }
                     }
                 )) {
-                    Text(routine.label)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(routine.label)
+                        if let message = routine.trimmedMessage {
+                            Text("\u{201C}\(message)\u{201D}")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(2)
+                        }
+                    }
                 }
                 Spacer()
                 Text(timeLabel(routine.minuteOfDay))
@@ -123,12 +147,15 @@ struct RemindersSettingsView: View {
 
     private func addRoutine(prefs: PreferencesStore) {
         guard prefs.routines.count < container.subscriptions.gate.maxRoutines else { return }
+        let message = newRoutineMessage.trimmingCharacters(in: .whitespacesAndNewlines)
         let routine = RoutineReminder(
             label: newRoutineLabel.trimmingCharacters(in: .whitespaces),
-            minuteOfDay: minutesOfDay(newRoutineTime)
+            minuteOfDay: minutesOfDay(newRoutineTime),
+            message: message.isEmpty ? nil : message
         )
         prefs.routines = prefs.routines + [routine]
         newRoutineLabel = ""
+        newRoutineMessage = ""
     }
 
     private func timeLabel(_ minute: Int) -> String {
