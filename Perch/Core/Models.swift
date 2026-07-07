@@ -26,13 +26,13 @@ enum PlanTier: String, Codable, Comparable {
     }
 }
 
-/// Single source of truth for what the current plan unlocks.
+
 struct FeatureGate {
     let tier: PlanTier
 
     var allPersonalities: Bool { tier >= .pro }
     var adaptiveMemory: Bool { tier >= .pro }
-    /// AI runs on free local intelligence, so every tier gets it.
+
     var aiChat: Bool { true }
     var calendarAwareness: Bool { tier >= .pro }
     var voiceInteraction: Bool { tier >= .pro }
@@ -52,6 +52,7 @@ enum ReminderKind: String, Codable, CaseIterable, Identifiable {
     case posture
     case walk
     case meal
+    case shower
     case overwork
     case windDown
     case sleep
@@ -72,6 +73,7 @@ enum ReminderKind: String, Codable, CaseIterable, Identifiable {
         case .posture: "Posture"
         case .walk: "Short walk"
         case .meal: "Meals"
+        case .shower: "Shower"
         case .overwork: "Overwork check"
         case .windDown: "Wind down"
         case .sleep: "Sleep"
@@ -92,6 +94,7 @@ enum ReminderKind: String, Codable, CaseIterable, Identifiable {
         case .posture: "person.bust"
         case .walk: "figure.walk"
         case .meal: "fork.knife"
+        case .shower: "shower.fill"
         case .overwork: "hourglass"
         case .windDown: "sunset.fill"
         case .sleep: "moon.stars.fill"
@@ -104,9 +107,9 @@ enum ReminderKind: String, Codable, CaseIterable, Identifiable {
         }
     }
 
-    /// Kinds the user can toggle in settings.
+
     static var togglable: [ReminderKind] {
-        [.water, .stretch, .eyes, .posture, .walk, .meal, .overwork, .windDown, .sleep, .meetingPrep, .meetingRecovery]
+        [.water, .stretch, .eyes, .posture, .walk, .meal, .shower, .overwork, .windDown, .sleep, .meetingPrep, .meetingRecovery]
     }
 
     var defaultEnabled: Bool {
@@ -120,7 +123,7 @@ enum ReminderKind: String, Codable, CaseIterable, Identifiable {
         self == .meetingPrep || self == .meetingRecovery
     }
 
-    /// A break timer makes sense for physical resets.
+
     var supportsTimer: Bool {
         switch self {
         case .stretch, .eyes, .walk, .overwork: true
@@ -132,6 +135,7 @@ enum ReminderKind: String, Codable, CaseIterable, Identifiable {
         switch self {
         case .water: "Logged"
         case .meal: "I ate"
+        case .shower: "Done"
         case .meetingPrep: "Ready"
         case .meetingRecovery: "Taking it"
         case .windDown, .sleep: "On it"
@@ -140,11 +144,12 @@ enum ReminderKind: String, Codable, CaseIterable, Identifiable {
         }
     }
 
-    /// Higher wins when several reminders are due at once.
+
     var priority: Int {
         switch self {
         case .meetingPrep: 100
         case .meal: 90
+        case .shower: 65
         case .overwork: 85
         case .sleep: 80
         case .windDown: 75
@@ -158,6 +163,10 @@ enum ReminderKind: String, Codable, CaseIterable, Identifiable {
         case .sessionStart: 15
         case .status, .welcome: 10
         }
+    }
+
+    var isTrackable: Bool {
+        self != .status && self != .welcome && self != .sessionStart
     }
 }
 
@@ -233,9 +242,12 @@ func minutesOfDay(_ date: Date) -> Int {
     return (parts.hour ?? 0) * 60 + (parts.minute ?? 0)
 }
 
-/// Turns a raw minute count into warm, human phrasing like "almost 3 hours".
+
 func humanDuration(minutes: Int) -> String {
-    if minutes < 50 { return "\(max(minutes, 1)) minutes" }
+    if minutes < 50 {
+        let value = max(minutes, 1)
+        return value == 1 ? "1 minute" : "\(value) minutes"
+    }
     let hours = minutes / 60
     let rem = minutes % 60
     if rem >= 45 {
@@ -259,6 +271,31 @@ func shortDuration(seconds: Double) -> String {
     return "\(minutes)m"
 }
 
+private let dayKeyFormatter: DateFormatter = {
+    let formatter = DateFormatter()
+    formatter.dateFormat = "yyyy-MM-dd"
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.calendar = Calendar(identifier: .gregorian)
+    return formatter
+}()
+
+func weekdayLetter(forDayKey key: String) -> String {
+    guard let date = dayKeyFormatter.date(from: key) else { return "?" }
+    let weekday = dayKeyFormatter.calendar.component(.weekday, from: date)
+    return ["S", "M", "T", "W", "T", "F", "S"][weekday - 1]
+}
+
+func stripAIPrefix(from text: String, aiName: String) -> String {
+    let escapedName = NSRegularExpression.escapedPattern(for: aiName)
+    var cleaned = text.replacingOccurrences(
+        of: "^(?:\\*+)?\(escapedName)(?:\\*+)?\\s*:?(?:\\*+)?\\s*:?\\s*",
+        with: "",
+        options: [.regularExpression, .caseInsensitive]
+    )
+    cleaned = cleaned.replacingOccurrences(of: "^:\\s*", with: "", options: .regularExpression)
+    return cleaned
+}
+
 // MARK: - User defined routines
 
 struct RoutineReminder: Codable, Identifiable, Hashable {
@@ -275,7 +312,7 @@ enum ReminderIntensity: String, Codable, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    /// Multiplier applied to base reminder intervals. Higher means fewer check ins.
+
     var intervalMultiplier: Double {
         switch self {
         case .relaxed: 1.35

@@ -1,11 +1,8 @@
 import SwiftUI
 
-/// Emotional support chat that drops out of the notch.
+
 struct CompanionChatView: View {
     let coordinator: CompanionCoordinator
-
-    @State private var input = ""
-    @FocusState private var inputFocused: Bool
 
     private var chat: CompanionChatService { coordinator.chat }
     private var accent: [Color] { coordinator.accentColors }
@@ -14,13 +11,10 @@ struct CompanionChatView: View {
         VStack(spacing: 10) {
             header
             messageList
-            inputBar
-
         }
-        .onAppear { inputFocused = true }
     }
 
-    /// On notch Macs the header sits in the band beside the notch itself:
+
     private var header: some View {
         let metrics = coordinator.metrics
         return HStack(spacing: 0) {
@@ -64,7 +58,7 @@ struct CompanionChatView: View {
                         thinkingRow
                             .id("thinking")
                     }
-                    if chat.messages.count <= 1, !chat.isThinking {
+                    if !chat.isThinking {
                         suggestionChips
                     }
                     Color.clear.frame(height: 1).id("bottom")
@@ -123,22 +117,22 @@ struct CompanionChatView: View {
 
     private var suggestionChips: some View {
         let chips = chat.suggestions.isEmpty ? ["I feel burned out", "I can't focus", "I shipped something today", "I don't know what's next"] : chat.suggestions
-        
-        // Chunk the chips into rows of 2
+
+
         var rows: [[String]] = []
         for i in stride(from: 0, to: chips.count, by: 2) {
             let end = min(i + 2, chips.count)
             rows.append(Array(chips[i..<end]))
         }
-        
+
         return VStack(spacing: 6) {
-            Text("Whatever's on your mind, I'm here.")
+            Text("Pick what's closest to how you feel.")
                 .font(.perchRounded(10.5))
                 .foregroundStyle(.white.opacity(0.4))
                 .padding(.bottom, 2)
-            ForEach(rows, id: \.self) { row in
+            ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
                 HStack(spacing: 6) {
-                    ForEach(row, id: \.self) { prompt in
+                    ForEach(Array(row.enumerated()), id: \.offset) { _, prompt in
                         Button(prompt) { chat.send(prompt) }
                             .buttonStyle(GhostPillButtonStyle())
                     }
@@ -157,45 +151,4 @@ struct CompanionChatView: View {
             .frame(width: 5, height: 5)
     }
 
-    private var inputBar: some View {
-        HStack(spacing: 8) {
-            if coordinator.gate.voiceInteraction {
-                Button {
-                    coordinator.startChatDictation { text in input = text }
-                } label: {
-                    Image(systemName: "mic.fill")
-                        .symbolEffect(.pulse, isActive: coordinator.isVoiceListening)
-                }
-                .buttonStyle(IconPillButtonStyle())
-                .help("Dictate")
-            }
-            TextField(
-                "",
-                text: $input,
-                prompt: Text("Tell me what's going on...").foregroundStyle(.white.opacity(0.35)),
-                axis: .vertical
-            )
-            .textFieldStyle(.plain)
-            .lineLimit(1...3)
-            .font(.perchRounded(12.5))
-            .foregroundStyle(.white)
-            .focused($inputFocused)
-            .onSubmit(send)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 7)
-            .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-            Button(action: send) {
-                Image(systemName: "arrow.up")
-            }
-            .buttonStyle(IconPillButtonStyle())
-            .keyboardShortcut(.defaultAction)
-            .disabled(input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-        }
-    }
-
-    private func send() {
-        let text = input
-        input = ""
-        chat.send(text)
-    }
 }

@@ -3,6 +3,7 @@ import SwiftUI
 
 struct PersonalitySettingsView: View {
     @Environment(AppContainer.self) private var container
+    @State private var localVoices: [AVSpeechSynthesisVoice] = []
 
     var body: some View {
         @Bindable var prefs = container.prefs
@@ -25,7 +26,9 @@ struct PersonalitySettingsView: View {
                 Toggle("Speak check ins out loud", isOn: $prefs.voiceEnabled)
                     .disabled(!container.subscriptions.gate.voiceInteraction)
                     .onChange(of: prefs.voiceEnabled) { _, enabled in
-                        if enabled { container.voice.preview("Voice is on. I'll speak up when it matters.") }
+                        if enabled {
+                            container.voice.preview("Voice is on. I'll speak up when it matters.")
+                        }
                     }
                 if !container.subscriptions.gate.voiceInteraction {
                     HStack(spacing: 6) {
@@ -56,66 +59,37 @@ struct PersonalitySettingsView: View {
         }
         prefs.usesCustomPersonality = false
         prefs.personality = personality
-        container.voice.preview(MessageLibrary.sample(personality: personality))
+        if prefs.voiceEnabled {
+            container.voice.preview(MessageLibrary.sample(personality: personality))
+        }
     }
-
-    private let openAIVoices = ["alloy", "echo", "fable", "onyx", "nova", "shimmer"]
-
-    @State private var localVoices = VoiceService.availableVoices()
 
     @ViewBuilder
     private func voicePicker(prefs: PreferencesStore) -> some View {
         @Bindable var prefs = prefs
         if container.subscriptions.gate.voiceStyles {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Picker("Voice style", selection: $prefs.voiceIdentifier) {
-                        if prefs.onlineMode {
-                            Text("Automatic (Default)").tag("")
-                            ForEach(openAIVoices, id: \.self) { voice in
-                                Text("OpenAI · \(voice.capitalized)").tag("openai-\(voice)")
-                            }
-                        } else {
-                            Text("Automatic (Default)").tag("")
-                            ForEach(localVoices, id: \.identifier) { voice in
-                                Text(voiceLabel(voice)).tag(voice.identifier)
-                            }
-                        }
-                        Divider()
-                        Text("Custom / Import...").tag("custom")
+            HStack {
+                Picker("Voice style", selection: $prefs.voiceIdentifier) {
+                    Text("Automatic").tag("")
+                    ForEach(localVoices, id: \.identifier) { voice in
+                        Text(voiceLabel(voice)).tag(voice.identifier)
                     }
-                    .onChange(of: prefs.voiceIdentifier) { _, identifier in
-                        if identifier != "custom" {
-                            container.voice.preview(voiceIdentifier: identifier)
-                        }
-                    }
-                    Button {
-                        container.voice.preview()
-                    } label: {
-                        Image(systemName: "speaker.wave.2.fill")
-                    }
-                    .buttonStyle(.borderless)
-                    .help("Hear this voice")
                 }
-                
-                if prefs.voiceIdentifier == "custom" {
-                    TextField("Custom Voice ID or URL", text: $prefs.customVoiceIdentifier)
-                        .textFieldStyle(.roundedBorder)
-                    Text("Paste your ElevenLabs Voice ID, open-source model URL, or custom identifier here.")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
+                .onChange(of: prefs.voiceIdentifier) { _, identifier in
+                    container.voice.preview(voiceIdentifier: identifier)
                 }
+
+                Button {
+                    container.voice.preview()
+                } label: {
+                    Image(systemName: "speaker.wave.2.fill")
+                }
+                .buttonStyle(.borderless)
+                .help("Hear this voice")
             }
             .onAppear {
-                if #available(macOS 14.0, *) {
-                    Task {
-                        if AVSpeechSynthesizer.personalVoiceAuthorizationStatus == .notDetermined {
-                            _ = await AVSpeechSynthesizer.requestPersonalVoiceAuthorization()
-                            await MainActor.run {
-                                self.localVoices = VoiceService.availableVoices()
-                            }
-                        }
-                    }
+                if localVoices.isEmpty {
+                    localVoices = VoiceService.availableVoices()
                 }
             }
         } else {
@@ -131,9 +105,12 @@ struct PersonalitySettingsView: View {
 
     private func voiceLabel(_ voice: AVSpeechSynthesisVoice) -> String {
         switch voice.quality {
-        case .premium: "\(voice.name) · Premium"
-        case .enhanced: "\(voice.name) · Enhanced"
-        default: voice.name
+        case .premium:
+            return "\(voice.name) - Premium"
+        case .enhanced:
+            return "\(voice.name) - Enhanced"
+        default:
+            return voice.name
         }
     }
 
@@ -180,15 +157,8 @@ struct PersonalitySettingsView: View {
     }
 
     private func importBrain(prefs: PreferencesStore) {
-        NSApp.activate(ignoringOtherApps: true)
-        let panel = NSOpenPanel()
-        panel.allowsMultipleSelection = false
-        panel.canChooseDirectories = false
-        panel.canChooseFiles = true
-        if panel.runModal() == .OK, let url = panel.url {
-            if let text = try? String(contentsOf: url, encoding: .utf8) {
-                prefs.customInstructions = text
-            }
+        if let text = importInstructionsFile() {
+            prefs.customInstructions = text
         }
     }
 }

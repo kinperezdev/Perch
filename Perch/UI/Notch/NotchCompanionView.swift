@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The black bubble that extends the notch. Hosts every companion surface:
+
 struct NotchCompanionView: View {
     let coordinator: CompanionCoordinator
 
@@ -17,7 +17,7 @@ struct NotchCompanionView: View {
         .animation(.spring(response: 0.45, dampingFraction: 0.82), value: coordinator.phase)
     }
 
-    // MARK: Bubble chrome
+        // MARK: Bubble chrome
 
     private var bubble: some View {
         let metrics = coordinator.metrics
@@ -48,7 +48,7 @@ struct NotchCompanionView: View {
         .onHover { coordinator.isHovering = $0 }
     }
 
-    /// The chat pulls its header up beside the notch, so it skips the inset.
+
     private func topPadding(for metrics: NotchMetrics) -> CGFloat {
         guard metrics.hasNotch else { return 10 }
         return (coordinator.phase == .chat || coordinator.phase == .message) ? 4 : metrics.topInset + 3
@@ -61,8 +61,6 @@ struct NotchCompanionView: View {
             EmptyView()
         case .message:
             if let checkIn = coordinator.current { messageView(checkIn) }
-        case .listening:
-            listeningView
         case .timer:
             timerView
         case .confirmation:
@@ -72,7 +70,7 @@ struct NotchCompanionView: View {
         }
     }
 
-    // MARK: Message
+        // MARK: Message
 
     private func faceState(for checkIn: CheckIn) -> CompanionFaceView.FaceState {
         let fallback: CompanionFaceView.FaceState
@@ -100,14 +98,16 @@ struct NotchCompanionView: View {
                             .font(.system(size: 9, weight: .semibold, design: .rounded))
                             .tracking(1.2)
                             .foregroundStyle(.white.opacity(0.45))
+                            .lineLimit(1)
+                            .fixedSize()
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                
+
                 if metrics.hasNotch {
                     Color.clear.frame(width: metrics.notchWidth + 12, height: 1)
                 }
-                
+
                 HStack {
                     dismissButton(for: checkIn)
                 }
@@ -147,19 +147,21 @@ struct NotchCompanionView: View {
         HStack(spacing: 6) {
             switch checkIn.kind {
             case .status:
-                Button(action: { coordinator.logWaterQuick() }) { Text("Log water") }
-                    .buttonStyle(GhostPillButtonStyle())
-                Button(action: { coordinator.takeBreakQuick() }) { Text("Took a break") }
-                    .buttonStyle(GhostPillButtonStyle())
-                Button(action: { coordinator.openChat() }) { Text("Talk") }
-                    .buttonStyle(GhostPillButtonStyle())
+                logButton("Water", symbol: "drop.fill") { coordinator.logWaterQuick() }
+                logButton("Meal", symbol: "fork.knife") { coordinator.logMealQuick() }
+                logButton("Break", symbol: "figure.walk") { coordinator.takeBreakQuick() }
+                logButton("Shower", symbol: "shower.fill") { coordinator.logShowerQuick() }
                 Spacer()
                 Button(action: { coordinator.respond(.done) }) { Text("All good") }
                     .buttonStyle(PillButtonStyle(accent: accent))
                     .keyboardShortcut("1", modifiers: [])
             case .welcome, .sessionStart:
-                Button(action: { coordinator.openChat() }) { Text("Talk to me") }
+                Button(action: { coordinator.respond(.snoozed(minutes: 10)) }) { Text("In a bit") }
                     .buttonStyle(GhostPillButtonStyle())
+                    .keyboardShortcut("2", modifiers: [])
+                Button(action: { coordinator.respond(.ignored) }) { Text("Just chilling") }
+                    .buttonStyle(GhostPillButtonStyle())
+                    .keyboardShortcut("3", modifiers: [])
                 Spacer()
                 Button(action: { coordinator.respond(.done) }) { Text("Let's go") }
                     .buttonStyle(PillButtonStyle(accent: accent))
@@ -198,18 +200,24 @@ struct NotchCompanionView: View {
                 .buttonStyle(GhostPillButtonStyle())
                 .keyboardShortcut("3", modifiers: [])
                 Spacer()
-                if coordinator.gate.voiceInteraction {
-                    Button { coordinator.startVoiceReply() } label: {
-                        Image(systemName: "mic.fill")
-                    }
-                    .buttonStyle(IconPillButtonStyle())
-                    .help("Reply with your voice")
-                }
             }
         }
     }
 
-    /// Tiny keycap so the quick answer keys are always discoverable.
+
+    private func logButton(_ title: String, symbol: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 4) {
+                Image(systemName: symbol)
+                    .font(.system(size: 9, weight: .semibold))
+                Text(title)
+            }
+        }
+        .buttonStyle(GhostPillButtonStyle())
+        .help("Log \(title.lowercased())")
+    }
+
+
     private func keycap(_ label: String, dark: Bool) -> some View {
         Text(label)
             .font(.system(size: 8, weight: .bold, design: .rounded))
@@ -221,7 +229,7 @@ struct NotchCompanionView: View {
             )
     }
 
-    /// Small hint under a proactive check in so it's clear Perch is
+
     private var waitingFooter: some View {
         TimelineView(.animation(minimumInterval: 1.0 / 20.0)) { timeline in
             let t = timeline.date.timeIntervalSinceReferenceDate
@@ -248,46 +256,7 @@ struct NotchCompanionView: View {
         .frame(height: 2)
     }
 
-    // MARK: Listening
-
-    private var listeningView: some View {
-        HStack(spacing: 10) {
-            CompanionFaceView(state: .listening, accent: accent, size: 30)
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Listening...")
-                    .font(.perchRounded(12, weight: .semibold))
-                    .foregroundStyle(accent[0])
-                Text(coordinator.voiceTranscript.isEmpty ? "Say \"done\", \"later\", or \"skip\"" : coordinator.voiceTranscript)
-                    .font(.perchRounded(13))
-                    .foregroundStyle(.white.opacity(0.85))
-                    .lineLimit(2)
-            }
-            Spacer()
-            waveform
-            Button { coordinator.respond(.ignored) } label: {
-                Image(systemName: "xmark")
-            }
-            .buttonStyle(IconPillButtonStyle())
-            .keyboardShortcut(.cancelAction)
-        }
-        .padding(.vertical, 10)
-    }
-
-    private var waveform: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 24.0)) { timeline in
-            let t = timeline.date.timeIntervalSinceReferenceDate
-            HStack(spacing: 3) {
-                ForEach(0..<5, id: \.self) { index in
-                    Capsule()
-                        .fill(accent[0])
-                        .frame(width: 3, height: 8 + 12 * abs(sin(t * 5 + Double(index) * 0.9)))
-                }
-            }
-        }
-        .frame(height: 22)
-    }
-
-    // MARK: Timer
+        // MARK: Timer
 
     private var timerView: some View {
         HStack(spacing: 16) {
@@ -329,7 +298,7 @@ struct NotchCompanionView: View {
         return String(format: "%d:%02d", m, s)
     }
 
-    // MARK: Confirmation
+        // MARK: Confirmation
 
     private var confirmationView: some View {
         HStack(spacing: 10) {

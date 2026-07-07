@@ -1,9 +1,8 @@
 import AppKit
 import SwiftUI
 
-/// Presents the few real windows Perch has: onboarding,
 @MainActor
-final class WindowPresenter {
+final class WindowPresenter: NSObject, NSWindowDelegate {
 
     static let shared = WindowPresenter()
     private var windows: [String: NSWindow] = [:] {
@@ -50,7 +49,7 @@ final class WindowPresenter {
     }
 
     func showDashboard(_ container: AppContainer) {
-        show(id: "dashboard", size: NSSize(width: 720 * PerchStyle.scale, height: 560 * PerchStyle.scale)) {
+        show(id: "dashboard", size: NSSize(width: 720 * PerchStyle.scale, height: 580 * PerchStyle.scale)) {
             DashboardView().environment(container)
         }
     }
@@ -59,8 +58,6 @@ final class WindowPresenter {
             SettingsView().environment(container)
         }
     }
-
-    // MARK: Private
 
     private func showStandardWindow<Content: View>(id: String, size: NSSize, @ViewBuilder content: () -> Content) {
         if let existing = windows[id] {
@@ -76,19 +73,10 @@ final class WindowPresenter {
         )
         window.title = "Settings"
         window.isReleasedWhenClosed = false
+        window.delegate = self
         window.contentView = NSHostingView(rootView: content().environment(\.dynamicTypeSize, .medium))
         window.center()
         windows[id] = window
-
-        NotificationCenter.default.addObserver(
-            forName: NSWindow.willCloseNotification,
-            object: window,
-            queue: .main
-        ) { _ in
-            Task { @MainActor [weak self] in
-                self?.windows.removeValue(forKey: id)
-            }
-        }
         window.makeKeyAndOrderFront(nil)
         NSApp.activate()
     }
@@ -109,24 +97,22 @@ final class WindowPresenter {
         window.titleVisibility = .hidden
         window.isMovableByWindowBackground = true
         window.isReleasedWhenClosed = false
+        window.delegate = self
         window.contentView = NSHostingView(rootView: content().environment(\.dynamicTypeSize, .medium))
         window.center()
         windows[id] = window
-
-        NotificationCenter.default.addObserver(
-            forName: NSWindow.willCloseNotification,
-            object: window,
-            queue: .main
-        ) { _ in
-            Task { @MainActor [weak self] in
-                self?.windows.removeValue(forKey: id)
-            }
-        }
         window.makeKeyAndOrderFront(nil)
         NSApp.activate()
     }
 
     private func close(id: String) {
         windows[id]?.close()
+    }
+
+    func windowWillClose(_ notification: Notification) {
+        guard let window = notification.object as? NSWindow else { return }
+        if let id = windows.first(where: { $0.value === window })?.key {
+            windows.removeValue(forKey: id)
+        }
     }
 }

@@ -1,10 +1,10 @@
 import SwiftUI
 
-/// The tiny living face of Perch. A soft gradient orb with a full range
+
 struct CompanionFaceView: View {
     enum FaceState {
         case idle, talking, listening, happy, excited, concerned, sleepy, thinking
-        
+
         static func inferred(from text: String, fallback: FaceState = .talking) -> FaceState {
             let lower = text.lowercased()
             if lower.contains("win") || lower.contains("great") || lower.contains("awesome") || lower.contains("proud") || lower.contains("yay") || lower.contains("!") || lower.contains("love") {
@@ -26,6 +26,7 @@ struct CompanionFaceView: View {
 
     @State private var blink = false
     @State private var pulse = false
+    @State private var bounceTask: Task<Void, Never>?
 
     var body: some View {
         TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
@@ -46,7 +47,7 @@ struct CompanionFaceView: View {
         .task { await blinkLoop() }
     }
 
-    // MARK: Orb
+        // MARK: Orb
 
     private var orb: some View {
         Circle()
@@ -65,7 +66,7 @@ struct CompanionFaceView: View {
             .shadow(color: accent.first?.opacity(0.55) ?? .clear, radius: size * 0.28)
     }
 
-    // MARK: Features
+        // MARK: Features
 
     private func features(t: TimeInterval) -> some View {
         VStack(spacing: size * 0.09) {
@@ -101,12 +102,12 @@ struct CompanionFaceView: View {
         }
     }
 
-    /// Inward tilt reads as gentle worry.
+
     private var eyeTilt: Double {
         state == .concerned ? 16 : 0
     }
 
-    /// Idle eyes wander slowly; thinking eyes look off to the side.
+
     private func eyeDriftX(_ t: TimeInterval) -> CGFloat {
         switch state {
         case .idle: CGFloat(sin(t * 0.5)) * 1.6
@@ -163,7 +164,7 @@ struct CompanionFaceView: View {
         return size * 0.05 + size * 0.09 * wave
     }
 
-    // MARK: Ambient motion
+        // MARK: Ambient motion
 
     private func bob(_ t: TimeInterval) -> CGFloat {
         let amplitude: CGFloat
@@ -220,12 +221,14 @@ struct CompanionFaceView: View {
             .opacity(1 - cycle)
     }
 
-    // MARK: State change and blinking
+        // MARK: State change and blinking
 
     private func bounceOnce() {
+        bounceTask?.cancel()
         withAnimation(.spring(response: 0.26, dampingFraction: 0.5)) { pulse = true }
-        Task {
+        bounceTask = Task {
             try? await Task.sleep(nanoseconds: 170_000_000)
+            guard !Task.isCancelled else { return }
             withAnimation(.spring(response: 0.3, dampingFraction: 0.72)) { pulse = false }
         }
     }
@@ -242,7 +245,7 @@ struct CompanionFaceView: View {
     }
 }
 
-/// A single soft curve. Upright it smiles, rotated it worries.
+
 struct SmileShape: Shape {
     func path(in rect: CGRect) -> Path {
         var path = Path()

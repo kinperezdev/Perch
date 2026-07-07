@@ -1,4 +1,25 @@
+import AppKit
 import SwiftUI
+
+// MARK: - File import
+
+@MainActor
+func importInstructionsFile() -> String? {
+    NSApp.activate(ignoringOtherApps: true)
+    let panel = NSOpenPanel()
+    panel.allowsMultipleSelection = false
+    panel.canChooseDirectories = false
+    panel.canChooseFiles = true
+    guard panel.runModal() == .OK, let url = panel.url else { return nil }
+    guard let text = try? String(contentsOf: url, encoding: .utf8) else {
+        let alert = NSAlert()
+        alert.messageText = "Couldn't read that file"
+        alert.informativeText = "Perch needs a plain text file."
+        alert.runModal()
+        return nil
+    }
+    return text
+}
 
 // MARK: - Color helpers
 
@@ -34,7 +55,7 @@ extension Font {
 
 // MARK: - Button styles
 
-/// Filled pill used for the primary action inside the notch bubble.
+
 struct PillButtonStyle: ButtonStyle {
     var accent: [Color]
 
@@ -52,7 +73,7 @@ struct PillButtonStyle: ButtonStyle {
     }
 }
 
-/// Quiet pill for secondary actions on the dark bubble.
+
 struct GhostPillButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -66,7 +87,7 @@ struct GhostPillButtonStyle: ButtonStyle {
     }
 }
 
-/// Small round icon button on the dark bubble.
+
 struct IconPillButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -79,7 +100,7 @@ struct IconPillButtonStyle: ButtonStyle {
     }
 }
 
-/// Prominent rounded button used across onboarding and paywall.
+
 struct BigActionButtonStyle: ButtonStyle {
     var accent: [Color]
 

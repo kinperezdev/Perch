@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Seven day picture of focus and care, with one learned insight.
+
 struct WeeklySummaryView: View {
     @Environment(AppContainer.self) private var container
 
@@ -22,7 +22,7 @@ struct WeeklySummaryView: View {
             Spacer()
         }
         .padding(22)
-        .frame(width: 460, height: 520)
+        .frame(width: 460 * PerchStyle.scale, height: 520 * PerchStyle.scale)
     }
 
     private func insightCard(_ week: WeekSummary) -> some View {
@@ -51,7 +51,7 @@ struct WeeklySummaryView: View {
                         Capsule()
                             .fill(PerchStyle.accentGradient(accent))
                             .frame(height: barHeight(day.activeSeconds, maxSeconds: maxSeconds))
-                        Text(dayLetter(day.date))
+                        Text(weekdayLetter(forDayKey: day.date))
                             .font(.system(size: 9, design: .rounded))
                             .foregroundStyle(.secondary)
                     }
@@ -98,13 +98,5 @@ struct WeeklySummaryView: View {
         }
         .padding(12)
         .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-    }
-
-    private func dayLetter(_ dateKey: String) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        guard let date = formatter.date(from: dateKey) else { return "?" }
-        let weekday = Calendar.current.component(.weekday, from: date)
-        return ["S", "M", "T", "W", "T", "F", "S"][weekday - 1]
     }
 }

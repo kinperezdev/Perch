@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The status item popover: session at a glance, quick care actions,
+
 struct MenuBarContentView: View {
     @Environment(AppContainer.self) private var container
 
@@ -65,7 +65,9 @@ struct MenuBarContentView: View {
                 value: shortDuration(seconds: today.activeSeconds)
             )
             StatRow(symbol: "drop.fill", label: "Water logged", value: "\(today.waterCount)")
+            StatRow(symbol: "fork.knife", label: "Meals logged", value: "\(today.mealsLogged)/3")
             StatRow(symbol: "figure.walk", label: "Breaks taken", value: "\(today.breaksTaken)")
+            StatRow(symbol: "shower.fill", label: "Shower", value: today.showerLogged ? "Done" : "Not yet")
         }
         .padding(11)
         .glassEffect(.regular, in: RoundedRectangle(cornerRadius: PerchStyle.cardRadius, style: .continuous))
@@ -87,6 +89,14 @@ struct MenuBarContentView: View {
                 }
                 actionButton("I took a break", symbol: "figure.walk") {
                     container.tracker.creditBreak()
+                }
+            }
+            HStack(spacing: 8) {
+                actionButton("Log a meal", symbol: "fork.knife") {
+                    container.memory.logMeal()
+                }
+                actionButton("Took a shower", symbol: "shower.fill") {
+                    container.memory.logShower()
                 }
             }
         }

@@ -1,7 +1,7 @@
 import ServiceManagement
 import SwiftUI
 
-/// First run flow: meet the companion, pick a personality with a live
+
 struct OnboardingView: View {
     @Environment(AppContainer.self) private var container
     let onFinish: () -> Void
@@ -33,7 +33,7 @@ struct OnboardingView: View {
             }
             .padding(30)
         }
-        .frame(width: 700, height: 560)
+        .frame(width: 700 * PerchStyle.scale, height: 560 * PerchStyle.scale)
         .animation(.spring(response: 0.45, dampingFraction: 0.86), value: page)
         .preferredColorScheme(.dark)
     }
@@ -52,7 +52,7 @@ struct OnboardingView: View {
         .ignoresSafeArea()
     }
 
-    /// Editorial step label that carries the accent quietly.
+
     private func kicker(_ text: String) -> some View {
         Text("\(String(format: "%02d", page + 1)) / \(String(format: "%02d", lastPage + 1))  ·  \(text)")
             .font(.system(size: 9, weight: .semibold, design: .rounded))
@@ -75,7 +75,7 @@ struct OnboardingView: View {
         }
     }
 
-    // MARK: Welcome
+        // MARK: Welcome
 
     private var welcomePage: some View {
         VStack(spacing: 16) {
@@ -107,7 +107,7 @@ struct OnboardingView: View {
         }
     }
 
-    // MARK: Name
+        // MARK: Name
 
     private var namePage: some View {
         @Bindable var prefs = container.prefs
@@ -130,7 +130,7 @@ struct OnboardingView: View {
         }
     }
 
-    // MARK: Personality
+        // MARK: Personality
 
     private var personalityPage: some View {
         VStack(spacing: 12) {
@@ -165,13 +165,16 @@ struct OnboardingView: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 440)
-            
+
             @Bindable var prefs = container.prefs
             if container.subscriptions.gate.customPersonality {
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
                         Toggle("Override intelligence rules", isOn: $prefs.usesCustomPersonality)
                             .font(.perchRounded(14, weight: .semibold))
+                            .onChange(of: prefs.usesCustomPersonality) { _, enabled in
+                                if enabled { prefs.customBaseStyle = prefs.personality }
+                            }
                         Spacer()
                         if prefs.usesCustomPersonality {
                             Button("Import Brain") {
@@ -213,9 +216,10 @@ struct OnboardingView: View {
             } else {
                 lockedNote = false
                 withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+                    container.prefs.usesCustomPersonality = false
                     container.prefs.personality = personality
                 }
-                container.voice.preview(MessageLibrary.sample(personality: personality))
+
             }
         } label: {
             HStack(spacing: 8) {
@@ -257,7 +261,7 @@ struct OnboardingView: View {
         .buttonStyle(.plain)
     }
 
-    /// Live mock of the notch bubble, speaking in the selected voice.
+
     private var notchPreview: some View {
         let personality = container.prefs.personality
         let shape = UnevenRoundedRectangle(
@@ -301,7 +305,7 @@ struct OnboardingView: View {
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: personality)
     }
 
-    // MARK: Rhythm
+        // MARK: Rhythm
 
     private var rhythmPage: some View {
         @Bindable var prefs = container.prefs
@@ -318,8 +322,12 @@ struct OnboardingView: View {
                     rhythmPicker("Work ends", selection: timeOfDayBinding($prefs.workEndMinutes))
                 }
                 GridRow {
+                    rhythmPicker("Breakfast", selection: timeOfDayBinding($prefs.breakfastMinutes))
                     rhythmPicker("Lunch", selection: timeOfDayBinding($prefs.lunchMinutes))
+                }
+                GridRow {
                     rhythmPicker("Dinner", selection: timeOfDayBinding($prefs.dinnerMinutes))
+                    rhythmPicker("Shower", selection: timeOfDayBinding($prefs.showerMinutes))
                 }
             }
             .padding(18)
@@ -340,7 +348,7 @@ struct OnboardingView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // MARK: Care
+        // MARK: Care
 
     private var carePage: some View {
         @Bindable var prefs = container.prefs
@@ -395,7 +403,7 @@ struct OnboardingView: View {
         .buttonStyle(.plain)
     }
 
-    // MARK: Permissions
+        // MARK: Permissions
 
     private var permissionsPage: some View {
         VStack(spacing: 14) {
@@ -421,14 +429,6 @@ struct OnboardingView: View {
                     granted: container.calendar.isAuthorized
                 ) {
                     Task { _ = await container.calendar.requestAccess() }
-                }
-                permissionRow(
-                    symbol: "mic.fill",
-                    title: "Microphone and speech",
-                    detail: "Voice replies and dictation, recognized on device",
-                    granted: container.voice.listeningAuthorized
-                ) {
-                    Task { _ = await container.voice.requestListeningPermissions() }
                 }
                 permissionRow(
                     symbol: "macwindow",
@@ -476,7 +476,7 @@ struct OnboardingView: View {
         .background(.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
-    // MARK: Shortcut
+        // MARK: Shortcut
 
     private var shortcutPage: some View {
         VStack(spacing: 16) {
@@ -514,7 +514,7 @@ struct OnboardingView: View {
         }
     }
 
-    // MARK: Plan
+        // MARK: Plan
 
     private var planPage: some View {
         VStack(spacing: 14) {
@@ -528,7 +528,7 @@ struct OnboardingView: View {
                 .foregroundStyle(.white.opacity(0.7))
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 420)
-            Text("Start free with smart check ins, or unlock AI memory, voice, chat, and calendar awareness with Pro.")
+            Text("Start free with smart check ins, or unlock AI memory, chat, calendar awareness, and weekly insights with Pro.")
                 .font(.perchRounded(11.5))
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -546,7 +546,7 @@ struct OnboardingView: View {
         }
     }
 
-    // MARK: Navigation
+        // MARK: Navigation
 
     private var navBar: some View {
         HStack {
@@ -589,15 +589,8 @@ struct OnboardingView: View {
     }
 
     private func importBrain(prefs: PreferencesStore) {
-        NSApp.activate(ignoringOtherApps: true)
-        let panel = NSOpenPanel()
-        panel.allowsMultipleSelection = false
-        panel.canChooseDirectories = false
-        panel.canChooseFiles = true
-        if panel.runModal() == .OK, let url = panel.url {
-            if let text = try? String(contentsOf: url, encoding: .utf8) {
-                prefs.customInstructions = text
-            }
+        if let text = importInstructionsFile() {
+            prefs.customInstructions = text
         }
     }
 }

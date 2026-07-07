@@ -1,7 +1,7 @@
 import Foundation
 import Observation
 
-/// Composition root. Builds every service once and wires the
+
 @MainActor
 @Observable
 final class AppContainer {
@@ -38,6 +38,8 @@ final class AppContainer {
             prefs: prefs,
             intelligence: intelligence,
             brain: brain,
+            memory: memory,
+            tracker: tracker,
             voice: voice,
             gateProvider: { subscriptions.gate }
         )
@@ -82,18 +84,17 @@ final class AppContainer {
         engine.isPresenting = { [weak coordinator] in
             coordinator?.isPresenting ?? false
         }
-        coordinator.applyResponse = { [weak engine] kind, response in
-            engine?.applyResponse(kind: kind, response: response)
+        coordinator.applyResponse = { [weak engine] kind, response, context in
+            engine?.applyResponse(kind: kind, response: response, context: context)
         }
         shortcuts.onPressed = { [weak coordinator] in
             coordinator?.quickAnswerPressed()
         }
-        shortcuts.onMicPressed = { [weak coordinator] in
-            coordinator?.micPressed()
-        }
 
         memory.onWaterLogged = { [weak brain] in brain?.recordWater() }
         memory.onBreakTaken = { [weak brain] in brain?.recordBreak() }
+        memory.onMealLogged = { [weak brain] in brain?.recordMeal() }
+        memory.onShowerLogged = { [weak brain] in brain?.recordShower() }
         memory.onResponseRecorded = { [weak brain, weak memory] in
             guard let brain, let memory else { return }
             let patterns = memory.learnedPatterns()

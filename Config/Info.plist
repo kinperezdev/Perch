@@ -34,12 +34,8 @@
 	<string>Perch reads upcoming events so it can help you prepare for meetings and recover after them. Events never leave your Mac.</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright 2026 Kin Clark Perez. All rights reserved.</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>Perch listens only while you hold the mic open to answer a check in with your voice.</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
-	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>Perch turns your short spoken replies into answers, on device whenever possible.</string>
 	<key>NSPersonalVoiceUsageDescription</key>
 	<string>Perch needs access to your personal voice so you can have your companion speak with familiar voices.</string>
 </dict>

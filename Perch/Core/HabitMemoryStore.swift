@@ -1,7 +1,7 @@
 import Foundation
 import Observation
 
-/// Local, private memory of how the user responds to care over time.
+
 @MainActor
 @Observable
 final class HabitMemoryStore {
@@ -26,13 +26,19 @@ final class HabitMemoryStore {
         var activeSeconds: Double = 0
         var breaksTaken = 0
         var waterCount = 0
+        var breakfastPrompted = false
+        var breakfastLogged = false
         var lunchPrompted = false
         var lunchLogged = false
         var dinnerPrompted = false
         var dinnerLogged = false
+        var showerPrompted = false
+        var showerLogged = false
         var overworkSeconds: Double = 0
         var checkInsShown = 0
         var checkInsAccepted = 0
+
+        var mealsLogged: Int { [breakfastLogged, lunchLogged, dinnerLogged].filter { $0 }.count }
 
         var id: String { date }
     }
@@ -46,10 +52,12 @@ final class HabitMemoryStore {
     private(set) var snapshot = Snapshot()
     @ObservationIgnored private var saveTask: Task<Void, Never>?
 
-    /// Fired on real events so PerchBrain can accumulate lifetime learning.
+
     @ObservationIgnored var onWaterLogged: (() -> Void)?
     @ObservationIgnored var onBreakTaken: (() -> Void)?
     @ObservationIgnored var onResponseRecorded: (() -> Void)?
+    @ObservationIgnored var onMealLogged: (() -> Void)?
+    @ObservationIgnored var onShowerLogged: (() -> Void)?
 
     private static let fileURL: URL = {
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -69,16 +77,18 @@ final class HabitMemoryStore {
         load()
     }
 
-    // MARK: Recording
+        // MARK: Recording
 
-    func recordShown(kind: ReminderKind, at date: Date = Date()) {
+    func recordShown(kind: ReminderKind, mealName: String? = nil, at date: Date = Date()) {
         mutate { snap in
             snap.stats[Self.statKey(kind, date), default: ResponseStat()].shown += 1
             snap.days[Self.dayIndex(&snap, date)].checkInsShown += 1
             if kind == .meal {
-                let isLunch = Self.isLunchTime(date)
-                if isLunch { snap.days[Self.dayIndex(&snap, date)].lunchPrompted = true }
-                else { snap.days[Self.dayIndex(&snap, date)].dinnerPrompted = true }
+                let meal = mealName ?? Self.defaultMealName(for: date)
+                Self.setMealPrompted(&snap.days[Self.dayIndex(&snap, date)], meal: meal)
+            }
+            if kind == .shower {
+                snap.days[Self.dayIndex(&snap, date)].showerPrompted = true
             }
         }
     }
@@ -127,12 +137,20 @@ final class HabitMemoryStore {
         onWaterLogged?()
     }
 
-    func logMeal(at date: Date = Date()) {
+    func logMeal(mealName: String? = nil, at date: Date = Date()) {
+        let meal = mealName ?? Self.defaultMealName(for: date)
         mutate { snap in
-            if Self.isLunchTime(date) { snap.days[Self.dayIndex(&snap, date)].lunchLogged = true }
-            else { snap.days[Self.dayIndex(&snap, date)].dinnerLogged = true }
+            Self.setMealLogged(&snap.days[Self.dayIndex(&snap, date)], meal: meal)
         }
         recordAccepted(kind: .meal, at: date)
+        onMealLogged?()
+    }
+
+    func logShower(at date: Date = Date()) {
+        mutate { snap in
+            snap.days[Self.dayIndex(&snap, date)].showerLogged = true
+        }
+        onShowerLogged?()
     }
 
     private func recordAccepted(kind: ReminderKind, at date: Date) {
@@ -141,7 +159,7 @@ final class HabitMemoryStore {
         }
     }
 
-    // MARK: Queries
+        // MARK: Queries
 
     func today(_ date: Date = Date()) -> DayLog {
         let key = Self.dayFormatter.string(from: date)
@@ -152,14 +170,14 @@ final class HabitMemoryStore {
         snapshot.lastAccepted[kind.rawValue]
     }
 
-    func skippedMealYesterday(isLunch: Bool, from date: Date = Date()) -> Bool {
+    func skippedMealYesterday(meal: String, from date: Date = Date()) -> Bool {
         guard let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: date) else { return false }
         let key = Self.dayFormatter.string(from: yesterday)
         guard let day = snapshot.days.first(where: { $0.date == key }) else { return false }
-        return isLunch ? (day.lunchPrompted && !day.lunchLogged) : (day.dinnerPrompted && !day.dinnerLogged)
+        return Self.mealPrompted(day, meal: meal) && !Self.mealLogged(day, meal: meal)
     }
 
-    /// How much to stretch this reminder's interval based on past responses.
+
     func intervalMultiplier(kind: ReminderKind, at date: Date = Date()) -> Double {
         guard let stat = snapshot.stats[Self.statKey(kind, date)], stat.shown >= 4 else { return 1.0 }
         if stat.ignoreRate > 0.8 { return 1.9 }
@@ -168,7 +186,7 @@ final class HabitMemoryStore {
         return 1.0
     }
 
-    /// Aggregates response stats per kind across all times of day into two
+
     func learnedPatterns() -> (wellTo: [String], ignores: [String]) {
         var totals: [String: (shown: Int, accepted: Int, ignored: Int)] = [:]
         for (key, stat) in snapshot.stats {
@@ -220,7 +238,7 @@ final class HabitMemoryStore {
         return "Still learning your rhythm. The more you respond, the better my timing gets."
     }
 
-    // MARK: Maintenance
+        // MARK: Maintenance
 
     func wipe() {
         snapshot = Snapshot()
@@ -232,7 +250,7 @@ final class HabitMemoryStore {
         persist()
     }
 
-    // MARK: Private
+        // MARK: Private
 
     private static func statKey(_ kind: ReminderKind, _ date: Date) -> String {
         "\(kind.rawValue)|\(Daypart.from(date).rawValue)"
@@ -246,8 +264,43 @@ final class HabitMemoryStore {
         return snap.days.count - 1
     }
 
-    private static func isLunchTime(_ date: Date) -> Bool {
-        Calendar.current.component(.hour, from: date) < 16
+    private static func defaultMealName(for date: Date) -> String {
+        let hour = Calendar.current.component(.hour, from: date)
+        if hour < 11 { return "breakfast" }
+        if hour < 16 { return "lunch" }
+        return "dinner"
+    }
+
+    private static func setMealPrompted(_ day: inout DayLog, meal: String) {
+        switch meal {
+        case "breakfast": day.breakfastPrompted = true
+        case "lunch": day.lunchPrompted = true
+        default: day.dinnerPrompted = true
+        }
+    }
+
+    private static func setMealLogged(_ day: inout DayLog, meal: String) {
+        switch meal {
+        case "breakfast": day.breakfastLogged = true
+        case "lunch": day.lunchLogged = true
+        default: day.dinnerLogged = true
+        }
+    }
+
+    private static func mealPrompted(_ day: DayLog, meal: String) -> Bool {
+        switch meal {
+        case "breakfast": day.breakfastPrompted
+        case "lunch": day.lunchPrompted
+        default: day.dinnerPrompted
+        }
+    }
+
+    private static func mealLogged(_ day: DayLog, meal: String) -> Bool {
+        switch meal {
+        case "breakfast": day.breakfastLogged
+        case "lunch": day.lunchLogged
+        default: day.dinnerLogged
+        }
     }
 
     private func mutate(_ change: (inout Snapshot) -> Void) {

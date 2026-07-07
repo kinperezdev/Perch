@@ -2,24 +2,20 @@ import AppKit
 import Carbon.HIToolbox
 import Observation
 
-/// One global shortcut, registered through Carbon hot keys so it works
+
 @MainActor
 @Observable
 final class QuickAnswerShortcutManager {
 
     @ObservationIgnored var onPressed: (() -> Void)?
-    @ObservationIgnored var onMicPressed: (() -> Void)?
-    /// False when the chosen combo was rejected, usually because the system owns it.
+
     private(set) var registrationOK = true
-    private(set) var micRegistrationOK = true
 
     @ObservationIgnored private let prefs: PreferencesStore
     @ObservationIgnored private var answerHotKeyRef: EventHotKeyRef?
-    @ObservationIgnored private var micHotKeyRef: EventHotKeyRef?
     @ObservationIgnored private var handlerRef: EventHandlerRef?
 
     private static let answerHotKeyID: UInt32 = 1
-    private static let micHotKeyID: UInt32 = 2
 
     init(prefs: PreferencesStore) {
         self.prefs = prefs
@@ -34,12 +30,6 @@ final class QuickAnswerShortcutManager {
             modifiers: prefs.shortcutModifiers,
             ref: &answerHotKeyRef
         )
-        micRegistrationOK = register(
-            id: Self.micHotKeyID,
-            keyCode: prefs.micShortcutKeyCode,
-            modifiers: prefs.micShortcutModifiers,
-            ref: &micHotKeyRef
-        )
     }
 
     func unregister() {
@@ -47,9 +37,9 @@ final class QuickAnswerShortcutManager {
             UnregisterEventHotKey(answerHotKeyRef)
             self.answerHotKeyRef = nil
         }
-        if let micHotKeyRef {
-            UnregisterEventHotKey(micHotKeyRef)
-            self.micHotKeyRef = nil
+        if let handlerRef {
+            RemoveEventHandler(handlerRef)
+            self.handlerRef = nil
         }
     }
 
@@ -87,16 +77,11 @@ final class QuickAnswerShortcutManager {
                     nil,
                     &hotKeyID
                 )
-                let pressedID = hotKeyID.id
                 let manager = Unmanaged<QuickAnswerShortcutManager>
                     .fromOpaque(userData)
                     .takeUnretainedValue()
                 Task { @MainActor in
-                    if pressedID == QuickAnswerShortcutManager.micHotKeyID {
-                        manager.onMicPressed?()
-                    } else {
-                        manager.onPressed?()
-                    }
+                    manager.onPressed?()
                 }
                 return noErr
             },
@@ -107,7 +92,7 @@ final class QuickAnswerShortcutManager {
         )
     }
 
-    // MARK: Key describing
+        // MARK: Key describing
 
     static func carbonModifiers(from flags: NSEvent.ModifierFlags) -> UInt32 {
         var result: UInt32 = 0

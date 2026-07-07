@@ -1,8 +1,6 @@
 import Foundation
 import Observation
 import SwiftUI
-
-/// Drives everything the user sees in the notch bubble: check ins,
 @MainActor
 @Observable
 final class CompanionCoordinator {
@@ -10,7 +8,6 @@ final class CompanionCoordinator {
     enum Phase: Equatable {
         case hidden
         case message
-        case listening
         case timer
         case confirmation
         case chat
@@ -25,7 +22,7 @@ final class CompanionCoordinator {
     private(set) var metrics = NotchMetrics()
     var isHovering = false
 
-    var applyResponse: ((ReminderKind, CheckInResponse) -> Void)?
+    var applyResponse: ((ReminderKind, CheckInResponse, CheckInContext) -> Void)?
 
     @ObservationIgnored private let prefs: PreferencesStore
     @ObservationIgnored private let memory: HabitMemoryStore
@@ -40,6 +37,7 @@ final class CompanionCoordinator {
 
     @ObservationIgnored private var timeoutTask: Task<Void, Never>?
     @ObservationIgnored private var timerTask: Task<Void, Never>?
+    @ObservationIgnored private var confirmationTask: Task<Void, Never>?
     @ObservationIgnored private var lastCheckIn: CheckIn?
     @ObservationIgnored private var lastCheckInAnswered = true
 
@@ -64,8 +62,6 @@ final class CompanionCoordinator {
         self.brain = brain
         self.chat = chat
     }
-
-    /// Called once by the container after init so the panel view can hold self.
     func prepare() {
         panel.attach(NotchCompanionView(coordinator: self))
     }
@@ -75,12 +71,6 @@ final class CompanionCoordinator {
     var companionName: String { personality.companionName }
     var gate: FeatureGate { subscriptions.gate }
     var isPresenting: Bool { phase != .hidden }
-    var voiceTranscript: String { voice.transcript }
-    var isVoiceListening: Bool { voice.isListening }
-
-    // MARK: Presenting
-
-    /// Engine entry point. Returns false when something is already showing.
     func present(kind: ReminderKind, context: CheckInContext) async -> Bool {
         guard phase == .hidden else { return false }
         let brainCtx = brain.contextSummary()
@@ -95,7 +85,7 @@ final class CompanionCoordinator {
         voice.speakIfAllowed(message)
         notifications.mirror(checkIn)
         startTimeout(seconds: 30)
-        if isTracked(kind) {
+        if kind.isTrackable {
             brain.recordCheckInDelivered()
         }
         return true
@@ -114,12 +104,9 @@ final class CompanionCoordinator {
         }
     }
 
-    // MARK: Responding
-
     func respond(_ response: CheckInResponse) {
-        guard phase == .message || phase == .listening else { return }
+        guard phase == .message else { return }
         cancelTimeout()
-        voice.stopListening(deliver: false)
         respondBackground(response)
         showConfirmation(personality.confirmation(for: response))
     }
@@ -127,11 +114,11 @@ final class CompanionCoordinator {
     private func respondBackground(_ response: CheckInResponse) {
         guard let current else { return }
         lastCheckInAnswered = true
-        if isTracked(current.kind) {
-            applyResponse?(current.kind, response)
+        if current.kind.isTrackable {
+            applyResponse?(current.kind, response, current.context)
         }
         if response.isPositive {
-            brain.recordPositiveResponse(kind: current.kind.rawValue)
+            brain.recordPositiveResponse()
         }
     }
 
@@ -156,96 +143,12 @@ final class CompanionCoordinator {
         guard phase == .timer, let current else { return }
         timerTask?.cancel()
         lastCheckInAnswered = true
-        if isTracked(current.kind) {
-            applyResponse?(current.kind, completed ? .timerCompleted : .done)
+        let response: CheckInResponse = completed ? .timerCompleted : .done
+        if current.kind.isTrackable {
+            applyResponse?(current.kind, response, current.context)
         }
-        showConfirmation(personality.confirmation(for: .timerCompleted))
+        showConfirmation(personality.confirmation(for: response))
     }
-
-    func startVoiceReply() {
-        guard subscriptions.gate.voiceInteraction, phase == .message else { return }
-        cancelTimeout()
-        Task { [weak self] in
-            guard let self else { return }
-            guard await self.voice.requestListeningPermissions() else {
-                self.startTimeout(seconds: 15)
-                return
-            }
-            self.reveal(.listening)
-            self.voice.startListening { [weak self] transcript in
-                guard let self else { return }
-                if transcript.isEmpty {
-                    self.showConfirmation("All good. I'm here.")
-                    return
-                }
-                
-                let intent = VoiceService.interpret(transcript) ?? .done
-                self.smartVoiceReply(transcript: transcript, fallbackIntent: intent)
-            }
-        }
-    }
-    
-    private func smartVoiceReply(transcript: String, fallbackIntent: CheckInResponse) {
-        guard subscriptions.gate.aiChat, chat.intelligence.isAvailable else {
-            respondBackground(fallbackIntent)
-            showConfirmation(personality.confirmation(for: fallbackIntent))
-            return
-        }
-        
-        let aiName = prefs.activePersonality.callName(userName: prefs.userName)
-        let checkInText = current?.message ?? ""
-        let prompt = """
-        You just asked the user: "\(checkInText)"
-        The user replied: "\(transcript)"
-        
-        Task 1: Generate a very brief, natural 1-sentence response (max 15 words) as \(aiName).
-        Act as a thoughtful, encouraging guide who wants what is best for the user's focus and wellbeing. Guide them gently based on their reply.
-        CRITICAL RULE: NEVER ask a question. JUST give a supportive, guiding response and let them get back to work.
-        
-        Task 2: Determine their focus status. Append EXACTLY ONE of these tags at the very end of your output:
-        [INTENT: done] (if they are focusing, working, finished the task, or said yes)
-        [INTENT: snoozed] (if they asked for more time, to snooze, or do it later)
-        [INTENT: ignored] (if they are distracted, refusing, annoyed, or stopping)
-        """
-        
-        Task { [weak self] in
-            guard let self else { return }
-            if let reply = await self.chat.intelligence.onlineChat(system: "You are \(aiName), a helpful companion.", prompt: prompt) {
-                if Task.isCancelled { return }
-                var cleaned = reply.trimmingCharacters(in: .whitespacesAndNewlines)
-                
-                var decidedIntent = fallbackIntent
-                if cleaned.contains("[INTENT: snoozed]") {
-                    decidedIntent = .snoozed(minutes: 10)
-                    cleaned = cleaned.replacingOccurrences(of: "[INTENT: snoozed]", with: "")
-                } else if cleaned.contains("[INTENT: ignored]") {
-                    decidedIntent = .ignored
-                    cleaned = cleaned.replacingOccurrences(of: "[INTENT: ignored]", with: "")
-                } else if cleaned.contains("[INTENT: done]") {
-                    decidedIntent = .done
-                    cleaned = cleaned.replacingOccurrences(of: "[INTENT: done]", with: "")
-                }
-                self.respondBackground(decidedIntent)
-                
-                cleaned = cleaned.trimmingCharacters(in: .whitespacesAndNewlines)
-                cleaned = cleaned.replacingOccurrences(of: "^(?:\\*+)?\(aiName)(?:\\*+)?\\s*:?(?:\\*+)?\\s*:?\\s*", with: "", options: [.regularExpression, .caseInsensitive])
-                cleaned = cleaned.replacingOccurrences(of: "^:\\s*", with: "", options: .regularExpression)
-                
-                self.showConfirmation(cleaned)
-                self.voice.speakIfAllowed(cleaned)
-                
-                // Inject the exchange into chat silently so it remembers!
-                self.chat.injectCheckIn(checkInText)
-                self.chat.injectSilentMessage(isUser: true, text: transcript)
-                self.chat.injectSilentMessage(isUser: false, text: cleaned)
-            } else {
-                self.respondBackground(fallbackIntent)
-                self.showConfirmation(self.personality.confirmation(for: fallbackIntent))
-            }
-        }
-    }
-
-    // MARK: Quick actions used by the status bubble and menu bar
 
     func logWaterQuick() {
         memory.logWater()
@@ -259,7 +162,17 @@ final class CompanionCoordinator {
         showConfirmation(personality.confirmation(for: .done))
     }
 
-    // MARK: Quick answer shortcut
+    func logMealQuick() {
+        memory.logMeal()
+        cancelTimeout()
+        showConfirmation(personality.confirmation(for: .done))
+    }
+
+    func logShowerQuick() {
+        memory.logShower()
+        cancelTimeout()
+        showConfirmation(personality.confirmation(for: .done))
+    }
 
     func quickAnswerPressed() {
         switch phase {
@@ -274,41 +187,8 @@ final class CompanionCoordinator {
             panel.makeKey()
         case .chat, .confirmation:
             hide()
-        case .listening, .timer:
+        case .timer:
             break
-        }
-    }
-
-    /// Mic shortcut: talk to Perch by voice from anywhere.
-    func micPressed() {
-        switch phase {
-        case .message:
-            startVoiceReply()
-        case .listening:
-            voice.stopListening(deliver: true)
-        case .chat:
-            toggleChatVoiceMessage()
-        case .hidden:
-            openChat()
-            toggleChatVoiceMessage()
-        case .timer, .confirmation:
-            break
-        }
-    }
-
-    private func toggleChatVoiceMessage() {
-        if voice.isListening {
-            voice.stopListening(deliver: true)
-            return
-        }
-        guard subscriptions.gate.voiceInteraction else { return }
-        Task { [weak self] in
-            guard let self else { return }
-            guard await self.voice.requestListeningPermissions() else { return }
-            self.voice.startListening { [weak self] transcript in
-                guard let self, !transcript.isEmpty else { return }
-                self.chat.send(transcript)
-            }
         }
     }
 
@@ -319,8 +199,6 @@ final class CompanionCoordinator {
         startTimeout(seconds: 30)
     }
 
-    // MARK: Chat
-
     func openChat() {
         cancelTimeout()
         chat.openIfNeeded()
@@ -328,23 +206,10 @@ final class CompanionCoordinator {
         panel.makeKey()
     }
 
-    func startChatDictation(onText: @escaping (String) -> Void) {
-        guard subscriptions.gate.voiceInteraction else { return }
-        Task { [weak self] in
-            guard let self else { return }
-            guard await self.voice.requestListeningPermissions() else { return }
-            self.voice.startListening { transcript in
-                if !transcript.isEmpty { onText(transcript) }
-            }
-        }
-    }
-
-    // MARK: Visibility
-
     func hide() {
         cancelTimeout()
         timerTask?.cancel()
-        voice.stopListening(deliver: false)
+        confirmationTask?.cancel()
         phase = .hidden
         panel.hide(afterDelay: 0.45)
     }
@@ -364,7 +229,9 @@ final class CompanionCoordinator {
     private func showConfirmation(_ text: String) {
         confirmationText = text
         reveal(.confirmation)
-        Task { [weak self] in
+        voice.speakIfAllowed(text)
+        confirmationTask?.cancel()
+        confirmationTask = Task { [weak self] in
             try? await Task.sleep(nanoseconds: 2_200_000_000)
             guard !Task.isCancelled, self?.phase == .confirmation else { return }
             self?.hide()
@@ -373,21 +240,20 @@ final class CompanionCoordinator {
 
     private static func size(for phase: Phase, metrics: NotchMetrics) -> CGSize {
         let anchor: CGFloat = metrics.hasNotch ? metrics.notchWidth : 185
+        let notchMessageExtra: CGFloat = metrics.hasNotch ? 320 : 260
         switch phase {
-        case .hidden, .listening:
+        case .hidden:
             return CGSize(width: max(anchor + 40, 250), height: 132)
         case .timer:
             return CGSize(width: max(anchor - 20, 235), height: 94)
         case .confirmation:
             return CGSize(width: max(anchor - 40, 210), height: 58)
         case .message:
-            return CGSize(width: max(anchor + 240, 440), height: 140)
+            return CGSize(width: max(anchor + notchMessageExtra, 520), height: 140)
         case .chat:
-            return CGSize(width: max(anchor + 240, 440), height: 300)
+            return CGSize(width: max(anchor + notchMessageExtra, 520), height: 300)
         }
     }
-
-    // MARK: Timeout
 
     private func startTimeout(seconds: Double) {
         cancelTimeout()
@@ -403,8 +269,9 @@ final class CompanionCoordinator {
                 }
             }
             guard let self, !Task.isCancelled else { return }
-            if let current = self.current, self.isTracked(current.kind) {
-                self.applyResponse?(current.kind, .timedOut)
+            if let current = self.current, current.kind.isTrackable {
+                self.lastCheckInAnswered = true
+                self.applyResponse?(current.kind, .timedOut, current.context)
             }
             self.hide()
         }
@@ -414,9 +281,5 @@ final class CompanionCoordinator {
         timeoutTask?.cancel()
         timeoutTask = nil
         timeoutProgress = 0
-    }
-
-    private func isTracked(_ kind: ReminderKind) -> Bool {
-        kind != .status && kind != .welcome && kind != .sessionStart
     }
 }

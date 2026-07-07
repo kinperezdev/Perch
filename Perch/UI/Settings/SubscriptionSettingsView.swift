@@ -55,8 +55,8 @@ struct SubscriptionSettingsView: View {
     private var planBlurb: String {
         switch container.subscriptions.tier {
         case .free: "Smart check ins and AI chat, two personalities, manual habits"
-        case .pro: "Adaptive memory, all personalities, voice, calendar"
-        case .premium: "Everything unlocked: memory, voice, calendar, custom companion"
+        case .pro: "Adaptive memory, all personalities, AI chat, calendar"
+        case .premium: "Everything unlocked: memory, weekly insights, calendar, custom companion"
         }
     }
 }

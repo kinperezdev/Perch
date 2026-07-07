@@ -39,7 +39,10 @@ struct RemindersSettingsView: View {
                     DatePicker("", selection: $newRoutineTime, displayedComponents: .hourAndMinute)
                         .labelsHidden()
                     Button("Add") { addRoutine(prefs: prefs) }
-                        .disabled(newRoutineLabel.trimmingCharacters(in: .whitespaces).isEmpty)
+                        .disabled(
+                            newRoutineLabel.trimmingCharacters(in: .whitespaces).isEmpty
+                                || prefs.routines.count >= container.subscriptions.gate.maxRoutines
+                        )
                 }
                 if prefs.routines.count >= container.subscriptions.gate.maxRoutines {
                     Text("Free plan includes \(container.subscriptions.gate.maxRoutines) routines. Pro unlocks more.")

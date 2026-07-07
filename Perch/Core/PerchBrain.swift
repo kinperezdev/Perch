@@ -1,71 +1,42 @@
 import Foundation
 import Observation
-
-/// Perch's long-term memory. Learns from every interaction, persists to a
 @MainActor
 @Observable
 final class PerchBrain {
 
-    // MARK: - Data model
-
     struct Brain: Codable {
-        /// The user's name, confirmed at onboarding.
         var userName: String = ""
-
-        /// Anything the user has told Perch about themselves directly.
         var userNotes: [String] = []
-
-        /// Peak observed focus hours. Key = hour-of-day (0-23), value = avg active seconds.
         var peakHours: [Int: Double] = [:]
-
-        /// Kinds the user consistently accepts (acceptance rate > 0.7 over 10+ samples).
         var respondedWellTo: [String] = []
-
-        /// Kinds the user consistently ignores (ignore rate > 0.7 over 10+ samples).
         var tendsToIgnore: [String] = []
-
-        /// The user's longest ever recorded focus session in seconds.
         var longestFocusSession: Double = 0
-
-        /// Total lifetime water logs.
         var lifetimeWaterLogs: Int = 0
-
-        /// Total lifetime breaks taken.
         var lifetimeBreaks: Int = 0
-
-        /// Total check ins Perch has delivered across all time.
+        var lifetimeMealLogs: Int = 0
+        var lifetimeShowerLogs: Int = 0
+        var mealLogHours: [Int: Int] = [:]
+        var showerLogHours: [Int: Int] = [:]
         var lifetimeCheckIns: Int = 0
-
-        /// Total positive responses (done / timer completed) across all time.
         var lifetimePositiveResponses: Int = 0
-
-        /// Observed streak: days the user has opened the app in a row.
         var currentStreakDays: Int = 0
         var lastActiveDate: String = ""
-
-        /// Observations Perch writes automatically when patterns emerge.
         var autoObservations: [Observation] = []
-
-        /// Free-form notes Perch can add or update over sessions.
         var sessionNotes: [String] = []
 
         struct Observation: Codable, Identifiable {
             var id = UUID()
             var text: String
-            var category: String      // "rhythm", "habit", "personality", "milestone"
+            var category: String
             var addedAt: Date
             var updatedAt: Date
         }
     }
 
-    // MARK: - State
-
     private(set) var brain = Brain()
     var isLoaded = false
 
     @ObservationIgnored private var saveTask: Task<Void, Never>?
-
-    // MARK: - Persistence
 
     private static let fileURL: URL = {
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -82,44 +53,48 @@ final class PerchBrain {
     }()
 
     init() { load() }
-
-    // MARK: - Public API
-
-    /// Called when the user's name changes in preferences.
     func setUserName(_ name: String) {
         guard !name.isEmpty, brain.userName != name else { return }
         brain.userName = name
         scheduleSave()
     }
-
-    /// Log a check in delivery.
     func recordCheckInDelivered() {
         brain.lifetimeCheckIns += 1
         updateStreak()
         scheduleSave()
     }
-
-    /// Log a positive response.
-    func recordPositiveResponse(kind: String) {
+    func recordPositiveResponse() {
         brain.lifetimePositiveResponses += 1
+        evaluateMilestones()
         scheduleSave()
     }
-
-    /// Log a water drink.
     func recordWater() {
         brain.lifetimeWaterLogs += 1
         evaluateMilestones()
         scheduleSave()
     }
-
-    /// Log a break.
     func recordBreak() {
         brain.lifetimeBreaks += 1
         evaluateMilestones()
         scheduleSave()
     }
 
-    /// Update focus session data.
+
+    func recordMeal(at date: Date = Date()) {
+        brain.lifetimeMealLogs += 1
+        let hour = Calendar.current.component(.hour, from: date)
+        brain.mealLogHours[hour, default: 0] += 1
+        evaluateMealPattern()
+        scheduleSave()
+    }
+
+    func recordShower(at date: Date = Date()) {
+        brain.lifetimeShowerLogs += 1
+        let hour = Calendar.current.component(.hour, from: date)
+        brain.showerLogHours[hour, default: 0] += 1
+        evaluateShowerPattern()
+        scheduleSave()
+    }
     func recordFocusSeconds(_ seconds: Double) {
         if seconds > brain.longestFocusSession {
             brain.longestFocusSession = seconds
@@ -134,8 +109,6 @@ final class PerchBrain {
         evaluatePeakHours()
         scheduleSave()
     }
-
-    /// Called from HabitMemoryStore analysis to update what Perch responds to.
     func updateResponsePatterns(wellTo: [String], ignores: [String]) {
         var changed = false
         if brain.respondedWellTo != wellTo {
@@ -163,18 +136,48 @@ final class PerchBrain {
         }
     }
 
-    /// Add a free-form session note (e.g. something the user typed in chat).
+    func absorbAIInsight(_ text: String, category: String) {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.count >= 3, trimmed.count <= 200 else { return }
+        if category == "name" {
+            setUserName(trimmed)
+            return
+        }
+        upsertObservation(trimmed, category: category)
+        scheduleSave()
+    }
+
     func addNote(_ note: String) {
-        guard !note.trimmingCharacters(in: .whitespaces).isEmpty else { return }
-        if !brain.userNotes.contains(note) {
-            brain.userNotes.append(note)
-            scheduleSave()
+        let trimmed = note.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        guard !brain.userNotes.contains(where: { $0.caseInsensitiveCompare(trimmed) == .orderedSame }) else { return }
+        brain.userNotes.insert(trimmed, at: 0)
+        if brain.userNotes.count > 40 {
+            brain.userNotes.removeLast(brain.userNotes.count - 40)
+        }
+        scheduleSave()
+    }
+
+    func absorbChatMessage(_ text: String) {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.count >= 8, trimmed.count <= 260 else { return }
+        guard shouldRemember(trimmed) else { return }
+        addNote("They said: \(trimmed)")
+    }
+
+    func wipe(keepingUserName userName: String = "") {
+        saveTask?.cancel()
+        brain = Brain()
+        let trimmedName = userName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedName.isEmpty {
+            brain.userName = trimmedName
+        }
+        try? FileManager.default.removeItem(at: Self.fileURL)
+        if !trimmedName.isEmpty {
+            persist()
         }
     }
 
-    // MARK: - Context for AI prompts
-
-    /// Returns a concise brain summary to inject into AI system instructions.
     func contextSummary() -> String {
         var lines: [String] = []
 
@@ -208,12 +211,10 @@ final class PerchBrain {
             .map(\.text)
         lines.append(contentsOf: relevant)
 
-        lines.append(contentsOf: brain.userNotes.prefix(2))
+        lines.append(contentsOf: brain.userNotes.prefix(4))
 
         return lines.joined(separator: " ")
     }
-
-    // MARK: - Private
 
     private func updateStreak() {
         let today = Self.dayFormatter.string(from: Date())
@@ -224,6 +225,23 @@ final class PerchBrain {
         }()
         brain.currentStreakDays = (brain.lastActiveDate == yesterday) ? brain.currentStreakDays + 1 : 1
         brain.lastActiveDate = today
+    }
+
+    private func shouldRemember(_ text: String) -> Bool {
+        let lowered = text.lowercased()
+        let crisisSignals = [
+            "kill myself", "suicide", "suicidal", "end my life", "end it all",
+            "hurt myself", "harm myself", "self harm", "self-harm",
+            "don't want to live", "dont want to live", "no reason to live",
+        ]
+        if crisisSignals.contains(where: lowered.contains) { return false }
+        let memorySignals = [
+            "remember", "call me", "my name", "i am ", "i'm ", "im ",
+            "i like", "i love", "i hate", "i prefer", "i usually", "i always",
+            "i struggle", "i need", "i want", "my goal", "my project",
+            "working on", "building", "i feel", "i get", "i keep",
+        ]
+        return memorySignals.contains(where: lowered.contains)
     }
 
     private func evaluatePeakHours() {
@@ -249,6 +267,18 @@ final class PerchBrain {
         }
     }
 
+
+
+    private func evaluateMealPattern() {
+        guard brain.lifetimeMealLogs >= 3, let top = brain.mealLogHours.max(by: { $0.value < $1.value }) else { return }
+        upsertObservation("Meal routine: they usually eat around \(hourLabel(top.key)).", category: "routine-meal")
+    }
+
+    private func evaluateShowerPattern() {
+        guard brain.lifetimeShowerLogs >= 3, let top = brain.showerLogHours.max(by: { $0.value < $1.value }) else { return }
+        upsertObservation("Shower routine: they usually shower around \(hourLabel(top.key)).", category: "routine-shower")
+    }
+
     private func upsertObservation(_ text: String, category: String) {
         let now = Date()
         if let index = brain.autoObservations.firstIndex(where: { $0.category == category && $0.text.hasPrefix(text.prefix(30)) }) {
@@ -270,8 +300,6 @@ final class PerchBrain {
         let h = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour)
         return "\(h) \(suffix)"
     }
-
-    // MARK: - Persistence
 
     private func scheduleSave() {
         saveTask?.cancel()

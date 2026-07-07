@@ -24,7 +24,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// Opening the app again (Finder, Spotlight, Launchpad) brings up the dashboard.
+
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         let container = AppContainer.shared
         if container.prefs.hasOnboarded {
@@ -37,6 +37,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         AppContainer.shared.memory.flush()
+        AppContainer.shared.brain.flush()
         AppContainer.shared.shortcuts.unregister()
     }
 }

@@ -1,6 +1,6 @@
 import Foundation
 
-/// The heart of Perch: watches session, schedule, and habits, then decides
+
 @MainActor
 final class ReminderEngine {
 
@@ -10,9 +10,9 @@ final class ReminderEngine {
     private let calendar: CalendarAwarenessService
     private let subscriptions: SubscriptionManager
 
-    /// Set by the container. Returns true when the check in was presented.
+
     var onDeliver: ((ReminderKind, CheckInContext) async -> Bool)?
-    /// Set by the container. True while a bubble is on screen.
+
     var isPresenting: (() -> Bool)?
 
     private var tickTask: Task<Void, Never>?
@@ -22,7 +22,7 @@ final class ReminderEngine {
     private var lastShownAt: [ReminderKind: Date] = [:]
     private var globalLastShownAt: Date?
     private var snoozedUntil: [ReminderKind: Date] = [:]
-    private var pending: (kind: ReminderKind, context: CheckInContext)?
+    private var pending: Candidate?
     private var pendingSince = Date()
     private var firedOverworkMilestones: Set<Int> = []
     private var promptedEventIDs: Set<String> = []
@@ -47,7 +47,7 @@ final class ReminderEngine {
         self.subscriptions = subscriptions
     }
 
-    // MARK: Lifecycle
+        // MARK: Lifecycle
 
     func start() {
         guard tickTask == nil else { return }
@@ -65,7 +65,7 @@ final class ReminderEngine {
         tickTask = nil
     }
 
-    // MARK: Tick
+        // MARK: Tick
 
     private func tick() {
         let now = Date()
@@ -86,7 +86,9 @@ final class ReminderEngine {
         }
 
         if let candidate = bestCandidate(now: now, gate: gate) {
-            if pending == nil || candidate.kind.priority > (pending?.kind.priority ?? 0) {
+            if pending?.kind == candidate.kind {
+                pending = candidate
+            } else if pending == nil || candidate.kind.priority > (pending?.kind.priority ?? 0) {
                 pending = candidate
                 pendingSince = now
             }
@@ -105,12 +107,15 @@ final class ReminderEngine {
         }
     }
 
-    // MARK: Candidate selection
+        // MARK: Candidate selection
 
-    private func bestCandidate(now: Date, gate: FeatureGate) -> (kind: ReminderKind, context: CheckInContext)? {
-        var candidates: [(kind: ReminderKind, context: CheckInContext)] = []
+    private typealias Candidate = (kind: ReminderKind, context: CheckInContext, commit: () -> Void)
+
+    private func bestCandidate(now: Date, gate: FeatureGate) -> Candidate? {
+        var candidates: [Candidate] = []
         if let c = meetingPrepRule(now: now, gate: gate) { candidates.append(c) }
         if let c = mealRule(now: now) { candidates.append(c) }
+        if let c = showerRule(now: now) { candidates.append(c) }
         if let c = overworkRule(now: now) { candidates.append(c) }
         if let c = sleepRule(now: now) { candidates.append(c) }
         if let c = windDownRule(now: now) { candidates.append(c) }
@@ -125,14 +130,13 @@ final class ReminderEngine {
         return candidates.max { $0.kind.priority < $1.kind.priority }
     }
 
-    /// Perch says hello on its own a couple of minutes into a fresh
-    private func sessionStartRule(now: Date) -> (ReminderKind, CheckInContext)? {
+
+    private func sessionStartRule(now: Date) -> Candidate? {
         let run = tracker.focusRunMinutes
         guard run >= 2, run <= 6 else { return nil }
         if let last = lastSessionHelloAt, now.timeIntervalSince(last) < 3 * 3600 { return nil }
         if let shown = globalLastShownAt, elapsedMinutes(since: shown, now: now) < 30 { return nil }
-        lastSessionHelloAt = now
-        return (.sessionStart, CheckInContext(minutes: run))
+        return (.sessionStart, CheckInContext(minutes: run), { [weak self] in self?.lastSessionHelloAt = now })
     }
 
     private func deliverPendingIfTimely(now: Date) {
@@ -154,10 +158,11 @@ final class ReminderEngine {
             let shown = await self.onDeliver?(item.kind, item.context) ?? false
             self.isDelivering = false
             guard shown else { return }
+            item.commit()
             self.lastShownAt[item.kind] = Date()
             self.globalLastShownAt = Date()
-            if self.shouldTrack(item.kind) {
-                self.memory.recordShown(kind: item.kind)
+            if item.kind.isTrackable {
+                self.memory.recordShown(kind: item.kind, mealName: item.context.mealName)
             }
         }
     }
@@ -168,118 +173,123 @@ final class ReminderEngine {
         return elapsedMinutes(since: last, now: now) >= gap
     }
 
-    // MARK: Rules
+        // MARK: Rules
 
-    private func waterRule(now: Date) -> (ReminderKind, CheckInContext)? {
+    private func waterRule(now: Date) -> Candidate? {
         guard ruleReady(.water, now: now), tracker.focusRunMinutes >= 20 else { return nil }
         guard minutesSinceKindEvent(.water, now: now) >= threshold(50, kind: .water, now: now) else { return nil }
-        return (.water, CheckInContext(minutes: tracker.focusRunMinutes))
+        return (.water, CheckInContext(minutes: tracker.focusRunMinutes), {})
     }
 
-    private func stretchRule(now: Date) -> (ReminderKind, CheckInContext)? {
+    private func stretchRule(now: Date) -> Candidate? {
         guard ruleReady(.stretch, now: now), tracker.focusRunMinutes >= 25 else { return nil }
         guard minutesSinceKindEvent(.stretch, now: now) >= threshold(55, kind: .stretch, now: now) else { return nil }
-        return (.stretch, CheckInContext(minutes: tracker.focusRunMinutes))
+        return (.stretch, CheckInContext(minutes: tracker.focusRunMinutes), {})
     }
 
-    private func eyesRule(now: Date) -> (ReminderKind, CheckInContext)? {
+    private func eyesRule(now: Date) -> Candidate? {
         guard ruleReady(.eyes, now: now), tracker.focusRunMinutes >= 20 else { return nil }
         guard minutesSinceKindEvent(.eyes, now: now) >= threshold(40, kind: .eyes, now: now) else { return nil }
-        return (.eyes, CheckInContext(minutes: tracker.focusRunMinutes))
+        return (.eyes, CheckInContext(minutes: tracker.focusRunMinutes), {})
     }
 
-    private func postureRule(now: Date) -> (ReminderKind, CheckInContext)? {
+    private func postureRule(now: Date) -> Candidate? {
         guard ruleReady(.posture, now: now), tracker.focusRunMinutes >= 30 else { return nil }
         guard minutesSinceKindEvent(.posture, now: now) >= threshold(95, kind: .posture, now: now) else { return nil }
-        return (.posture, CheckInContext(minutes: tracker.focusRunMinutes))
+        return (.posture, CheckInContext(minutes: tracker.focusRunMinutes), {})
     }
 
-    private func walkRule(now: Date) -> (ReminderKind, CheckInContext)? {
+    private func walkRule(now: Date) -> Candidate? {
         guard ruleReady(.walk, now: now), tracker.focusRunMinutes >= 110 else { return nil }
         guard minutesSinceKindEvent(.walk, now: now) >= threshold(110, kind: .walk, now: now) else { return nil }
-        return (.walk, CheckInContext(minutes: tracker.focusRunMinutes))
+        return (.walk, CheckInContext(minutes: tracker.focusRunMinutes), {})
     }
 
-    private func overworkRule(now: Date) -> (ReminderKind, CheckInContext)? {
+    private func overworkRule(now: Date) -> Candidate? {
         guard ruleReady(.overwork, now: now) else { return nil }
         let run = tracker.focusRunMinutes
         for milestone in [110, 170, 230, 290] where run >= milestone && !firedOverworkMilestones.contains(milestone) {
-            firedOverworkMilestones.insert(milestone)
-            return (.overwork, CheckInContext(minutes: run))
+            return (.overwork, CheckInContext(minutes: run), { [weak self] in self?.firedOverworkMilestones.insert(milestone) })
         }
         return nil
     }
 
-    private func mealRule(now: Date) -> (ReminderKind, CheckInContext)? {
+    private func mealRule(now: Date) -> Candidate? {
         guard ruleReady(.meal, now: now) else { return nil }
         let nowMinute = minutesOfDay(now)
         let today = memory.today(now)
-        let meals: [(name: String, minute: Int, logged: Bool, prompted: Bool, isLunch: Bool)] = [
-            ("lunch", prefs.lunchMinutes, today.lunchLogged, today.lunchPrompted, true),
-            ("dinner", prefs.dinnerMinutes, today.dinnerLogged, today.dinnerPrompted, false),
+        let meals: [(name: String, minute: Int, logged: Bool, prompted: Bool)] = [
+            ("breakfast", prefs.breakfastMinutes, today.breakfastLogged, today.breakfastPrompted),
+            ("lunch", prefs.lunchMinutes, today.lunchLogged, today.lunchPrompted),
+            ("dinner", prefs.dinnerMinutes, today.dinnerLogged, today.dinnerPrompted),
         ]
         for meal in meals {
             let window = (meal.minute - 30)...(meal.minute + 120)
             guard window.contains(nowMinute), !meal.logged, !meal.prompted else { continue }
-            let skipped = memory.skippedMealYesterday(isLunch: meal.isLunch, from: now)
-            return (.meal, CheckInContext(mealName: meal.name, yesterdaySkipped: skipped))
+            let skipped = memory.skippedMealYesterday(meal: meal.name, from: now)
+            return (.meal, CheckInContext(mealName: meal.name, yesterdaySkipped: skipped), {})
         }
         return nil
     }
 
-    private func windDownRule(now: Date) -> (ReminderKind, CheckInContext)? {
+    private func showerRule(now: Date) -> Candidate? {
+        guard ruleReady(.shower, now: now) else { return nil }
+        let nowMinute = minutesOfDay(now)
+        let today = memory.today(now)
+        guard !today.showerLogged, !today.showerPrompted else { return nil }
+        let window = (prefs.showerMinutes - 15)...(prefs.showerMinutes + 90)
+        guard window.contains(nowMinute) else { return nil }
+        return (.shower, CheckInContext(), {})
+    }
+
+    private func windDownRule(now: Date) -> Candidate? {
         guard ruleReady(.windDown, now: now) else { return nil }
         guard minutesOfDay(now) >= prefs.workEndMinutes + 30, tracker.idleSeconds < 120 else { return nil }
         if let last = lastWindDownAt, elapsedMinutes(since: last, now: now) < 45 { return nil }
-        lastWindDownAt = now
-        return (.windDown, CheckInContext(minutes: tracker.focusRunMinutes))
+        return (.windDown, CheckInContext(minutes: tracker.focusRunMinutes), { [weak self] in self?.lastWindDownAt = now })
     }
 
-    private func sleepRule(now: Date) -> (ReminderKind, CheckInContext)? {
+    private func sleepRule(now: Date) -> Candidate? {
         guard ruleReady(.sleep, now: now) else { return nil }
         let day = ISO8601DateFormatter.perchDay.string(from: now)
         guard sleepPromptedDay != day else { return nil }
         let nowMinute = minutesOfDay(now)
         let window = (prefs.quietStartMinutes - 20)..<prefs.quietStartMinutes
         guard window.contains(nowMinute), tracker.idleSeconds < 120 else { return nil }
-        sleepPromptedDay = day
-        return (.sleep, CheckInContext(minutes: tracker.focusRunMinutes))
+        return (.sleep, CheckInContext(minutes: tracker.focusRunMinutes), { [weak self] in self?.sleepPromptedDay = day })
     }
 
-    private func meetingPrepRule(now: Date, gate: FeatureGate) -> (ReminderKind, CheckInContext)? {
+    private func meetingPrepRule(now: Date, gate: FeatureGate) -> Candidate? {
         guard gate.calendarAwareness, ruleReady(.meetingPrep, now: now) else { return nil }
         guard let event = calendar.nextEvent(startingWithinMinutes: 15, at: now) else { return nil }
         guard !promptedEventIDs.contains(event.id) else { return nil }
-        promptedEventIDs.insert(event.id)
         let minutes = max(Int(event.start.timeIntervalSince(now) / 60), 1)
-        return (.meetingPrep, CheckInContext(eventTitle: event.title, minutesUntil: minutes))
+        return (.meetingPrep, CheckInContext(eventTitle: event.title, minutesUntil: minutes), { [weak self] in self?.promptedEventIDs.insert(event.id) })
     }
 
-    private func meetingRecoveryRule(now: Date, gate: FeatureGate) -> (ReminderKind, CheckInContext)? {
+    private func meetingRecoveryRule(now: Date, gate: FeatureGate) -> Candidate? {
         guard gate.calendarAwareness, ruleReady(.meetingRecovery, now: now) else { return nil }
         guard let event = calendar.recentlyEndedMeeting(withinMinutes: 6, minimumDurationMinutes: 45, at: now) else { return nil }
         guard !recoveredEventIDs.contains(event.id) else { return nil }
-        recoveredEventIDs.insert(event.id)
-        return (.meetingRecovery, CheckInContext(eventTitle: event.title))
+        return (.meetingRecovery, CheckInContext(eventTitle: event.title), { [weak self] in self?.recoveredEventIDs.insert(event.id) })
     }
 
-    private func routineRule(now: Date, gate: FeatureGate) -> (ReminderKind, CheckInContext)? {
+    private func routineRule(now: Date, gate: FeatureGate) -> Candidate? {
         let nowMinute = minutesOfDay(now)
         let active = prefs.routines.prefix(gate.maxRoutines)
         for routine in active where routine.enabled && !firedRoutineIDs.contains(routine.id) {
             if (routine.minuteOfDay...(routine.minuteOfDay + 15)).contains(nowMinute) {
-                firedRoutineIDs.insert(routine.id)
-                return (.routine, CheckInContext(routineLabel: routine.label))
+                return (.routine, CheckInContext(routineLabel: routine.label), { [weak self] in self?.firedRoutineIDs.insert(routine.id) })
             }
         }
         return nil
     }
 
-    // MARK: Responses
+        // MARK: Responses
 
-    func applyResponse(kind: ReminderKind, response: CheckInResponse) {
+    func applyResponse(kind: ReminderKind, response: CheckInResponse, context: CheckInContext) {
         let now = Date()
-        if shouldTrack(kind) {
+        if kind.isTrackable {
             memory.recordResponse(kind: kind, response: response)
         }
         switch response {
@@ -288,7 +298,8 @@ final class ReminderEngine {
         case .done, .timerCompleted:
             switch kind {
             case .water: memory.logWater(at: now)
-            case .meal: memory.logMeal(at: now)
+            case .meal: memory.logMeal(mealName: context.mealName, at: now)
+            case .shower: memory.logShower(at: now)
             case .stretch, .walk, .eyes, .overwork, .meetingRecovery: tracker.creditBreak()
             default: break
             }
@@ -298,7 +309,7 @@ final class ReminderEngine {
         pending = nil
     }
 
-    /// Manual "check on me" from the menu bar or quick answer shortcut.
+
     func forceCheckIn() async {
         let now = Date()
         let run = tracker.focusRunMinutes
@@ -319,22 +330,28 @@ final class ReminderEngine {
         if shown {
             lastShownAt[choice.0] = Date()
             globalLastShownAt = Date()
-            if shouldTrack(choice.0) { memory.recordShown(kind: choice.0) }
+            if choice.0.isTrackable {
+                memory.recordShown(kind: choice.0, mealName: choice.1.mealName)
+            }
         }
     }
 
     private func forceMealChoice(now: Date, today: HabitMemoryStore.DayLog) -> (ReminderKind, CheckInContext)? {
         let nowMinute = minutesOfDay(now)
-        if ((prefs.lunchMinutes - 30)...(prefs.lunchMinutes + 120)).contains(nowMinute), !today.lunchLogged {
-            return (.meal, CheckInContext(mealName: "lunch", yesterdaySkipped: memory.skippedMealYesterday(isLunch: true)))
-        }
-        if ((prefs.dinnerMinutes - 30)...(prefs.dinnerMinutes + 120)).contains(nowMinute), !today.dinnerLogged {
-            return (.meal, CheckInContext(mealName: "dinner", yesterdaySkipped: memory.skippedMealYesterday(isLunch: false)))
+        let meals: [(name: String, minute: Int, logged: Bool)] = [
+            ("breakfast", prefs.breakfastMinutes, today.breakfastLogged),
+            ("lunch", prefs.lunchMinutes, today.lunchLogged),
+            ("dinner", prefs.dinnerMinutes, today.dinnerLogged),
+        ]
+        for meal in meals {
+            if ((meal.minute - 30)...(meal.minute + 120)).contains(nowMinute), !meal.logged {
+                return (.meal, CheckInContext(mealName: meal.name, yesterdaySkipped: memory.skippedMealYesterday(meal: meal.name)))
+            }
         }
         return nil
     }
 
-    /// Small hint for the menu bar, like "next gentle check in soon".
+
     func nextHint(now: Date = Date()) -> String? {
         guard tracker.isInSession else { return nil }
         var remaining: [Double] = []
@@ -349,11 +366,7 @@ final class ReminderEngine {
         return "Next gentle check in about \(Int(soonest.rounded(.up)))m away"
     }
 
-    // MARK: Helpers
-
-    private func shouldTrack(_ kind: ReminderKind) -> Bool {
-        kind != .status && kind != .welcome && kind != .sessionStart
-    }
+        // MARK: Helpers
 
     private func ruleReady(_ kind: ReminderKind, now: Date) -> Bool {
         guard prefs.enabledKinds.contains(kind) else { return false }
@@ -361,7 +374,7 @@ final class ReminderEngine {
         return true
     }
 
-    /// Base interval adjusted for user intensity and learned habits.
+
     private func threshold(_ base: Double, kind: ReminderKind, now: Date) -> Double {
         let memoryMultiplier = subscriptions.gate.adaptiveMemory
             ? memory.intervalMultiplier(kind: kind, at: now)
@@ -369,7 +382,7 @@ final class ReminderEngine {
         return base * prefs.intensity.intervalMultiplier * memoryMultiplier
     }
 
-    /// Minutes since we last shown or the user last accepted this kind,
+
     private func minutesSinceKindEvent(_ kind: ReminderKind, now: Date) -> Double {
         let runStart = now.addingTimeInterval(-tracker.focusRunSeconds / prefs.demoTimeScale)
         var anchor = runStart

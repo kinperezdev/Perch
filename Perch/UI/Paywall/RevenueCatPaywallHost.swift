@@ -1,18 +1,12 @@
 import RevenueCat
 import SwiftUI
-#if canImport(RevenueCatUI) && os(iOS)
-import RevenueCatUI
-#endif
 
-/// Subscription management. RevenueCat Customer Center is iOS only for
+
+
 struct CustomerCenterHost: View {
     @Environment(AppContainer.self) private var container
 
     var body: some View {
-        #if canImport(RevenueCatUI) && os(iOS)
-        RevenueCatUI.CustomerCenterView()
-            .frame(minWidth: 480, minHeight: 560)
-        #else
         VStack(spacing: 14) {
             Image(systemName: "person.crop.circle.badge.checkmark")
                 .font(.system(size: 30))
@@ -36,6 +30,5 @@ struct CustomerCenterHost: View {
         }
         .padding(28)
         .frame(width: 440, height: 300)
-        #endif
     }
 }

@@ -15,8 +15,10 @@ struct GeneralSettingsView: View {
             Section("Your rhythm") {
                 DatePicker("Work starts", selection: timeOfDayBinding($prefs.workStartMinutes), displayedComponents: .hourAndMinute)
                 DatePicker("Work ends", selection: timeOfDayBinding($prefs.workEndMinutes), displayedComponents: .hourAndMinute)
+                DatePicker("Usual breakfast", selection: timeOfDayBinding($prefs.breakfastMinutes), displayedComponents: .hourAndMinute)
                 DatePicker("Usual lunch", selection: timeOfDayBinding($prefs.lunchMinutes), displayedComponents: .hourAndMinute)
                 DatePicker("Usual dinner", selection: timeOfDayBinding($prefs.dinnerMinutes), displayedComponents: .hourAndMinute)
+                DatePicker("Usual shower", selection: timeOfDayBinding($prefs.showerMinutes), displayedComponents: .hourAndMinute)
             }
             Section("Quiet hours") {
                 DatePicker("Quiet from", selection: timeOfDayBinding($prefs.quietStartMinutes), displayedComponents: .hourAndMinute)

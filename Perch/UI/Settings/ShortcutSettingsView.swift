@@ -4,7 +4,6 @@ import SwiftUI
 struct ShortcutSettingsView: View {
     @Environment(AppContainer.self) private var container
     @State private var isRecording = false
-    @State private var isRecordingMic = false
 
     var body: some View {
         Form {
@@ -40,33 +39,6 @@ struct ShortcutSettingsView: View {
                     container.shortcuts.registerFromPrefs()
                 }
             }
-            Section("Voice shortcut") {
-                HStack {
-                    Text("Talk to Perch by voice from anywhere")
-                    Spacer()
-                    ShortcutRecorderButton(isRecording: $isRecordingMic) { keyCode, modifiers in
-                        container.prefs.micShortcutKeyCode = keyCode
-                        container.prefs.micShortcutModifiers = modifiers
-                        container.shortcuts.registerFromPrefs()
-                    } currentLabel: {
-                        QuickAnswerShortcutManager.describe(
-                            keyCode: container.prefs.micShortcutKeyCode,
-                            modifiers: container.prefs.micShortcutModifiers
-                        )
-                    }
-                }
-                if !container.shortcuts.micRegistrationOK {
-                    Label(
-                        "That combination could not be registered. Try another.",
-                        systemImage: "exclamationmark.triangle.fill"
-                    )
-                    .font(.caption)
-                    .foregroundStyle(.orange)
-                }
-                Text("A check in showing: answers it by voice. Otherwise: opens chat listening, press again to send.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
             Section("What it does") {
                 Label("A check in is showing: focuses it so keys 1, 2, 3 answer instantly", systemImage: "1.circle")
                 Label("Nothing showing: brings back the last unanswered check in", systemImage: "arrow.uturn.left.circle")
@@ -84,7 +56,7 @@ struct ShortcutSettingsView: View {
     }
 }
 
-/// Click, then press any combo. Shows held modifiers live while recording.
+
 struct ShortcutRecorderButton: View {
     @Binding var isRecording: Bool
     let onRecorded: (Int, UInt) -> Void
@@ -114,6 +86,7 @@ struct ShortcutRecorderButton: View {
     }
 
     private func startRecording() {
+        ShortcutRecordingCoordinator.shared.begin(stop: stopRecording)
         isRecording = true
         liveModifiers = 0
         flagsMonitor = NSEvent.addLocalMonitorForEvents(matching: .flagsChanged) { event in
@@ -136,11 +109,30 @@ struct ShortcutRecorderButton: View {
     }
 
     private func stopRecording() {
+        guard isRecording else { return }
         isRecording = false
         liveModifiers = 0
         if let keyMonitor { NSEvent.removeMonitor(keyMonitor) }
         if let flagsMonitor { NSEvent.removeMonitor(flagsMonitor) }
         keyMonitor = nil
         flagsMonitor = nil
+        ShortcutRecordingCoordinator.shared.end()
+    }
+}
+
+
+
+@MainActor
+private final class ShortcutRecordingCoordinator {
+    static let shared = ShortcutRecordingCoordinator()
+    private var stopActive: (() -> Void)?
+
+    func begin(stop: @escaping () -> Void) {
+        stopActive?()
+        stopActive = stop
+    }
+
+    func end() {
+        stopActive = nil
     }
 }

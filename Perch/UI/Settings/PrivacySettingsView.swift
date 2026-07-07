@@ -4,7 +4,6 @@ struct PrivacySettingsView: View {
     @Environment(AppContainer.self) private var container
     @State private var showWipeConfirm = false
     @State private var calendarRequested = false
-    @State private var showOnlineWarning = false
 
     var body: some View {
         @Bindable var prefs = container.prefs
@@ -16,53 +15,13 @@ struct PrivacySettingsView: View {
                 Label("How you respond to check ins", systemImage: "hand.tap")
             }
             .font(.perchRounded(12))
-            Section("What Perch never touches") {
+            Section("What stays private") {
                 Label("Messages, documents, and passwords", systemImage: "xmark.circle")
                 Label("Browser content and screen contents", systemImage: "xmark.circle")
-                Label("Anything leaving this Mac. Memory and AI stay on device", systemImage: "xmark.circle")
+                Label("Memory and AI stay on this Mac. Nothing is sent to the cloud", systemImage: "lock.circle")
             }
             .font(.perchRounded(12))
             .foregroundStyle(.secondary)
-            Section("AI Privacy") {
-                Toggle("Enable Online Cloud AI (OpenAI)", isOn: Binding(
-                    get: { prefs.onlineMode },
-                    set: { newValue in
-                        if newValue {
-                            showOnlineWarning = true
-                        } else {
-                            prefs.onlineMode = false
-                        }
-                    }
-                ))
-                .alert("Enable Online Cloud AI?", isPresented: $showOnlineWarning) {
-                    Button("Cancel", role: .cancel) {
-                        prefs.onlineMode = false
-                    }
-                    Button("Enable") {
-                        prefs.onlineMode = true
-                    }
-                } message: {
-                    Text("If you enable this, your private chat messages and thoughts will be sent over the internet to OpenAI servers instead of staying 100% private on your Mac. You must also provide an API key, which will incur real-world costs.")
-                }
-                if prefs.onlineMode {
-                    VStack(spacing: 12) {
-                        SecureField("OpenAI API Key (sk-...)", text: $prefs.openAiApiKey)
-                            .textFieldStyle(.roundedBorder)
-                        SecureField("Gemini API Key", text: $prefs.geminiApiKey)
-                            .textFieldStyle(.roundedBorder)
-                        SecureField("Anthropic API Key", text: $prefs.anthropicApiKey)
-                            .textFieldStyle(.roundedBorder)
-                    }
-                    .padding(.vertical, 4)
-                    
-                    Text("Keys are stored securely in your Mac's Keychain.")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
-                Text("By default, Perch runs entirely on-device. Turning this on sacrifices privacy for slightly smarter reasoning.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
             Section("Permissions") {
                 HStack {
                     Text("Calendar")
@@ -91,7 +50,7 @@ struct PrivacySettingsView: View {
                 Toggle("Also deliver check ins as notifications", isOn: $prefs.notificationsMirror)
             }
             Section("Your memory") {
-                Text("Habit memory lives in a local JSON file you can delete at any time. Chat conversations are never saved.")
+                Text("Habit memory, brain memory, and chat history stay in local files on this Mac. You can delete them at any time.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Button("Delete all memory", role: .destructive) {
@@ -103,6 +62,7 @@ struct PrivacySettingsView: View {
                 ) {
                     Button("Delete memory", role: .destructive) {
                         container.memory.wipe()
+                        container.brain.wipe(keepingUserName: container.prefs.userName)
                         container.chat.clear()
                     }
                 }

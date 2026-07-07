@@ -2,7 +2,7 @@ import EventKit
 import Foundation
 import Observation
 
-/// Reads upcoming events, with permission, so check ins can respect
+
 @MainActor
 @Observable
 final class CalendarAwarenessService {
@@ -65,7 +65,7 @@ final class CalendarAwarenessService {
             .sorted { $0.start < $1.start }
     }
 
-    // MARK: Queries
+        // MARK: Queries
 
     func nextEvent(startingWithinMinutes minutes: Int, at date: Date = Date()) -> EventInfo? {
         upcoming.first {

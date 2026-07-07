@@ -1,8 +1,6 @@
 import Foundation
 import FoundationModels
 import Observation
-
-/// Free, private intelligence with graceful fallbacks:
 @MainActor
 @Observable
 final class CompanionIntelligence {
@@ -15,21 +13,15 @@ final class CompanionIntelligence {
 
     private(set) var engine: Engine = .none
     private(set) var availabilityNote = "Checking for on-device intelligence..."
-
-    /// Cloud models are available only when the user turns on Online mode
-    var isAvailable: Bool { engine != .none || onlineProvider != nil }
+    var isAvailable: Bool { engine != .none }
 
     @ObservationIgnored private let prefs: PreferencesStore
     @ObservationIgnored private var session: LanguageModelSession?
     @ObservationIgnored private var sessionPersonality: Personality?
+    @ObservationIgnored private var sessionInstructions: String?
 
     init(prefs: PreferencesStore) {
         self.prefs = prefs
-    }
-
-    var onlineProvider: OnlineIntelligence.Provider? {
-        guard prefs.onlineMode else { return nil }
-        return OnlineIntelligence.firstConfigured(prefs: prefs)
     }
 
     func start() {
@@ -37,14 +29,9 @@ final class CompanionIntelligence {
     }
 
     func refreshAvailability() {
-        if let provider = onlineProvider {
-            availabilityNote = "Online mode is on. Using \(provider.label) for the smartest, most natural replies."
-        }
         if case .available = SystemLanguageModel.default.availability {
             engine = .appleIntelligence
-            if onlineProvider == nil {
-                availabilityNote = "Apple Intelligence is active. Check ins are composed on device, free."
-            }
+            availabilityNote = "Apple Intelligence is active. Check ins are composed on device, free."
             return
         }
         var reason = "On-device model unavailable."
@@ -55,7 +42,6 @@ final class CompanionIntelligence {
             guard let self else { return }
             let model = await OllamaClient.firstModel()
             if let model { self.engine = .ollama(model: model) } else { self.engine = .none }
-            guard self.onlineProvider == nil else { return }
             if let model {
                 self.availabilityNote = "Using the local model \(model) through Ollama. Free and private."
             } else {
@@ -74,14 +60,6 @@ final class CompanionIntelligence {
         fallback: String
     ) async -> String {
         let prompt = Self.prompt(kind: kind, context: context, callName: callName, customInstructions: customInstructions)
-
-        if let provider = onlineProvider {
-            let system = Self.checkInInstructions(for: personality, brainContext: brainContext)
-            let online = await Self.withTimeout(seconds: 12) {
-                await OnlineIntelligence.generate(provider: provider, system: system, prompt: prompt)
-            }
-            if let online, let cleaned = Self.sanitize(online) { return cleaned }
-        }
 
         let raw: String?
         switch engine {
@@ -105,29 +83,28 @@ final class CompanionIntelligence {
         guard let raw, let cleaned = Self.sanitize(raw) else { return fallback }
         return cleaned
     }
-
-    /// Chat path: online when configured, else local Ollama. Apple
     func onlineChat(system: String, prompt: String) async -> String? {
-        if let provider = onlineProvider {
-            let online = await Self.withTimeout(seconds: 15) {
-                await OnlineIntelligence.generate(provider: provider, system: system, prompt: prompt)
+        switch engine {
+        case .appleIntelligence:
+            let session = LanguageModelSession(instructions: system)
+            guard !session.isResponding else { return nil }
+            return await Self.withTimeout(seconds: 6) {
+                try? await session.respond(to: prompt, options: GenerationOptions(temperature: 0.8)).content
             }
-            if let online, !online.isEmpty { return online }
-        }
-        if case .ollama(let model) = engine {
+        case .ollama(let model):
             return await OllamaClient.generate(model: model, system: system, prompt: prompt)
+        case .none:
+            return nil
         }
-        return nil
     }
 
-    // MARK: Sessions and instructions
-
     private func preparedSession(for personality: Personality, brainContext: String = "") -> LanguageModelSession {
-        if let session, sessionPersonality == personality, brainContext.isEmpty { return session }
-        let fresh = LanguageModelSession(instructions: Self.checkInInstructions(for: personality, brainContext: brainContext))
-        fresh.prewarm()
+        let instructions = Self.checkInInstructions(for: personality, brainContext: brainContext)
+        if let session, sessionPersonality == personality, sessionInstructions == instructions { return session }
+        let fresh = LanguageModelSession(instructions: instructions)
         session = fresh
         sessionPersonality = personality
+        sessionInstructions = instructions
         return fresh
     }
 
@@ -146,14 +123,13 @@ final class CompanionIntelligence {
         - One short check in line only, like something a friend would say out loud. Under 18 words.
         - Always end with a caring question that invites a quick reply (yes / no / later).
         - No lists, no quotes. Contractions are good, formal phrasing is not.
-        - Use highly expressive texting punctuation! Emphasize feelings with exclamation marks (!), use question marks (?), trailing ellipses (...) to sound conversational, and feel free to use emojis that fit your vibe!
+        - Use natural, conversational punctuation: contractions and the occasional exclamation mark or ellipsis are fine. Use at most one emoji, and only when it truly fits. Most check ins should have no emoji at all.
+        - Never print parentheses, timestamps, or meta labels like "(System note...)" in your reply. Those are for your eyes only, to inform what you say, not to repeat.
         - Warm and human. Never guilt trip, never lecture, never mention productivity metrics.
         - Weave the concrete facts you are given (duration, meal, meeting, minutes) into the line naturally.
         - Speak directly to the user in second person.
         """
     }
-
-    // MARK: Helpers
 
     private static func prompt(kind: ReminderKind, context: CheckInContext, callName: String, customInstructions: String = "") -> String {
         let f = DateFormatter()
@@ -184,6 +160,7 @@ final class CompanionIntelligence {
         case .posture: "Gently get them to fix their posture."
         case .walk: "Suggest a short five minute walk."
         case .meal: "Check whether they have eaten, and encourage a real meal break."
+        case .shower: "Gently nudge them to take a shower and reset for the day."
         case .overwork: "Caringly point out the very long session and ask them to take a real break."
         case .windDown: "Their workday is over. Encourage wrapping up soon."
         case .sleep: "It is late. Encourage them to end the day and sleep."
@@ -236,10 +213,6 @@ final class CompanionIntelligence {
         }
     }
 }
-
-// MARK: - Ollama
-
-/// Minimal client for a local Ollama server. Loopback only,
 enum OllamaClient {
 
     private static let base = URL(string: "http://127.0.0.1:11434")!

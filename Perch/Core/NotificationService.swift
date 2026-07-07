@@ -2,7 +2,7 @@ import Foundation
 import Observation
 import UserNotifications
 
-/// Optional mirror of check ins into Notification Center,
+
 @MainActor
 @Observable
 final class NotificationService: NSObject, UNUserNotificationCenterDelegate {

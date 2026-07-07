@@ -2,7 +2,7 @@ import Foundation
 import Observation
 import RevenueCat
 
-/// RevenueCat backed subscription state. Configured once at launch,
+
 @MainActor
 @Observable
 final class SubscriptionManager {
@@ -18,12 +18,12 @@ final class SubscriptionManager {
         let periodLabel: String
         let priceLabel: String
         let note: String?
-        /// Free trial or intro offer text, shown on the paywall when present.
+
         let introText: String?
         let package: Package?
     }
 
-    /// The RevenueCat public SDK key never lives in source. It is read from
+
     private static var resolvedKey: String {
         if let env = ProcessInfo.processInfo.environment["PERCH_REVENUECAT_KEY"], !env.isEmpty {
             return env
@@ -42,7 +42,7 @@ final class SubscriptionManager {
         return dict["RevenueCatAPIKey"] as? String
     }
 
-    /// The single entitlement configured in the RevenueCat dashboard.
+
     static let perchProEntitlementID = "Perch Pro"
 
     private(set) var mode: Mode
@@ -53,7 +53,7 @@ final class SubscriptionManager {
 
     var gate: FeatureGate { FeatureGate(tier: tier) }
 
-    /// What the user sees as their plan name.
+
     var currentPlanName: String {
         if tier == .free { return "Free" }
         return mode == .revenueCat ? "Perch Pro" : tier.displayName
@@ -81,9 +81,9 @@ final class SubscriptionManager {
         }
     }
 
-    // MARK: Customer info
+        // MARK: Customer info
 
-    /// Stays subscribed for the app's lifetime so entitlement changes
+
     private func observeCustomerInfo() {
         Task { [weak self] in
             for await info in Purchases.shared.customerInfoStream {
@@ -101,7 +101,7 @@ final class SubscriptionManager {
         }
     }
 
-    /// Entry point for RevenueCatUI completion callbacks.
+
     func refresh(with info: CustomerInfo) {
         apply(info)
     }
@@ -118,7 +118,7 @@ final class SubscriptionManager {
         }
     }
 
-    // MARK: Offerings
+        // MARK: Offerings
 
     func loadOfferings() async {
         guard mode == .revenueCat else { return }
@@ -146,7 +146,7 @@ final class SubscriptionManager {
         }
     }
 
-    // MARK: Actions
+        // MARK: Actions
 
     func purchase(_ option: PlanOption) async {
         isWorking = true
@@ -187,14 +187,14 @@ final class SubscriptionManager {
         }
     }
 
-    /// Demo mode helper so testers can walk back to Free.
+
     func resetDemoTier() {
         guard mode == .demo else { return }
         tier = .free
         UserDefaults.standard.set(PlanTier.free.rawValue, forKey: "demoTier")
     }
 
-    // MARK: Static helpers
+        // MARK: Static helpers
 
     private static func friendlyMessage(for error: Error) -> String {
         if let code = error as? RevenueCat.ErrorCode {
@@ -214,7 +214,7 @@ final class SubscriptionManager {
         return error.localizedDescription
     }
 
-    /// Human trial text from a product's introductory offer, when it has one.
+
     private static func introText(for product: StoreProduct) -> String? {
         guard let intro = product.introductoryDiscount else { return nil }
         let count = intro.subscriptionPeriod.value

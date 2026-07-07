@@ -57,7 +57,7 @@ enum Personality: String, Codable, CaseIterable, Identifiable {
         }
     }
 
-    /// Free plan ships with two voices. The rest unlock with Pro.
+
     var requiresPro: Bool {
         switch self {
         case .professional, .homie: false
@@ -65,7 +65,7 @@ enum Personality: String, Codable, CaseIterable, Identifiable {
         }
     }
 
-    /// How the companion addresses the user when no name fits better.
+
     func callName(userName: String) -> String {
         switch self {
         case .mother: return "sweetheart"
@@ -75,7 +75,7 @@ enum Personality: String, Codable, CaseIterable, Identifiable {
         }
     }
 
-    /// Voice description used to steer on-device AI generation.
+
     var styleBrief: String {
         switch self {
         case .mother:
@@ -96,7 +96,7 @@ enum Personality: String, Codable, CaseIterable, Identifiable {
 
 // MARK: - Engine
 
-/// Renders companion lines. Tries on-device AI first when unlocked,
+
 @MainActor
 final class PersonalityEngine {
     private let prefs: PreferencesStore
@@ -118,7 +118,7 @@ final class PersonalityEngine {
             : "Perch"
     }
 
-    /// Instant, curated line. Never fails, never waits.
+
     func templateLine(for kind: ReminderKind, context: CheckInContext) -> String {
         let personality = activePersonality
         let variants = MessageLibrary.variants(kind: kind, personality: personality)
@@ -127,7 +127,7 @@ final class PersonalityEngine {
         return fill(variants[index], context: context)
     }
 
-    /// Preferred path: on-device generation with the template as a safety net.
+
     func composeLine(for kind: ReminderKind, context: CheckInContext, aiAllowed: Bool, brainContext: String = "") async -> String {
         let fallback = templateLine(for: kind, context: context)
         guard aiAllowed else { return fallback }
@@ -158,7 +158,7 @@ final class PersonalityEngine {
         MessageLibrary.sample(personality: personality)
     }
 
-    // MARK: Private
+        // MARK: Private
 
     private func pickIndex(count: Int, key: String) -> Int {
         guard count > 1 else { return 0 }

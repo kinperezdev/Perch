@@ -1,11 +1,12 @@
 import SwiftUI
 
-/// Perch's own paywall: one plan, Perch Pro, with the real packages
+
 struct PerchPaywallView: View {
     @Environment(AppContainer.self) private var container
     let onClose: () -> Void
 
     @State private var selectedID: String?
+    @State private var isLoadingOfferings = true
 
     private var accent: [Color] { container.personality.activePersonality.accentColors }
     private var options: [SubscriptionManager.PlanOption] { container.subscriptions.planOptions }
@@ -24,10 +25,20 @@ struct PerchPaywallView: View {
                 }
                 featureList
                     .padding(.vertical, 4)
-                if options.isEmpty {
+                if isLoadingOfferings {
                     ProgressView()
                         .controlSize(.small)
                         .frame(maxHeight: .infinity)
+                } else if options.isEmpty {
+                    VStack(spacing: 10) {
+                        Text(container.subscriptions.lastError ?? "Couldn't load plans.")
+                            .font(.perchRounded(11.5))
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                        Button("Try again") { Task { await loadOfferings() } }
+                            .buttonStyle(.glass)
+                    }
+                    .frame(maxHeight: .infinity)
                 } else {
                     VStack(spacing: 8) {
                         ForEach(options) { option in
@@ -40,13 +51,17 @@ struct PerchPaywallView: View {
             }
             .padding(24)
         }
-        .frame(width: 440, height: 640)
+        .frame(width: 440 * PerchStyle.scale, height: 640 * PerchStyle.scale)
         .preferredColorScheme(.dark)
-        .task {
-            await container.subscriptions.loadOfferings()
-            if selectedID == nil {
-                selectedID = options.first { $0.periodLabel == "Yearly" }?.id ?? options.first?.id
-            }
+        .task { await loadOfferings() }
+    }
+
+    private func loadOfferings() async {
+        isLoadingOfferings = true
+        await container.subscriptions.loadOfferings()
+        isLoadingOfferings = false
+        if selectedID == nil {
+            selectedID = options.first { $0.periodLabel == "Yearly" }?.id ?? options.first?.id
         }
     }
 
@@ -68,7 +83,7 @@ struct PerchPaywallView: View {
         VStack(alignment: .leading, spacing: 6) {
             featureRow("Memory that adapts timing to your habits")
             featureRow("All six personalities, plus a custom companion")
-            featureRow("Voice check ins, voice replies, voice styles")
+            featureRow("AI companion chat for quick answers")
             featureRow("Calendar and meeting awareness")
             featureRow("Weekly wellbeing summary and insights")
             featureRow("More personal routines")

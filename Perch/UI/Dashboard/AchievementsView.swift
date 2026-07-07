@@ -14,20 +14,16 @@ struct AchievementsView: View {
     @Environment(\.dismiss) private var dismiss
 
     private var accent: [Color] { container.prefs.activePersonality.accentColors }
-    
-    private var unlockedCount: Int {
-        achievements.filter { $0.isUnlocked }.count
-    }
 
     private var achievements: [Achievement] {
         let snap = container.memory.snapshot
-        
-        // Compute stats from memory snapshot
+
+
         let totalWater = snap.days.reduce(0) { $0 + $1.waterCount }
         let totalAccepted = snap.days.reduce(0) { $0 + $1.checkInsAccepted }
         let totalActiveHours = snap.days.reduce(0.0) { $0 + $1.activeSeconds } / 3600.0
         let maxBreaksInDay = snap.days.map { $0.breaksTaken }.max() ?? 0
-        
+
         let acceptedSleep = snap.stats.keys.contains { $0.hasPrefix("sleep_") && snap.stats[$0]?.accepted ?? 0 > 0 }
 
         return [
@@ -83,6 +79,7 @@ struct AchievementsView: View {
     }
 
     var body: some View {
+        let list = achievements
         ZStack {
             LinearGradient(
                 colors: [Color(hex: 0x0B0B0E), Color(hex: 0x121216)],
@@ -92,11 +89,11 @@ struct AchievementsView: View {
             .ignoresSafeArea()
 
             VStack(spacing: 20) {
-                header
-                
+                header(list)
+
                 ScrollView {
                     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                        ForEach(achievements) { achievement in
+                        ForEach(list) { achievement in
                             achievementCard(achievement)
                         }
                     }
@@ -107,13 +104,13 @@ struct AchievementsView: View {
         .frame(width: 500, height: 440)
         .preferredColorScheme(.dark)
     }
-    
-    private var header: some View {
+
+    private func header(_ list: [Achievement]) -> some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Achievements")
                     .font(.perchRounded(22, weight: .bold))
-                Text("\(unlockedCount) of \(achievements.count) unlocked")
+                Text("\(list.filter(\.isUnlocked).count) of \(list.count) unlocked")
                     .font(.perchRounded(13))
                     .foregroundStyle(.secondary)
             }
@@ -141,7 +138,7 @@ struct AchievementsView: View {
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(ach.isUnlocked ? ach.color : .white.opacity(0.2))
             }
-            
+
             VStack(alignment: .leading, spacing: 2) {
                 Text(ach.title)
                     .font(.perchRounded(14, weight: .bold))

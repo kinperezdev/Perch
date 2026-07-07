@@ -3,7 +3,7 @@ import CoreGraphics
 import Foundation
 import Observation
 
-/// Watches safe, local signals only: how long the user has been actively
+
 @MainActor
 @Observable
 final class FocusSessionTracker {
@@ -16,7 +16,7 @@ final class FocusSessionTracker {
     @ObservationIgnored private let prefs: PreferencesStore
     @ObservationIgnored private let memory: HabitMemoryStore
 
-    /// Fired with the length of a focus run when it ends, so PerchBrain can
+
     @ObservationIgnored var onRunEnded: ((Double) -> Void)?
 
     init(prefs: PreferencesStore, memory: HabitMemoryStore) {
@@ -29,7 +29,7 @@ final class FocusSessionTracker {
     var isInSession: Bool { focusRunSeconds > 60 }
     var todayActiveSeconds: Double { memory.today().activeSeconds }
 
-    /// Called by the engine on every tick with the real elapsed seconds.
+
     func update(delta realDelta: Double) {
         guard !isScreenLocked else {
             endRun()
@@ -49,7 +49,7 @@ final class FocusSessionTracker {
         }
     }
 
-    /// The user actually stepped away or completed a break timer.
+
     func creditBreak() {
         lastBreakAt = Date()
         reportRunEnded()
@@ -57,7 +57,7 @@ final class FocusSessionTracker {
         memory.creditBreak()
     }
 
-    // MARK: Private
+        // MARK: Private
 
     private static let activeThreshold: Double = 90
     private static let naturalBreakThreshold: Double = 300
@@ -71,7 +71,7 @@ final class FocusSessionTracker {
         focusRunSeconds = 0
     }
 
-    /// Notify the brain about a meaningful completed run (over two minutes).
+
     private func reportRunEnded() {
         guard focusRunSeconds > 120 else { return }
         onRunEnded?(focusRunSeconds)

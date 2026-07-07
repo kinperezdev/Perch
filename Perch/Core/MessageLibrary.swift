@@ -1,6 +1,6 @@
 import Foundation
 
-/// Curated companion lines. These are the guaranteed voice of Perch:
+
 enum MessageLibrary {
 
     static func variants(kind: ReminderKind, personality: Personality) -> [String] {
@@ -125,6 +125,26 @@ enum MessageLibrary {
         case (.meal, .playful): return [
             "Your stomach called. It said something dramatic about {meal}. Better go check.",
             "{meal} quest available! Reward: energy, joy, not being hangry."]
+
+        // MARK: Shower
+        case (.shower, .mother): return [
+            "Sweetheart, it's around your usual shower time. A warm shower will do you good.",
+            "{name}, go freshen up for a bit. You'll feel so much better."]
+        case (.shower, .homie): return [
+            "Bro, shower time. Reset the vibes and come back sharper.",
+            "{name}, go rinse off real quick. Trust the process."]
+        case (.shower, .professional): return [
+            "It's around your usual shower time. A quick reset can help your focus.",
+            "Reminder: this is typically when you shower. Consider taking one now."]
+        case (.shower, .mentor): return [
+            "It's shower time, {name}. Small resets keep the whole day steady.",
+            "Cleanse and reset. The work will still be here after."]
+        case (.shower, .coach): return [
+            "Reset rep, {name}! Shower time, then back at it fresh.",
+            "Quick reset in the locker room, champ. Go shower."]
+        case (.shower, .playful): return [
+            "Beep boop, hygiene quest available: take a shower, {name}.",
+            "It's your usual shower o'clock. Go be a fresh, clean legend."]
 
         // MARK: Overwork
         case (.overwork, .mother): return [

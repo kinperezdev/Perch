@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The home window: today at a glance, the week, quick care actions,
+
 struct DashboardView: View {
     @Environment(AppContainer.self) private var container
     @Environment(\.openSettings) private var openSettings
@@ -8,7 +8,7 @@ struct DashboardView: View {
 
     private var accent: [Color] { container.prefs.activePersonality.accentColors }
 
-    /// A warm time-of-day mood for the header. Never sad on the dashboard.
+
     private var contextualFaceState: CompanionFaceView.FaceState {
         if container.memory.today().checkInsAccepted > 0 { return .happy }
         switch Calendar.current.component(.hour, from: Date()) {
@@ -19,24 +19,22 @@ struct DashboardView: View {
     }
 
     var body: some View {
-        ZStack {
+        ZStack(alignment: .top) {
             background
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 18) {
                 header
                 statsRow
                 HStack(alignment: .top, spacing: 12) {
                     weekSection
-                    Spacer(minLength: 0)
                     actionsSection
                 }
-                Spacer(minLength: 0)
                 footer
             }
             .padding(.horizontal, 30)
-            .padding(.bottom, 30)
-            .padding(.top, 72)
+            .padding(.bottom, 24)
+            .padding(.top, 8)
         }
-        .frame(width: 720 * PerchStyle.scale, height: 420 * PerchStyle.scale)
+        .frame(width: 720 * PerchStyle.scale, height: 580 * PerchStyle.scale)
         .preferredColorScheme(.dark)
     }
 
@@ -54,7 +52,7 @@ struct DashboardView: View {
         .ignoresSafeArea()
     }
 
-    // MARK: Header
+        // MARK: Header
 
     private var header: some View {
         HStack(spacing: 14) {
@@ -89,7 +87,7 @@ struct DashboardView: View {
                 Image(systemName: "medal.fill")
             }
             .buttonStyle(.glass)
-            
+
             Button {
                 WindowPresenter.shared.showSettings(container)
                 NSApp.activate(ignoringOtherApps: true)
@@ -115,15 +113,21 @@ struct DashboardView: View {
         return "Good \(daypartWord), \(call)"
     }
 
-    // MARK: Stats
+        // MARK: Stats
 
     private var statsRow: some View {
         let today = container.memory.today()
-        return HStack(spacing: 10) {
-            statTile("Current focus", value: shortDuration(seconds: container.tracker.focusRunSeconds), symbol: "flame.fill")
-            statTile("Active today", value: shortDuration(seconds: today.activeSeconds), symbol: "sum")
-            statTile("Water", value: "\(today.waterCount)", symbol: "drop.fill")
-            statTile("Breaks", value: "\(today.breaksTaken)", symbol: "figure.walk")
+        return VStack(spacing: 10) {
+            HStack(spacing: 10) {
+                statTile("Focus", value: shortDuration(seconds: container.tracker.focusRunSeconds), symbol: "flame.fill")
+                statTile("Active", value: shortDuration(seconds: today.activeSeconds), symbol: "sum")
+                statTile("Water", value: "\(today.waterCount)", symbol: "drop.fill")
+            }
+            HStack(spacing: 10) {
+                statTile("Meals", value: "\(today.mealsLogged)/3", symbol: "fork.knife")
+                statTile("Breaks", value: "\(today.breaksTaken)", symbol: "figure.walk")
+                statTile("Shower", value: today.showerLogged ? "Done" : "Not yet", symbol: "shower.fill")
+            }
         }
     }
 
@@ -136,30 +140,35 @@ struct DashboardView: View {
                 Text(value)
                     .font(.perchRounded(16, weight: .bold))
                     .monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
                 Text(label)
                     .font(.perchRounded(9.5))
                     .foregroundStyle(.secondary)
+                    .lineLimit(1)
             }
             Spacer(minLength: 0)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
-    // MARK: Week
+        // MARK: Week
 
     private var weekSection: some View {
         let week = container.memory.weekSummary()
+        let maxSeconds = max(week.days.map(\.activeSeconds).max() ?? 1, 1)
         return VStack(alignment: .leading, spacing: 10) {
             sectionKicker("This week")
             if container.subscriptions.gate.weeklySummary {
                 HStack(alignment: .bottom, spacing: 10) {
                     ForEach(week.days) { day in
-                        dayBar(day, maxSeconds: max(week.days.map(\.activeSeconds).max() ?? 1, 1))
+                        dayBar(day, maxSeconds: maxSeconds)
                     }
                 }
-                .frame(height: 130 * PerchStyle.scale, alignment: .bottom)
+                .frame(height: 160 * PerchStyle.scale, alignment: .bottom)
                 HStack(alignment: .top, spacing: 8) {
                     Image(systemName: "lightbulb.fill")
                         .font(.system(size: 11))
@@ -193,31 +202,34 @@ struct DashboardView: View {
         return VStack(spacing: 4) {
             Capsule()
                 .fill(PerchStyle.accentGradient(accent))
-                .frame(height: max(CGFloat(ratio) * 104, 3))
-            Text(Self.dayLetter(day.date))
+                .frame(height: max(CGFloat(ratio) * 128, 3))
+            Text(weekdayLetter(forDayKey: day.date))
                 .font(.system(size: 8.5, design: .rounded))
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
     }
 
-    // MARK: Actions
+        // MARK: Actions
 
     private var actionsSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             sectionKicker("Quick actions")
-            VStack(spacing: 6) {
-                actionButton("Check on me", symbol: "sparkles") {
-                    Task { await container.engine.forceCheckIn() }
-                }
+            LazyVGrid(columns: [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)], spacing: 8) {
                 actionButton("Talk", symbol: "bubble.left.and.bubble.right.fill") {
                     container.coordinator.openChat()
                 }
                 actionButton("Log water", symbol: "drop.fill") {
                     container.memory.logWater()
                 }
+                actionButton("Log a meal", symbol: "fork.knife") {
+                    container.memory.logMeal()
+                }
                 actionButton("Took a break", symbol: "figure.walk") {
                     container.tracker.creditBreak()
+                }
+                actionButton("Took a shower", symbol: "shower.fill") {
+                    container.memory.logShower()
                 }
                 if container.prefs.isPaused() {
                     actionButton("Resume", symbol: "play.fill") {
@@ -230,20 +242,26 @@ struct DashboardView: View {
                 }
             }
         }
-        .frame(width: 148 * PerchStyle.scale)
+        .frame(width: 230 * PerchStyle.scale)
     }
 
     private func actionButton(_ title: String, symbol: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Label(title, systemImage: symbol)
-                .font(.perchRounded(11, weight: .medium))
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 5)
+            VStack(spacing: 4) {
+                Image(systemName: symbol)
+                    .font(.system(size: 14))
+                Text(title)
+                    .font(.perchRounded(9.5, weight: .medium))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 9)
         }
         .buttonStyle(.glass)
     }
 
-    // MARK: Footer
+        // MARK: Footer
 
     private var footer: some View {
         HStack {
@@ -265,13 +283,5 @@ struct DashboardView: View {
             .font(.system(size: 9, weight: .semibold, design: .rounded))
             .tracking(2)
             .foregroundStyle(accent[0].opacity(0.9))
-    }
-
-    private static func dayLetter(_ dateKey: String) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        guard let date = formatter.date(from: dateKey) else { return "?" }
-        let weekday = Calendar.current.component(.weekday, from: date)
-        return ["S", "M", "T", "W", "T", "F", "S"][weekday - 1]
     }
 }

@@ -7,13 +7,13 @@ struct NotchMetrics: Equatable {
     var notchWidth: CGFloat = 200
 }
 
-/// Borderless panel that can become key without activating the app,
+
 final class NotchPanel: NSPanel {
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { false }
 }
 
-/// Owns the floating window pinned to the top center of the notch screen.
+
 @MainActor
 final class NotchPanelController {
 
@@ -47,7 +47,7 @@ final class NotchPanelController {
         self.panel = panel
     }
 
-    /// Recomputes screen geometry so callers can size the bubble
+
     @discardableResult
     func refreshMetrics() -> NotchMetrics {
         metrics = Self.metrics(for: Self.targetScreen())
@@ -90,9 +90,7 @@ final class NotchPanelController {
         panel?.makeKey()
     }
 
-    var isVisible: Bool { panel?.isVisible ?? false }
-
-    // MARK: Screen math
+        // MARK: Screen math
 
     private static func targetScreen() -> NSScreen {
         NSScreen.screens.first { $0.safeAreaInsets.top > 0 }
