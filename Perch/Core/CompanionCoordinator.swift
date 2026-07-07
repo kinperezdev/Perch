@@ -247,7 +247,7 @@ final class CompanionCoordinator {
         case .timer:
             return CGSize(width: max(anchor - 20, 235), height: 94)
         case .confirmation:
-            return CGSize(width: max(anchor - 40, 210), height: 58)
+            return CGSize(width: max(anchor, 245), height: 58)
         case .message:
             return CGSize(width: max(anchor + notchMessageExtra, 520), height: 140)
         case .chat:
