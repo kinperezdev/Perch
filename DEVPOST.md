@@ -41,6 +41,8 @@ Building a non-intrusive companion requires incredible restraint. We learned how
 **Ground the companion in real data, not vibes.** Generic supportive lines feel hollow fast. Replies got noticeably better when we fed the model the same numbers the dashboard shows (focus minutes, water, meals, breaks, shower) and told it to praise what's logged and nudge only the one habit that's clearly behind.
 
 ## What we sacrificed
+**Inline Comments.** We made the deliberate decision to strip out all of our inline code comments right before submission, retaining only the structural `// MARK:` tags and professional `///` docstrings. The tradeoff was losing the historical "why" behind our complex hackathon workarounds, but the outcome is a highly professional, self-documenting architecture that senior engineers can read like a book using the Xcode minimap. It forced us to rely on clean code instead of messy explanations.
+
 **Cloud AI APIs.** We had working OpenAI, Gemini, and Claude integrations. But we removed all of them. This app is a companion, not an AI chatbot. Smarter replies weren't worth asking users for an API key, sending their private moments over the network, or maintaining three providers. To make everything work as expected and get the app to the stable, fast stage it is in now, we had to cut the cloud. Perch runs 100% on device.
 
 **Voice input.** Mic replies and dictation were genuinely cool in demos, but they needed two system permissions, an always-warm speech pipeline, and they were slower than tapping a button. We kept the part that matters (Perch can still speak to you, including in your own Personal Voice) and cut the part that didn't (Perch listening).
