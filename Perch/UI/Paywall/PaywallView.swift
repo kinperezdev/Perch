@@ -1,6 +1,5 @@
 import SwiftUI
 
-
 struct PerchPaywallView: View {
     @Environment(AppContainer.self) private var container
     let onClose: () -> Void
@@ -83,7 +82,7 @@ struct PerchPaywallView: View {
         VStack(alignment: .leading, spacing: 6) {
             featureRow("Memory that adapts timing to your habits")
             featureRow("All six personalities, plus a custom companion")
-            featureRow("AI companion chat for quick answers")
+            featureRow("Personalized AI companion check-ins")
             featureRow("Calendar and meeting awareness")
             featureRow("Weekly wellbeing summary and insights")
             featureRow("More personal routines")

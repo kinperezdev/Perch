@@ -18,7 +18,6 @@ struct AchievementsView: View {
     private var achievements: [Achievement] {
         let snap = container.memory.snapshot
 
-
         let totalWater = snap.days.reduce(0) { $0 + $1.waterCount }
         let totalAccepted = snap.days.reduce(0) { $0 + $1.checkInsAccepted }
         let totalActiveHours = snap.days.reduce(0.0) { $0 + $1.activeSeconds } / 3600.0

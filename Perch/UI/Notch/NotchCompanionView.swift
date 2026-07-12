@@ -1,8 +1,8 @@
 import SwiftUI
 
-
 struct NotchCompanionView: View {
     let coordinator: CompanionCoordinator
+    @Environment(PreferencesStore.self) private var prefs
 
     private var accent: [Color] { coordinator.accentColors }
 
@@ -41,17 +41,20 @@ struct NotchCompanionView: View {
         .padding(.horizontal, 12)
         .padding(.bottom, 9)
         .frame(maxWidth: .infinity)
-        .background(shape.fill(.black))
+        .background(shape.fill(Color(red: 0, green: 0, blue: 0)))
         .compositingGroup()
-        .shadow(color: .black.opacity(0.45), radius: 16, y: 8)
         .padding(.top, metrics.hasNotch ? 0 : 6)
         .onHover { coordinator.isHovering = $0 }
     }
 
-
     private func topPadding(for metrics: NotchMetrics) -> CGFloat {
         guard metrics.hasNotch else { return 10 }
-        return (coordinator.phase == .chat || coordinator.phase == .message) ? 4 : metrics.topInset + 3
+        switch coordinator.phase {
+        case .timer, .confirmation:
+            return 0
+        default:
+            return 4
+        }
     }
 
     @ViewBuilder
@@ -86,21 +89,10 @@ struct NotchCompanionView: View {
 
     private func messageView(_ checkIn: CheckIn) -> some View {
         let metrics = coordinator.metrics
-        return VStack(alignment: .leading, spacing: 6) {
+        return VStack(spacing: 8) {
             HStack(spacing: 0) {
                 HStack(spacing: 8) {
                     CompanionFaceView(state: faceState(for: checkIn), accent: accent, size: 26)
-                    HStack(spacing: 5) {
-                        Image(systemName: checkIn.kind.symbolName)
-                            .font(.system(size: 9, weight: .semibold))
-                            .foregroundStyle(accent[0])
-                        Text(checkIn.kind.displayName.uppercased())
-                            .font(.system(size: 9, weight: .semibold, design: .rounded))
-                            .tracking(1.2)
-                            .foregroundStyle(.white.opacity(0.45))
-                            .lineLimit(1)
-                            .fixedSize()
-                    }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -108,7 +100,8 @@ struct NotchCompanionView: View {
                     Color.clear.frame(width: metrics.notchWidth + 12, height: 1)
                 }
 
-                HStack {
+                HStack(spacing: 6) {
+                    logMenu
                     dismissButton(for: checkIn)
                 }
                 .frame(maxWidth: .infinity, alignment: .trailing)
@@ -116,16 +109,38 @@ struct NotchCompanionView: View {
             .frame(height: metrics.hasNotch ? max(metrics.topInset - 6, 26) : 28)
             .padding(.horizontal, 4)
 
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(spacing: 8) {
                 Text(checkIn.message)
                     .font(.perchRounded(12.5, weight: .medium))
                     .foregroundStyle(.white.opacity(0.94))
-                    .lineLimit(4)
-                    .fixedSize(horizontal: false, vertical: true)
-                actions(for: checkIn)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 6)
+
+                HStack(spacing: 6) {
+                    leftActions(for: checkIn)
+                    rightActions(for: checkIn)
+                }
             }
             .padding(.horizontal, 6)
         }
+        .padding(.bottom, 4)
+    }
+
+    private var logMenu: some View {
+        let log = coordinator.todayLog
+        return Menu {
+            Button { coordinator.quickLog(.water) } label: { Label("Log water (\(log.waterCount))", systemImage: "drop.fill") }
+            Button { coordinator.quickLog(.meal) } label: { Label("Log a meal (\(log.mealsLogged))", systemImage: "fork.knife") }
+            Button { coordinator.quickLog(.breakTime) } label: { Label("Took a break (\(log.breaksTaken))", systemImage: "figure.walk") }
+            Button { coordinator.quickLog(.shower) } label: { Label("Showered\(log.showerLogged ? " (Yes)" : "")", systemImage: "shower.fill") }
+        } label: {
+            Image(systemName: "plus")
+        }
+        .menuStyle(.button)
+        .buttonStyle(IconPillButtonStyle())
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .help("Log a habit without answering")
     }
 
     private func dismissButton(for checkIn: CheckIn) -> some View {
@@ -143,80 +158,85 @@ struct NotchCompanionView: View {
     }
 
     @ViewBuilder
-    private func actions(for checkIn: CheckIn) -> some View {
-        HStack(spacing: 6) {
-            switch checkIn.kind {
-            case .status:
-                logButton("Water", symbol: "drop.fill") { coordinator.logWaterQuick() }
-                logButton("Meal", symbol: "fork.knife") { coordinator.logMealQuick() }
-                logButton("Break", symbol: "figure.walk") { coordinator.takeBreakQuick() }
-                logButton("Shower", symbol: "shower.fill") { coordinator.logShowerQuick() }
-                Spacer()
-                Button(action: { coordinator.respond(.done) }) { Text("All good") }
-                    .buttonStyle(PillButtonStyle(accent: accent))
-                    .keyboardShortcut("1", modifiers: [])
-            case .welcome, .sessionStart:
-                Button(action: { coordinator.respond(.snoozed(minutes: 10)) }) { Text("In a bit") }
-                    .buttonStyle(GhostPillButtonStyle())
-                    .keyboardShortcut("2", modifiers: [])
-                Button(action: { coordinator.respond(.ignored) }) { Text("Just chilling") }
-                    .buttonStyle(GhostPillButtonStyle())
-                    .keyboardShortcut("3", modifiers: [])
-                Spacer()
-                Button(action: { coordinator.respond(.done) }) { Text("Let's go") }
-                    .buttonStyle(PillButtonStyle(accent: accent))
-                    .keyboardShortcut("1", modifiers: [])
-            default:
+    private func leftActions(for checkIn: CheckIn) -> some View {
+        switch checkIn.kind {
+        case .status:
+            Button(action: { coordinator.respondMood(.stressed) }) { Text("Stressing") }
+                .buttonStyle(GhostPillButtonStyle())
+                .keyboardShortcut("3", modifiers: [])
+            Button(action: { coordinator.respondMood(.okay) }) { Text("Am okay") }
+                .buttonStyle(GhostPillButtonStyle())
+                .keyboardShortcut("2", modifiers: [])
+        case .welcome:
+            Button(action: { coordinator.respond(.snoozed(minutes: 10)) }) { Text("In a bit") }
+                .buttonStyle(GhostPillButtonStyle())
+                .keyboardShortcut("2", modifiers: [])
+            Button(action: { coordinator.respond(.ignored) }) { Text("Just chilling") }
+                .buttonStyle(GhostPillButtonStyle())
+                .keyboardShortcut("3", modifiers: [])
+        case .sessionStart:
+            Button(action: { coordinator.respond(.ignored) }) { Text("Later") }
+                .buttonStyle(GhostPillButtonStyle())
+                .keyboardShortcut("3", modifiers: [])
+            Button(action: { coordinator.respond(.snoozed(minutes: 10)) }) { Text("Not yet") }
+                .buttonStyle(GhostPillButtonStyle())
+                .keyboardShortcut("2", modifiers: [])
+        case .meal, .water, .shower, .sleep, .routine:
+            Button(action: { coordinator.respond(.snoozed(minutes: 10)) }) { Text("Later") }
+                .buttonStyle(GhostPillButtonStyle())
+                .keyboardShortcut("3", modifiers: [])
+            Button(action: { coordinator.respond(.ignored) }) { Text("Not yet") }
+                .buttonStyle(GhostPillButtonStyle())
+                .keyboardShortcut("2", modifiers: [])
+        default:
+            if checkIn.kind.supportsThanks && !checkIn.message.contains("?") {
+                Button(action: { coordinator.respondThanks() }) { Text("Thanks") }
+                .buttonStyle(GhostPillButtonStyle())
+                .keyboardShortcut("4", modifiers: [])
+            }
+                Button(action: { coordinator.respond(.snoozed(minutes: 10)) }) { Text("Later") }
+            .buttonStyle(GhostPillButtonStyle())
+            .keyboardShortcut("3", modifiers: [])
+        }
+    }
+
+    @ViewBuilder
+    private func rightActions(for checkIn: CheckIn) -> some View {
+        switch checkIn.kind {
+        case .status:
+            Button(action: { coordinator.respondMood(.great) }) { Text("Good") }
+                .buttonStyle(PillButtonStyle(accent: accent))
+                .keyboardShortcut("1", modifiers: [])
+        case .welcome:
+            Button(action: { coordinator.respond(.done) }) { Text("Let's go") }
+                .buttonStyle(PillButtonStyle(accent: accent))
+                .keyboardShortcut("1", modifiers: [])
+        case .sessionStart:
+            let isNowQuestion = checkIn.message.contains("Starting another session") || checkIn.message.contains("locking in") || checkIn.message.contains("Starting a focus session") || checkIn.message.contains("Ready") || checkIn.message.contains("Starting focus now")
+            Button(action: { coordinator.respond(.done) }) { Text(isNowQuestion ? "Sure" : "Okay") }
+                .buttonStyle(PillButtonStyle(accent: accent))
+                .keyboardShortcut("1", modifiers: [])
+        default:
+            if checkIn.kind.supportsTimer {
                 Button {
-                    coordinator.respond(.done)
+                    coordinator.startTimer()
                 } label: {
-                    HStack(spacing: 4) {
-                        keycap("1", dark: true)
-                        Text(checkIn.kind.primaryActionLabel)
+                    let seconds = checkIn.computedTimerSeconds(prefs: prefs)
+                    if seconds < 60 {
+                        Text("Start \(seconds)s")
+                    } else {
+                        Text("Start \(seconds / 60)m")
                     }
                 }
                 .buttonStyle(PillButtonStyle(accent: accent))
                 .keyboardShortcut("1", modifiers: [])
-                if checkIn.kind.supportsTimer {
-                    Button {
-                        coordinator.startTimer()
-                    } label: {
-                        HStack(spacing: 4) {
-                            keycap("2", dark: false)
-                            Text("Timer")
-                        }
-                    }
-                    .buttonStyle(GhostPillButtonStyle())
-                    .keyboardShortcut("2", modifiers: [])
-                }
-                Button {
-                    coordinator.respond(.snoozed(minutes: 10))
-                } label: {
-                    HStack(spacing: 4) {
-                        keycap("3", dark: false)
-                        Text("Later")
-                    }
-                }
-                .buttonStyle(GhostPillButtonStyle())
-                .keyboardShortcut("3", modifiers: [])
-                Spacer()
+            } else {
+                Button(action: { coordinator.respond(.done) }) { Text(checkIn.kind.primaryActionLabel) }
+                .buttonStyle(PillButtonStyle(accent: accent))
+                .keyboardShortcut("1", modifiers: [])
             }
         }
     }
-
-
-    private func logButton(_ title: String, symbol: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: 4) {
-                Image(systemName: symbol)
-                    .font(.system(size: 9, weight: .semibold))
-                Text(title)
-            }
-        }
-        .buttonStyle(GhostPillButtonStyle())
-        .help("Log \(title.lowercased())")
-    }
-
 
     private func keycap(_ label: String, dark: Bool) -> some View {
         Text(label)
@@ -228,7 +248,6 @@ struct NotchCompanionView: View {
                 in: RoundedRectangle(cornerRadius: 3, style: .continuous)
             )
     }
-
 
     private var waitingFooter: some View {
         TimelineView(.animation(minimumInterval: 1.0 / 20.0)) { timeline in
@@ -259,37 +278,63 @@ struct NotchCompanionView: View {
         // MARK: Timer
 
     private var timerView: some View {
-        HStack(spacing: 16) {
-            ZStack {
-                Circle()
-                    .stroke(.white.opacity(0.12), lineWidth: 4)
-                Circle()
-                    .trim(from: 0, to: CGFloat(coordinator.timerRemaining) / CGFloat(max(coordinator.timerTotal, 1)))
-                    .stroke(
-                        LinearGradient(colors: accent, startPoint: .top, endPoint: .bottom),
-                        style: StrokeStyle(lineWidth: 4, lineCap: .round)
-                    )
-                    .rotationEffect(.degrees(-90))
-                    .animation(.linear(duration: 1), value: coordinator.timerRemaining)
-                Text(timerLabel)
-                    .font(.system(size: 13, weight: .semibold, design: .rounded))
-                    .monospacedDigit()
-                    .foregroundStyle(.white)
+        let metrics = coordinator.metrics
+        return VStack(spacing: 8) {
+            HStack(spacing: 0) {
+                HStack {
+                    ZStack {
+                        Circle()
+                            .stroke(.white.opacity(0.12), lineWidth: 3)
+                        Circle()
+                            .trim(from: 0, to: CGFloat(coordinator.timerRemaining) / CGFloat(max(coordinator.timerTotal, 1)))
+                            .stroke(
+                                LinearGradient(colors: accent, startPoint: .top, endPoint: .bottom),
+                                style: StrokeStyle(lineWidth: 3, lineCap: .round)
+                            )
+                            .rotationEffect(.degrees(-90))
+                            .animation(.linear(duration: 1), value: coordinator.timerRemaining)
+                        Text(timerLabel)
+                            .font(.system(size: 11, weight: .semibold, design: .rounded))
+                            .monospacedDigit()
+                            .foregroundStyle(.white)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.5)
+                    }
+                    .frame(width: 28, height: 28)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                if metrics.hasNotch {
+                    Color.clear.frame(width: metrics.notchWidth + 12, height: 1)
+                }
+
+                HStack {
+                    Button("Finish") { coordinator.finishTimer(completed: false) }
+                        .buttonStyle(GhostPillButtonStyle())
+                }
+                .frame(maxWidth: .infinity, alignment: .trailing)
             }
-            .frame(width: 46, height: 46)
-            VStack(alignment: .leading, spacing: 3) {
-                Text("Reset in progress")
+            .frame(height: metrics.hasNotch ? max(metrics.topInset - 6, 26) : 28)
+            .padding(.horizontal, 4)
+
+            VStack(alignment: .center, spacing: 5) {
+                Text("Rest in progress")
                     .font(.perchRounded(13, weight: .semibold))
                     .foregroundStyle(.white.opacity(0.92))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
                 Text("Move a little. I'll keep count.")
                     .font(.perchRounded(11))
                     .foregroundStyle(.white.opacity(0.5))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                
+                CompanionFaceView(state: .playing, accent: accent, size: 28)
+                    .padding(.top, 4)
             }
-            Spacer()
-            Button("Finish") { coordinator.finishTimer(completed: false) }
-                .buttonStyle(GhostPillButtonStyle())
+            .padding(.horizontal, 6)
         }
-        .padding(.vertical, 8)
+        .padding(.bottom, 4)
     }
 
     private var timerLabel: String {
@@ -301,14 +346,32 @@ struct NotchCompanionView: View {
         // MARK: Confirmation
 
     private var confirmationView: some View {
-        HStack(spacing: 10) {
-            CompanionFaceView(state: .happy, accent: accent, size: 26)
+        let metrics = coordinator.metrics
+        return VStack(spacing: 8) {
+            HStack(spacing: 0) {
+                HStack(spacing: 8) {
+                    CompanionFaceView(state: .happy, accent: accent, size: 26)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                if metrics.hasNotch {
+                    Color.clear.frame(width: metrics.notchWidth + 12, height: 1)
+                }
+
+                HStack(spacing: 6) {
+                    Spacer()
+                }
+                .frame(maxWidth: .infinity, alignment: .trailing)
+            }
+            .frame(height: metrics.hasNotch ? max(metrics.topInset - 6, 26) : 28)
+            .padding(.horizontal, 4)
+
             Text(coordinator.confirmationText)
                 .font(.perchRounded(13, weight: .medium))
                 .foregroundStyle(.white.opacity(0.92))
-                .lineLimit(2)
-            Spacer()
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 6)
         }
-        .padding(.vertical, 6)
+        .padding(.bottom, 4)
     }
 }

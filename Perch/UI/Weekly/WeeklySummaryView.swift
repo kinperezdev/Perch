@@ -1,6 +1,5 @@
 import SwiftUI
 
-
 struct WeeklySummaryView: View {
     @Environment(AppContainer.self) private var container
 

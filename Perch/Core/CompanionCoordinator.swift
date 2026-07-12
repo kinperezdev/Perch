@@ -28,6 +28,7 @@ final class CompanionCoordinator {
     @ObservationIgnored private let memory: HabitMemoryStore
     @ObservationIgnored private let personality: PersonalityEngine
     @ObservationIgnored private let voice: VoiceService
+    @ObservationIgnored private let music: BreakMusicService
     @ObservationIgnored private let notifications: NotificationService
     @ObservationIgnored private let tracker: FocusSessionTracker
     @ObservationIgnored private let subscriptions: SubscriptionManager
@@ -46,6 +47,7 @@ final class CompanionCoordinator {
         memory: HabitMemoryStore,
         personality: PersonalityEngine,
         voice: VoiceService,
+        music: BreakMusicService,
         notifications: NotificationService,
         tracker: FocusSessionTracker,
         subscriptions: SubscriptionManager,
@@ -56,6 +58,7 @@ final class CompanionCoordinator {
         self.memory = memory
         self.personality = personality
         self.voice = voice
+        self.music = music
         self.notifications = notifications
         self.tracker = tracker
         self.subscriptions = subscriptions
@@ -63,7 +66,7 @@ final class CompanionCoordinator {
         self.chat = chat
     }
     func prepare() {
-        panel.attach(NotchCompanionView(coordinator: self))
+        panel.attach(NotchCompanionView(coordinator: self).environment(prefs))
     }
 
     var accentColors: [Color] { personality.activePersonality.accentColors }
@@ -71,6 +74,8 @@ final class CompanionCoordinator {
     var companionName: String { personality.companionName }
     var gate: FeatureGate { subscriptions.gate }
     var isPresenting: Bool { phase != .hidden }
+    var todayLog: HabitMemoryStore.DayLog { memory.today() }
+
     func present(kind: ReminderKind, context: CheckInContext) async -> Bool {
         guard phase == .hidden else { return false }
         let brainCtx = brain.contextSummary()
@@ -108,7 +113,7 @@ final class CompanionCoordinator {
         guard phase == .message else { return }
         cancelTimeout()
         respondBackground(response)
-        showConfirmation(personality.confirmation(for: response))
+        showConfirmation(personality.confirmation(for: response, kind: current?.kind))
     }
 
     private func respondBackground(_ response: CheckInResponse) {
@@ -122,12 +127,14 @@ final class CompanionCoordinator {
         }
     }
 
-    func startTimer(seconds: Int = 60) {
-        guard current != nil, phase == .message else { return }
+    func startTimer() {
+        guard let current, phase == .message else { return }
         cancelTimeout()
+        let seconds = current.computedTimerSeconds(prefs: prefs)
         timerTotal = seconds
         timerRemaining = seconds
         reveal(.timer)
+        music.start()
         timerTask?.cancel()
         timerTask = Task { [weak self] in
             while let self, self.timerRemaining > 0, !Task.isCancelled {
@@ -142,6 +149,7 @@ final class CompanionCoordinator {
     func finishTimer(completed: Bool) {
         guard phase == .timer, let current else { return }
         timerTask?.cancel()
+        music.stop()
         lastCheckInAnswered = true
         let response: CheckInResponse = completed ? .timerCompleted : .done
         if current.kind.isTrackable {
@@ -150,28 +158,36 @@ final class CompanionCoordinator {
         showConfirmation(personality.confirmation(for: response))
     }
 
-    func logWaterQuick() {
-        memory.logWater()
-        cancelTimeout()
-        showConfirmation(personality.confirmation(for: .done))
+    /// Logs a habit from the bubble's + menu without dismissing the check in.
+    func quickLog(_ topic: ChatTopic) {
+        switch topic {
+        case .water: memory.logWater()
+        case .meal: memory.logMeal()
+        case .breakTime: tracker.creditBreak()
+        case .shower: memory.logShower()
+        case .feeling: break
+        }
     }
 
-    func takeBreakQuick() {
-        tracker.creditBreak()
+    func respondMood(_ mood: ChatScriptLibrary.Mood) {
+        guard phase == .message else { return }
         cancelTimeout()
-        showConfirmation(personality.confirmation(for: .done))
+        lastCheckInAnswered = true
+        if mood == .great {
+            brain.recordPositiveResponse()
+        }
+        let call = activePersonality.callName(userName: prefs.userName)
+        showConfirmation(ChatScriptLibrary.moodConfirmation(mood, activePersonality, callName: call))
     }
 
-    func logMealQuick() {
-        memory.logMeal()
+    func respondThanks() {
+        guard phase == .message, let current else { return }
         cancelTimeout()
-        showConfirmation(personality.confirmation(for: .done))
-    }
-
-    func logShowerQuick() {
-        memory.logShower()
-        cancelTimeout()
-        showConfirmation(personality.confirmation(for: .done))
+        lastCheckInAnswered = true
+        if current.kind.isTrackable {
+            applyResponse?(current.kind, .ignored, current.context)
+        }
+        showConfirmation(personality.thanksLine())
     }
 
     func quickAnswerPressed() {
@@ -201,6 +217,7 @@ final class CompanionCoordinator {
 
     func openChat() {
         cancelTimeout()
+        chat.clear()
         chat.openIfNeeded()
         reveal(.chat)
         panel.makeKey()
@@ -209,6 +226,7 @@ final class CompanionCoordinator {
     func hide() {
         cancelTimeout()
         timerTask?.cancel()
+        music.stop()
         confirmationTask?.cancel()
         phase = .hidden
         panel.hide(afterDelay: 0.45)
@@ -245,9 +263,13 @@ final class CompanionCoordinator {
         case .hidden:
             return CGSize(width: max(anchor + 40, 250), height: 132)
         case .timer:
-            return CGSize(width: max(anchor - 20, 235), height: 94)
+            if metrics.hasNotch {
+                return CGSize(width: metrics.notchWidth + 240, height: metrics.topInset + 90)
+            } else {
+                return CGSize(width: 250, height: 140)
+            }
         case .confirmation:
-            return CGSize(width: max(anchor, 245), height: 58)
+            return CGSize(width: max(anchor + 120, 320), height: 76)
         case .message:
             return CGSize(width: max(anchor + notchMessageExtra, 520), height: 140)
         case .chat:
@@ -258,6 +280,7 @@ final class CompanionCoordinator {
     private func startTimeout(seconds: Double) {
         cancelTimeout()
         timeoutProgress = 0
+        guard prefs.autoHideMessages else { return }
         timeoutTask = Task { [weak self] in
             var elapsed: Double = 0
             while elapsed < seconds, !Task.isCancelled {

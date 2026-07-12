@@ -53,12 +53,15 @@ final class PreferencesStore {
         }
     }
     var notificationsMirror: Bool { didSet { save(notificationsMirror, "notificationsMirror") } }
+    var breakMusicEnabled: Bool { didSet { save(breakMusicEnabled, "breakMusicEnabled") } }
 
     var shortcutKeyCode: Int { didSet { save(shortcutKeyCode, "shortcutKeyCode") } }
     var shortcutModifiers: UInt { didSet { save(shortcutModifiers, "shortcutModifiers") } }
 
     var pausedUntil: Date? { didSet { save(pausedUntil, "pausedUntil") } }
     var demoMode: Bool { didSet { save(demoMode, "demoMode") } }
+    var autoHideMessages: Bool { didSet { save(autoHideMessages, "autoHideMessages") } }
+    var timerDurationMinutes: Int { didSet { save(timerDurationMinutes, "timerDurationMinutes") } }
 
     init() {
         hasOnboarded = defaults.bool(forKey: "hasOnboarded")
@@ -96,11 +99,14 @@ final class PreferencesStore {
         voiceOverrides = defaults.dictionary(forKey: "voiceOverrides") as? [String: String] ?? [:]
         voiceIdentifier = defaults.string(forKey: "voiceIdentifier") ?? ""
         notificationsMirror = defaults.object(forKey: "notificationsMirror") as? Bool ?? false
+        breakMusicEnabled = defaults.object(forKey: "breakMusicEnabled") as? Bool ?? true
 
         shortcutKeyCode = defaults.object(forKey: "shortcutKeyCode") as? Int ?? 49
         shortcutModifiers = defaults.object(forKey: "shortcutModifiers") as? UInt ?? Self.defaultModifiers
         pausedUntil = defaults.object(forKey: "pausedUntil") as? Date
         demoMode = defaults.bool(forKey: "demoMode")
+        autoHideMessages = defaults.object(forKey: "autoHideMessages") as? Bool ?? true
+        timerDurationMinutes = defaults.object(forKey: "timerDurationMinutes") as? Int ?? 5
     }
     static let defaultModifiers: UInt = (1 << 18) | (1 << 19)
 

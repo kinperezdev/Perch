@@ -1,13 +1,11 @@
 import SwiftUI
 
-
 struct DashboardView: View {
     @Environment(AppContainer.self) private var container
     @Environment(\.openSettings) private var openSettings
     @State private var showingAchievements = false
 
     private var accent: [Color] { container.prefs.activePersonality.accentColors }
-
 
     private var contextualFaceState: CompanionFaceView.FaceState {
         if container.memory.today().checkInsAccepted > 0 { return .happy }
@@ -159,13 +157,13 @@ struct DashboardView: View {
 
     private var weekSection: some View {
         let week = container.memory.weekSummary()
-        let maxSeconds = max(week.days.map(\.activeSeconds).max() ?? 1, 1)
+        let maxLogs = max(week.days.map(\.totalLogs).max() ?? 1, 1)
         return VStack(alignment: .leading, spacing: 10) {
             sectionKicker("This week")
             if container.subscriptions.gate.weeklySummary {
                 HStack(alignment: .bottom, spacing: 10) {
                     ForEach(week.days) { day in
-                        dayBar(day, maxSeconds: maxSeconds)
+                        dayBar(day, maxLogs: maxLogs)
                     }
                 }
                 .frame(height: 160 * PerchStyle.scale, alignment: .bottom)
@@ -197,8 +195,8 @@ struct DashboardView: View {
         .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
-    private func dayBar(_ day: HabitMemoryStore.DayLog, maxSeconds: Double) -> some View {
-        let ratio = day.activeSeconds / maxSeconds
+    private func dayBar(_ day: HabitMemoryStore.DayLog, maxLogs: Int) -> some View {
+        let ratio = maxLogs > 0 ? sqrt(Double(day.totalLogs)) / sqrt(Double(maxLogs)) : 0
         return VStack(spacing: 4) {
             Capsule()
                 .fill(PerchStyle.accentGradient(accent))
@@ -266,7 +264,7 @@ struct DashboardView: View {
     private var footer: some View {
         HStack {
             Label(
-                "Quick answer: \(QuickAnswerShortcutManager.describe(keyCode: container.prefs.shortcutKeyCode, modifiers: container.prefs.shortcutModifiers))",
+                "Quick check in: \(QuickAnswerShortcutManager.describe(keyCode: container.prefs.shortcutKeyCode, modifiers: container.prefs.shortcutModifiers))",
                 systemImage: "keyboard"
             )
             .font(.perchRounded(10.5))

@@ -55,7 +55,6 @@ extension Font {
 
 // MARK: - Button styles
 
-
 struct PillButtonStyle: ButtonStyle {
     var accent: [Color]
 
@@ -73,7 +72,6 @@ struct PillButtonStyle: ButtonStyle {
     }
 }
 
-
 struct GhostPillButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -87,7 +85,6 @@ struct GhostPillButtonStyle: ButtonStyle {
     }
 }
 
-
 struct IconPillButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -99,7 +96,6 @@ struct IconPillButtonStyle: ButtonStyle {
             .animation(.spring(response: 0.25, dampingFraction: 0.7), value: configuration.isPressed)
     }
 }
-
 
 struct BigActionButtonStyle: ButtonStyle {
     var accent: [Color]

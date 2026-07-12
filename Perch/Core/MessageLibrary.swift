@@ -1,6 +1,5 @@
 import Foundation
 
-
 enum MessageLibrary {
 
     static func variants(kind: ReminderKind, personality: Personality) -> [String] {
@@ -8,143 +7,143 @@ enum MessageLibrary {
 
         // MARK: Water
         case (.water, .mother): return [
-            "Sweetheart, you haven't had water in a while. Drink first, the code can wait a minute.",
-            "{name}, have some water please. I worry when you forget."]
+            "Sweetheart, have you had any water lately? Please drink a glass, the code can wait.",
+            "{name}, did you remember to drink water? I worry when you forget."]
         case (.water, .homie): return [
-            "Yo {name}, hydration check. Grab some water real quick, then keep cooking.",
-            "Bro. Water. Now. Your brain runs on it, trust."]
+            "Yo {name}, hydration check—have you drank any water? Grab some real quick.",
+            "Bro, are you drinking water? Your brain runs on it, trust."]
         case (.water, .professional): return [
-            "Quick note: no water logged in a while. A glass now will keep your focus sharp.",
-            "Hydration reminder. A short water break is recommended before your next block."]
+            "Have you had water recently? A glass now will keep your focus sharp.",
+            "Hydration reminder. Did you take a short water break before your next block?"]
         case (.water, .mentor): return [
-            "A small thing done consistently: drink some water, {name}. It keeps the mind clear.",
-            "Pause. Water. The work will still be here in ninety seconds."]
+            "Have you drank any water, {name}? It keeps the mind clear.",
+            "Did you pause for water? The work will still be here in ninety seconds."]
         case (.water, .coach): return [
-            "Hydration rep, {name}! One glass, then back in the game.",
-            "Athletes hydrate. Builders too. Quick water break, let's go."]
+            "Did you hit your hydration rep, {name}? One glass, then back in the game.",
+            "Athletes hydrate, builders too. Did you take a quick water break?"]
         case (.water, .playful): return [
-            "Beep beep. Your internal plants need watering, {name}.",
-            "Fun fact: you are mostly water. Top yourself up a little?"]
+            "Beep beep. Did you water your internal plants today, {name}?",
+            "Fun fact: you are mostly water. Want to top yourself up a little?"]
 
         // MARK: Stretch
         case (.stretch, .mother): return [
-            "Sweetheart, you've been sitting for {duration}. Stand up and stretch for me, please.",
-            "{name}, your back will thank you later. One minute of stretching, okay?"]
+            "Sweetheart, you've been sitting for {duration}. Could you stand up and stretch for me?",
+            "{name}, your back will thank you later. Did you take a minute to stretch?"]
         case (.stretch, .homie): return [
-            "Bro, you've been locked in for {duration}. Stretch first, then cook again.",
-            "{name}, quick stretch break. Can't ship greatness with a stiff neck."]
+            "Bro, you've been locked in for {duration}. Did you stretch yet?",
+            "{name}, how about a quick stretch break? Can't ship greatness with a stiff neck."]
         case (.stretch, .professional): return [
-            "You have been focused for {duration}. A short stretch break is recommended.",
-            "Long session detected: {duration}. Consider standing and stretching briefly."]
+            "You have been focused for {duration}. Have you taken a short stretch break?",
+            "Long session detected: {duration}. Would you like to stand and stretch briefly?"]
         case (.stretch, .mentor): return [
-            "It's been {duration} of deep work. Stand, breathe, stretch. Then return with fresh eyes.",
-            "{name}, the body carries the mind. Give it a minute of movement."]
+            "It's been {duration} of deep work. Did you stand, breathe, and stretch?",
+            "{name}, the body carries the mind. Have you given it a minute of movement?"]
         case (.stretch, .coach): return [
-            "{duration} of focus, nice endurance {name}! Now a mobility minute. Stand up, reach tall.",
-            "Time out! Stretch those shoulders. Recovery is part of the program."]
+            "{duration} of focus! Have you done your mobility minute? Stand up, reach tall.",
+            "Time out! Did you stretch those shoulders? Recovery is part of the program."]
         case (.stretch, .playful): return [
-            "You've been statue mode for {duration}. Time to do the human noodle dance.",
-            "Stretch o'clock, {name}. Arms up! Pretend you just won something."]
+            "You've been statue mode for {duration}. Are you ready to do the human noodle dance?",
+            "Stretch o'clock, {name}. Arms up! Have you pretended you just won something yet?"]
 
         // MARK: Eyes
         case (.eyes, .mother): return [
-            "Rest your eyes for a moment, sweetheart. Look far away, blink a little.",
-            "{name}, your eyes have been working hard. Look out the window for twenty seconds."]
+            "Have you rested your eyes, sweetheart? Look far away, blink a little.",
+            "{name}, your eyes have been working hard. Did you look out the window today?"]
         case (.eyes, .homie): return [
-            "Eyes check, {name}. Stare at something far away for a sec, screens are brutal.",
-            "Give your eyes a breather bro. Twenty seconds, something 20 feet away."]
+            "Eyes check, {name}. Did you stare at something far away for a sec?",
+            "Are you giving your eyes a breather, bro? Twenty seconds, something 20 feet away."]
         case (.eyes, .professional): return [
-            "Eye strain prevention: focus on a distant object for about twenty seconds.",
-            "Screen time is adding up. A brief distance gaze will reset your eyes."]
+            "Have you focused on a distant object recently to prevent eye strain?",
+            "Screen time is adding up. Did you take a brief distance gaze to reset your eyes?"]
         case (.eyes, .mentor): return [
-            "Let your gaze travel somewhere far for a moment. The eyes need horizons too.",
-            "Twenty seconds of distance, {name}. Small habits protect long careers."]
+            "Have you let your gaze travel somewhere far? The eyes need horizons too.",
+            "Did you take twenty seconds of distance, {name}? Small habits protect long careers."]
         case (.eyes, .coach): return [
-            "Eye reset rep! Twenty seconds, far focus. Protect the equipment, {name}.",
-            "Blink break! Look far, breathe once, back in."]
+            "Did you do your eye reset rep? Twenty seconds, far focus. Protect the equipment.",
+            "Blink break! Did you look far and breathe before going back in?"]
         case (.eyes, .playful): return [
-            "Your eyeballs formally request a vacation. A tiny one. Twenty seconds, far away.",
-            "Quick! Look at the farthest thing you can find. It's a game. You win by blinking."]
+            "Your eyeballs formally request a vacation. Did you give them twenty seconds far away?",
+            "Quick! Have you looked at the farthest thing you can find?"]
 
         // MARK: Posture
         case (.posture, .mother): return [
-            "Sweetheart, sit up straight for me. Shoulders back, deep breath.",
-            "{name}, check your posture please. You'll feel better right away."]
+            "Sweetheart, are you sitting up straight? Shoulders back, deep breath.",
+            "{name}, did you check your posture? You'll feel better right away."]
         case (.posture, .homie): return [
-            "Posture check {name}. Unfold yourself, you're doing the shrimp thing again.",
-            "Sit up bro. Future you says thanks."]
+            "Posture check {name}. Are you doing the shrimp thing again?",
+            "Are you sitting up, bro? Future you will say thanks."]
         case (.posture, .professional): return [
-            "Posture check: shoulders relaxed, back supported, screen at eye level.",
-            "A brief posture reset now will prevent fatigue later."]
+            "Posture check: are your shoulders relaxed and screen at eye level?",
+            "Have you done a brief posture reset? It will prevent fatigue later."]
         case (.posture, .mentor): return [
-            "Notice how you're sitting, {name}. Straighten gently. Alignment is quiet strength.",
-            "A tall spine, a calm breath. Continue."]
+            "Have you noticed how you're sitting, {name}? Straighten gently.",
+            "Are you keeping a tall spine and a calm breath?"]
         case (.posture, .coach): return [
-            "Form check, {name}! Chest up, shoulders back. Good form, good output.",
-            "Reset that stance! Even sitting is a sport if you do it right."]
+            "Form check, {name}! Are your chest up and shoulders back?",
+            "Did you reset that stance? Even sitting is a sport if you do it right."]
         case (.posture, .playful): return [
-            "Croissant detected in your chair. Please return to human shape, {name}.",
-            "Posture patrol! Straighten up before you evolve into a question mark."]
+            "Croissant detected in your chair. Could you please return to human shape, {name}?",
+            "Posture patrol! Are you straightening up before you evolve into a question mark?"]
 
         // MARK: Walk
         case (.walk, .mother): return [
-            "You've been inside this screen for {duration}, sweetheart. A short walk would be so good for you.",
-            "{name}, stretch your legs a little. Even just around the room, please."]
+            "You've been inside this screen for {duration}. Would you like to take a short walk?",
+            "{name}, did you stretch your legs today? Even just around the room?"]
         case (.walk, .homie): return [
-            "Big session, {name}. {duration} straight. Take a lap, get some air, come back sharper.",
-            "Bro, five minute walk. The best ideas show up when you step away."]
+            "Big session, {name}. {duration} straight. Want to take a lap and get some air?",
+            "Bro, how about a short walk? The best ideas show up when you step away."]
         case (.walk, .professional): return [
-            "You have been at your desk for {duration}. A five minute walk is recommended.",
-            "Extended session: {duration}. A brief walk will restore focus and circulation."]
+            "You have been at your desk for {duration}. Would you consider a short walk?",
+            "Extended session: {duration}. Did you take a brief walk to restore focus?"]
         case (.walk, .mentor): return [
-            "{duration} of sitting, {name}. Walking is thinking. Give yourself five minutes of it.",
-            "Step away briefly. Distance from the problem is often the fastest path through it."]
+            "{duration} of sitting, {name}. Have you given yourself a few minutes to walk?",
+            "Did you step away briefly? Distance from the problem is often the fastest path through it."]
         case (.walk, .coach): return [
-            "Cardio micro session! Five minute walk, {name}. Movement feeds momentum.",
-            "{duration} on the bench, time to move! Quick lap, then we go again."]
+            "Cardio micro session! Have you taken a short walk, {name}?",
+            "{duration} on the bench! Want to take a quick lap before we go again?"]
         case (.walk, .playful): return [
-            "Your legs just filed a missing person report. Take them for a walk?",
-            "Adventure time, {name}! A legendary five minute quest to Outside."]
+            "Your legs just filed a missing person report. Want to take them for a walk?",
+            "Adventure time, {name}! Ready for a legendary quick quest to Outside?"]
 
         // MARK: Meal
         case (.meal, .mother): return [
-            "Sweetheart, it's {meal} time. Have you eaten? Please don't skip it for work.",
-            "You skipped {meal} around this time yesterday, {name}. Please eat something today, promise?"]
+            "Sweetheart, it's {meal} time. Have you eaten yet?",
+            "You skipped {meal} yesterday, {name}. Are you going to eat something today?"]
         case (.meal, .homie): return [
-            "{name}, {meal} time bro. Feed the machine or the machine stops cooking.",
-            "You dodged {meal} yesterday. Not today bro. Go eat, I'll hold your spot."]
+            "{name}, it's {meal} time bro. Did you feed the machine?",
+            "You dodged {meal} yesterday. Are you going to go eat now?"]
         case (.meal, .professional): return [
-            "It's around your usual {meal} time. Taking it now will keep your afternoon steady.",
-            "Reminder: {meal} was skipped yesterday. A proper break today is strongly recommended."]
+            "It's around your usual {meal} time. Have you taken a break to eat?",
+            "Reminder: {meal} was skipped yesterday. Are you taking a proper break today?"]
         case (.meal, .mentor): return [
-            "It's {meal} time, {name}. Fuel is part of the work, not a break from it.",
-            "Yesterday {meal} slipped past you. Today, let it anchor your day instead."]
+            "It's {meal} time, {name}. Have you fueled up for the work?",
+            "Yesterday {meal} slipped past you. Will you let it anchor your day today?"]
         case (.meal, .coach): return [
-            "Fuel window open, {name}! {meal} time. You can't out-train an empty tank.",
-            "Nutrition is training too. Go get {meal}, champ."]
+            "Fuel window open, {name}! Have you had your {meal}?",
+            "Nutrition is training too. Did you go get your {meal}, champ?"]
         case (.meal, .playful): return [
-            "Your stomach called. It said something dramatic about {meal}. Better go check.",
-            "{meal} quest available! Reward: energy, joy, not being hangry."]
+            "Your stomach called. Have you gone to check on your {meal}?",
+            "{meal} quest available! Are you ready to claim your energy reward?"]
 
         // MARK: Shower
         case (.shower, .mother): return [
-            "Sweetheart, it's around your usual shower time. A warm shower will do you good.",
-            "{name}, go freshen up for a bit. You'll feel so much better."]
+            "Sweetheart, it's around your usual shower time. Have you taken one yet?",
+            "{name}, did you go freshen up for a bit? You'll feel so much better."]
         case (.shower, .homie): return [
-            "Bro, shower time. Reset the vibes and come back sharper.",
-            "{name}, go rinse off real quick. Trust the process."]
+            "Bro, shower time. Have you reset the vibes yet?",
+            "{name}, did you go rinse off real quick?"]
         case (.shower, .professional): return [
-            "It's around your usual shower time. A quick reset can help your focus.",
-            "Reminder: this is typically when you shower. Consider taking one now."]
+            "It's around your usual shower time. Have you taken a quick reset?",
+            "Reminder: this is typically when you shower. Have you taken one today?"]
         case (.shower, .mentor): return [
-            "It's shower time, {name}. Small resets keep the whole day steady.",
-            "Cleanse and reset. The work will still be here after."]
+            "It's shower time, {name}. Have you taken your small reset?",
+            "Cleanse and reset. Have you taken your shower yet?"]
         case (.shower, .coach): return [
-            "Reset rep, {name}! Shower time, then back at it fresh.",
-            "Quick reset in the locker room, champ. Go shower."]
+            "Reset rep, {name}! Did you take your shower time?",
+            "Quick reset in the locker room, champ. Have you showered?"]
         case (.shower, .playful): return [
-            "Beep boop, hygiene quest available: take a shower, {name}.",
-            "It's your usual shower o'clock. Go be a fresh, clean legend."]
+            "Beep boop. Did you complete your hygiene quest and take a shower, {name}?",
+            "It's your usual shower o'clock. Are you going to be a fresh, clean legend?"]
 
         // MARK: Overwork
         case (.overwork, .mother): return [
@@ -269,13 +268,13 @@ enum MessageLibrary {
         // MARK: Status
         case (.status, .mother): return [
             "You've been focused for {duration}, sweetheart. How are you feeling right now?",
-            "{duration} of good work so far, {name}. Is there anything you need from me?"]
+            "{duration} of good work so far, {name}. How are you holding up?"]
         case (.status, .homie): return [
             "You're {duration} deep and cruising, {name}. How's it going in there?",
             "{duration} locked in, bro. You good, or you need a breather?"]
         case (.status, .professional): return [
-            "You're at {duration} of focus. Is everything going smoothly?",
-            "Current session: {duration}. Anything you'd like me to help with?"]
+            "You're at {duration} of focus. How are you feeling?",
+            "Current session: {duration}. How is it going in there?"]
         case (.status, .mentor): return [
             "{duration} of steady work, {name}. How is your energy holding up?",
             "The session flows well at {duration}. Are you still in a good rhythm?"]
@@ -288,23 +287,23 @@ enum MessageLibrary {
 
         // MARK: Session start
         case (.sessionStart, .mother): return [
-            "There you are, sweetheart. Starting another session? Want me to watch the clock for you?",
+            "There you are, sweetheart. Starting another session?",
             "Good to see you working, {name}. Have you eaten and had water first?"]
         case (.sessionStart, .homie): return [
-            "Yo {name}, locking in? Want me to keep you honest on breaks?",
-            "New session, let's cook. Should I ping you when it's water time?"]
+            "Yo {name}, locking in?",
+            "New session, let's cook."]
         case (.sessionStart, .professional): return [
-            "Starting a focus session? I can watch your pace and check in. Sound good?",
-            "You're in focus, {name}. Would you like me to remind you about breaks?"]
+            "Starting a focus session?",
+            "You're in focus, {name}."]
         case (.sessionStart, .mentor): return [
-            "A fresh block begins, {name}. What's the one thing you want to finish?",
-            "Back to the craft. Shall I guard the pace so you don't have to?"]
+            "A fresh block begins, {name}. Ready to start?",
+            "Back to the craft."]
         case (.sessionStart, .coach): return [
-            "Session's live, {name}! Ready to lock in? I'll call the recovery breaks.",
-            "Game on! Want me to keep you on a solid work-rest rhythm today?"]
+            "Session's live, {name}! Ready to lock in?",
+            "Game on! Let's get to work."]
         case (.sessionStart, .playful): return [
-            "A wild focus session appears! Want a tiny guardian on break duty, {name}?",
-            "Guardian mode ready. Should I nudge you when it's time to move?"]
+            "A wild focus session appears! Ready, {name}?",
+            "Guardian mode ready. Starting focus now?"]
 
         // MARK: Welcome
         case (.welcome, .mother): return [
@@ -331,26 +330,37 @@ enum MessageLibrary {
             case .professional: return ["Noted. Resuming focus.", "Logged. Well done."]
             case .mentor: return ["Well kept, {name}.", "Good. Small acts, long careers."]
             case .coach: return ["Rep counted! Nice.", "That's the discipline. Go."]
-            case .playful: return ["Achievement unlocked!", "Gold star. Massive one."]
+            case .playful: return ["Got it! Let's keep the streak alive.", "Nailed it! You're crushing it today."]
             }
         case .snoozed:
             switch personality {
-            case .mother: return ["Okay sweetheart, but I'll come back. Promise me."]
-            case .homie: return ["Bet. I'll circle back in a few."]
-            case .professional: return ["Understood. I'll remind you shortly."]
-            case .mentor: return ["Alright. I'll return when the moment is better."]
-            case .coach: return ["Copy that. Short delay, then we go."]
-            case .playful: return ["Fine, but I'm setting a tiny dramatic timer."]
+            case .mother: return ["Okay sweetheart, but I'll come back. Promise me.", "Alright, but don't make me ask twice, sweetheart."]
+            case .homie: return ["Bet. I'll circle back in a few.", "Aight, snoozed. Don't ghost me though."]
+            case .professional: return ["Understood. I'll remind you shortly.", "Noted. A follow up is scheduled."]
+            case .mentor: return ["Alright. I'll return when the moment is better.", "Fine. Some moments arrive a little later."]
+            case .coach: return ["Copy that. Short delay, then we go.", "Snooze logged. We go again shortly."]
+            case .playful: return ["Fine, but I'm setting a tiny dramatic timer.", "Snooze accepted. My tiny timer is dramatic but fair."]
             }
         case .ignored, .timedOut:
             switch personality {
-            case .mother: return ["Okay, I'll let you focus. Take care, okay?"]
-            case .homie: return ["All good. I'll catch you later."]
-            case .professional: return ["Dismissed. I'll stay out of the way."]
-            case .mentor: return ["Understood. The work calls. I'll be near."]
-            case .coach: return ["Roger. Back to the game."]
-            case .playful: return ["Vanishing gracefully. Poof."]
+            case .mother: return ["Okay, I'll let you focus. Take care, okay?", "Alright, sweetheart. I'll be close by."]
+            case .homie: return ["All good. I'll catch you later.", "Say less. I'm around if you need me."]
+            case .professional: return ["Dismissed. I'll stay out of the way.", "Understood. Resuming quiet watch."]
+            case .mentor: return ["Understood. The work calls. I'll be near.", "As you wish. I'll keep quiet watch."]
+            case .coach: return ["Roger. Back to the game.", "Got it. I'll hold the bench."]
+            case .playful: return ["Vanishing gracefully. Poof.", "Poof! I'm still here, just very tiny."]
             }
+        }
+    }
+
+    static func thanksReplies(personality: Personality) -> [String] {
+        switch personality {
+        case .mother: ["Always, sweetheart. Now take that break soon, okay?", "Anytime, love. Look after yourself."]
+        case .homie: ["Got you, bro. Now actually do it.", "Anytime. I got your six."]
+        case .professional: ["Of course. Do consider it soon.", "You're welcome. Carry on."]
+        case .mentor: ["Of course. Kindness to yourself finishes the work.", "Always. The reminder is part of the craft."]
+        case .coach: ["That's my job! Now go take it, {name}.", "Anytime! Recovery is part of the program."]
+        case .playful: ["You're welcome! Tiny guardian duties fulfilled.", "Anytime! It's literally my whole job."]
         }
     }
 

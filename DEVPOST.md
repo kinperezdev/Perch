@@ -41,11 +41,11 @@ Building a non-intrusive companion requires incredible restraint. We learned how
 **Ground the companion in real data, not vibes.** Generic supportive lines feel hollow fast. Replies got noticeably better when we fed the model the same numbers the dashboard shows (focus minutes, water, meals, breaks, shower) and told it to praise what's logged and nudge only the one habit that's clearly behind.
 
 ## What we sacrificed
-**Cloud AI.** We had working OpenAI, Gemini, and Claude integrations with Keychain-stored keys. We deleted all of it. Smarter replies weren't worth asking users for an API key, sending their private moments over the network, or maintaining three providers. Perch runs 100% on device: Apple Intelligence first, a local Ollama model if you have one, curated lines if you have neither. Zero setup, zero keys, zero data leaves your Mac.
+**Cloud AI APIs.** We had working OpenAI, Gemini, and Claude integrations. But we removed all of them. This app is a companion, not an AI chatbot. Smarter replies weren't worth asking users for an API key, sending their private moments over the network, or maintaining three providers. To make everything work as expected and get the app to the stable, fast stage it is in now, we had to cut the cloud. Perch runs 100% on device.
 
 **Voice input.** Mic replies and dictation were genuinely cool in demos, but they needed two system permissions, an always-warm speech pipeline, and they were slower than tapping a button. We kept the part that matters (Perch can still speak to you, including in your own Personal Voice) and cut the part that didn't (Perch listening).
 
-**The chatbot.** The hardest cut. A companion that chats feels more alive, but every hour spent making chat smarter was an hour not spent making reminders land at the right moment. Perch's job is to remind you to take care of yourself, not to hold a conversation. Saying no to the chatbot is what keeps it honest.
+**The chatbot.** This was the biggest tradeoff. A companion that chats feels more alive, but Perch's job is to remind you to take care of yourself, not to hold a conversation. By removing the chatbot, we ensured the app remains a true wellbeing companion rather than a distraction. Saying no to the chatbot and the API is what allowed us to get to this refined stage.
 
 ## What's next for Perch
 We plan to release Perch on the Mac App Store officially! We want to expand the PerchBrain to sync securely via iCloud so your companion remembers your habits across multiple Macs.

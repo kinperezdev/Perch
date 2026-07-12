@@ -1,7 +1,6 @@
 import ServiceManagement
 import SwiftUI
 
-
 struct OnboardingView: View {
     @Environment(AppContainer.self) private var container
     let onFinish: () -> Void
@@ -54,7 +53,6 @@ struct OnboardingView: View {
         }
         .ignoresSafeArea()
     }
-
 
     private func kicker(_ text: String) -> some View {
         Text("\(String(format: "%02d", page + 1)) / \(String(format: "%02d", lastPage + 1))  ·  \(text)")
@@ -265,7 +263,6 @@ struct OnboardingView: View {
         .buttonStyle(.plain)
     }
 
-
     private var notchPreview: some View {
         let personality = container.prefs.personality
         let shape = UnevenRoundedRectangle(
@@ -294,7 +291,7 @@ struct OnboardingView: View {
             .padding(.bottom, 12)
         }
         .frame(width: 410)
-        .background(shape.fill(.black))
+        .background(shape.fill(Color(red: 0, green: 0, blue: 0)))
         .overlay(
             shape.strokeBorder(
                 LinearGradient(
@@ -582,8 +579,8 @@ struct OnboardingView: View {
 
     private var shortcutPage: some View {
         VStack(spacing: 16) {
-            kicker("Quick answers")
-            Text("Your quick answer key")
+            kicker("Quick check ins")
+            Text("Your quick check in key")
                 .font(.perchRounded(24, weight: .bold))
             Text("When I check in, press it from any app to answer without touching the mouse.")
                 .font(.perchRounded(11.5))

@@ -7,7 +7,7 @@ struct ShortcutSettingsView: View {
 
     var body: some View {
         Form {
-            Section("Quick answer shortcut") {
+            Section("Quick check in shortcut") {
                 HStack {
                     Text("Press from anywhere to answer the latest check in")
                     Spacer()
@@ -55,7 +55,6 @@ struct ShortcutSettingsView: View {
         .formStyle(.grouped)
     }
 }
-
 
 struct ShortcutRecorderButton: View {
     @Binding var isRecording: Bool
@@ -119,8 +118,6 @@ struct ShortcutRecorderButton: View {
         ShortcutRecordingCoordinator.shared.end()
     }
 }
-
-
 
 @MainActor
 private final class ShortcutRecordingCoordinator {

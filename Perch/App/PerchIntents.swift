@@ -1,6 +1,5 @@
 import AppIntents
 
-
 struct LogWaterIntent: AppIntent {
     static let title: LocalizedStringResource = "Log Water"
     static let description = IntentDescription("Log a glass of water in Perch.")

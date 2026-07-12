@@ -1,6 +1,5 @@
 import Foundation
 
-
 @MainActor
 final class ReminderEngine {
 
@@ -9,7 +8,6 @@ final class ReminderEngine {
     private let tracker: FocusSessionTracker
     private let calendar: CalendarAwarenessService
     private let subscriptions: SubscriptionManager
-
 
     var onDeliver: ((ReminderKind, CheckInContext) async -> Bool)?
 
@@ -129,7 +127,6 @@ final class ReminderEngine {
         if let c = sessionStartRule(now: now) { candidates.append(c) }
         return candidates.max { $0.kind.priority < $1.kind.priority }
     }
-
 
     private func sessionStartRule(now: Date) -> Candidate? {
         let run = tracker.focusRunMinutes
@@ -314,7 +311,6 @@ final class ReminderEngine {
         pending = nil
     }
 
-
     func forceCheckIn() async {
         let now = Date()
         let run = tracker.focusRunMinutes
@@ -356,7 +352,6 @@ final class ReminderEngine {
         return nil
     }
 
-
     func nextHint(now: Date = Date()) -> String? {
         guard tracker.isInSession else { return nil }
         var remaining: [Double] = []
@@ -379,14 +374,12 @@ final class ReminderEngine {
         return true
     }
 
-
     private func threshold(_ base: Double, kind: ReminderKind, now: Date) -> Double {
         let memoryMultiplier = subscriptions.gate.adaptiveMemory
             ? memory.intervalMultiplier(kind: kind, at: now)
             : 1.0
         return base * prefs.intensity.intervalMultiplier * memoryMultiplier
     }
-
 
     private func minutesSinceKindEvent(_ kind: ReminderKind, now: Date) -> Double {
         let runStart = now.addingTimeInterval(-tracker.focusRunSeconds / prefs.demoTimeScale)

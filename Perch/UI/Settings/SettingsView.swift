@@ -47,7 +47,6 @@ struct SettingsView: View {
     }
 }
 
-
 func timeOfDayBinding(_ source: Binding<Int>) -> Binding<Date> {
     Binding<Date>(
         get: {

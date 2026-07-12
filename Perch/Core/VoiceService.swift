@@ -81,9 +81,7 @@ final class VoiceService {
         .joined()
         .trimmingCharacters(in: .whitespacesAndNewlines)
 
-        let sentences = noEmoji.split(separator: ".", omittingEmptySubsequences: true)
-        guard sentences.count > 2 else { return noEmoji }
-        return sentences.prefix(2).joined(separator: ".") + "."
+        return noEmoji
     }
 
     private func resolvedVoice(preferring identifier: String) -> AVSpeechSynthesisVoice? {

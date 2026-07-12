@@ -2,7 +2,6 @@ import AppKit
 import Carbon.HIToolbox
 import Observation
 
-
 @MainActor
 @Observable
 final class QuickAnswerShortcutManager {

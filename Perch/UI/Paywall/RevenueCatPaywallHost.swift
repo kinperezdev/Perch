@@ -1,8 +1,6 @@
 import RevenueCat
 import SwiftUI
 
-
-
 struct CustomerCenterHost: View {
     @Environment(AppContainer.self) private var container
 

@@ -1,6 +1,5 @@
 import SwiftUI
 
-
 struct CompanionChatView: View {
     let coordinator: CompanionCoordinator
 
@@ -13,7 +12,6 @@ struct CompanionChatView: View {
             messageList
         }
     }
-
 
     private var header: some View {
         let metrics = coordinator.metrics
@@ -58,7 +56,7 @@ struct CompanionChatView: View {
                         thinkingRow
                             .id("thinking")
                     }
-                    if !chat.isThinking {
+                    if !chat.isThinking, !chat.suggestions.isEmpty {
                         suggestionChips
                     }
                     Color.clear.frame(height: 1).id("bottom")
@@ -116,24 +114,23 @@ struct CompanionChatView: View {
     }
 
     private var suggestionChips: some View {
-        let chips = chat.suggestions.isEmpty ? ["I feel burned out", "I can't focus", "I shipped something today", "I don't know what's next"] : chat.suggestions
+        let chips = chat.suggestions
 
-
-        var rows: [[String]] = []
+        var rows: [[CompanionChatService.Suggestion]] = []
         for i in stride(from: 0, to: chips.count, by: 2) {
             let end = min(i + 2, chips.count)
             rows.append(Array(chips[i..<end]))
         }
 
         return VStack(spacing: 6) {
-            Text("Pick what's closest to how you feel.")
+            Text(chat.suggestionHint)
                 .font(.perchRounded(10.5))
                 .foregroundStyle(.white.opacity(0.4))
                 .padding(.bottom, 2)
             ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
                 HStack(spacing: 6) {
-                    ForEach(Array(row.enumerated()), id: \.offset) { _, prompt in
-                        Button(prompt) { chat.send(prompt) }
+                    ForEach(row) { suggestion in
+                        Button(suggestion.label) { chat.choose(suggestion) }
                             .buttonStyle(GhostPillButtonStyle())
                     }
                 }

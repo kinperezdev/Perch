@@ -57,14 +57,12 @@ enum Personality: String, Codable, CaseIterable, Identifiable {
         }
     }
 
-
     var requiresPro: Bool {
         switch self {
         case .professional, .homie: false
         default: true
         }
     }
-
 
     func callName(userName: String) -> String {
         switch self {
@@ -74,7 +72,6 @@ enum Personality: String, Codable, CaseIterable, Identifiable {
         default: return userName.isEmpty ? "friend" : userName
         }
     }
-
 
     var styleBrief: String {
         switch self {
@@ -95,7 +92,6 @@ enum Personality: String, Codable, CaseIterable, Identifiable {
 }
 
 // MARK: - Engine
-
 
 @MainActor
 final class PersonalityEngine {
@@ -118,7 +114,6 @@ final class PersonalityEngine {
             : "Perch"
     }
 
-
     func templateLine(for kind: ReminderKind, context: CheckInContext) -> String {
         if let custom = customLine(context: context) { return custom }
         let personality = activePersonality
@@ -128,9 +123,8 @@ final class PersonalityEngine {
         return fill(variants[index], context: context)
     }
 
-
     func composeLine(for kind: ReminderKind, context: CheckInContext, aiAllowed: Bool, brainContext: String = "") async -> String {
-        // The user's own words are sacred: never let the model rephrase them.
+        
         if let custom = customLine(context: context) { return custom }
         let fallback = templateLine(for: kind, context: context)
         guard aiAllowed else { return fallback }
@@ -149,11 +143,35 @@ final class PersonalityEngine {
         return line
     }
 
-    func confirmation(for response: CheckInResponse) -> String {
+    func confirmation(for response: CheckInResponse, kind: ReminderKind? = nil) -> String {
+        if let kind = kind, [.meal, .water, .shower, .sleep, .routine].contains(kind) {
+            if case .ignored = response {
+                let actionVerb: String
+                switch kind {
+                case .water: actionVerb = "drink water"
+                case .shower: actionVerb = "shower"
+                case .sleep: actionVerb = "sleep"
+                case .routine: actionVerb = "do your routine"
+                default: actionVerb = "eat"
+                }
+                return "to \(actionVerb) and not forget about it"
+            }
+            if case .snoozed = response {
+                return "okay i will remind you later but this time please do it so"
+            }
+        }
         let personality = activePersonality
         let variants = MessageLibrary.confirmations(response: response, personality: personality)
         guard !variants.isEmpty else { return "Noted." }
         let index = pickIndex(count: variants.count, key: "\(personality.rawValue)|confirm")
+        return fill(variants[index], context: .empty)
+    }
+
+    func thanksLine() -> String {
+        let personality = activePersonality
+        let variants = MessageLibrary.thanksReplies(personality: personality)
+        guard !variants.isEmpty else { return "Anytime." }
+        let index = pickIndex(count: variants.count, key: "\(personality.rawValue)|thanks")
         return fill(variants[index], context: .empty)
     }
 

@@ -1,6 +1,5 @@
 import SwiftUI
 
-
 struct MenuBarContentView: View {
     @Environment(AppContainer.self) private var container
 

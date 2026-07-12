@@ -26,7 +26,6 @@ enum PlanTier: String, Codable, Comparable {
     }
 }
 
-
 struct FeatureGate {
     let tier: PlanTier
 
@@ -107,7 +106,6 @@ enum ReminderKind: String, Codable, CaseIterable, Identifiable {
         }
     }
 
-
     static var togglable: [ReminderKind] {
         [.water, .stretch, .eyes, .posture, .walk, .meal, .shower, .overwork, .windDown, .sleep, .meetingPrep, .meetingRecovery]
     }
@@ -123,7 +121,6 @@ enum ReminderKind: String, Codable, CaseIterable, Identifiable {
         self == .meetingPrep || self == .meetingRecovery
     }
 
-
     var supportsTimer: Bool {
         switch self {
         case .stretch, .eyes, .walk, .overwork: true
@@ -131,19 +128,43 @@ enum ReminderKind: String, Codable, CaseIterable, Identifiable {
         }
     }
 
-    var primaryActionLabel: String {
+    /// Timer length matching what the lines promise: twenty seconds of eye
+    /// rest, a one minute stretch, a five minute walk or break.
+    var timerSeconds: Int {
         switch self {
-        case .water: "Logged"
-        case .meal: "I ate"
-        case .shower: "Done"
-        case .meetingPrep: "Ready"
-        case .meetingRecovery: "Taking it"
-        case .windDown, .sleep: "On it"
-        case .status, .welcome, .sessionStart: "All good"
-        default: "Done"
+        case .eyes: 20
+        case .stretch: 60
+        case .walk, .overwork: 300
+        default: 60
         }
     }
 
+    var primaryActionLabel: String {
+        switch self {
+        case .water: "Drank some"
+        case .stretch: "Stretched"
+        case .eyes: "Rested eyes"
+        case .walk: "Walked"
+        case .shower: "Showered"
+        case .overwork: "Stepping away"
+        case .posture: "Fixed it"
+        case .meal: "I ate"
+        case .meetingPrep: "Ready"
+        case .meetingRecovery: "Taking it"
+        case .windDown: "On it"
+        case .sleep: "Okay, goodnight"
+        case .status, .welcome, .sessionStart: "All good"
+        case .routine: "Done"
+        }
+    }
+
+    /// Advice-style check ins earn a polite "Thanks" answer chip.
+    var supportsThanks: Bool {
+        switch self {
+        case .overwork, .windDown, .sleep, .meetingPrep, .meetingRecovery: true
+        default: false
+        }
+    }
 
     var priority: Int {
         switch self {
@@ -190,6 +211,24 @@ struct CheckIn: Identifiable {
     let message: String
     let createdAt = Date()
     var context: CheckInContext = .empty
+
+    @MainActor
+    func computedTimerSeconds(prefs: PreferencesStore? = nil) -> Int {
+        if kind == .walk || kind == .overwork {
+            if let prefs = prefs {
+                return prefs.timerDurationMinutes * 60
+            }
+            let focusMins = context.minutes ?? 0
+            if focusMins > 90 {
+                return 20 * 60 
+            } else if focusMins > 60 {
+                return 15 * 60 
+            } else {
+                return 10 * 60 
+            }
+        }
+        return kind.timerSeconds
+    }
 }
 
 enum CheckInResponse: Equatable {
@@ -242,7 +281,6 @@ func minutesOfDay(_ date: Date) -> Int {
     let parts = Calendar.current.dateComponents([.hour, .minute], from: date)
     return (parts.hour ?? 0) * 60 + (parts.minute ?? 0)
 }
-
 
 func humanDuration(minutes: Int) -> String {
     if minutes < 50 {
@@ -319,7 +357,6 @@ enum ReminderIntensity: String, Codable, CaseIterable, Identifiable {
     case attentive
 
     var id: String { rawValue }
-
 
     var intervalMultiplier: Double {
         switch self {

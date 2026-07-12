@@ -3,7 +3,6 @@ import CoreGraphics
 import Foundation
 import Observation
 
-
 @MainActor
 @Observable
 final class FocusSessionTracker {
@@ -16,7 +15,6 @@ final class FocusSessionTracker {
     @ObservationIgnored private let prefs: PreferencesStore
     @ObservationIgnored private let memory: HabitMemoryStore
 
-
     @ObservationIgnored var onRunEnded: ((Double) -> Void)?
 
     init(prefs: PreferencesStore, memory: HabitMemoryStore) {
@@ -28,7 +26,6 @@ final class FocusSessionTracker {
     var focusRunMinutes: Int { Int(focusRunSeconds / 60) }
     var isInSession: Bool { focusRunSeconds > 60 }
     var todayActiveSeconds: Double { memory.today().activeSeconds }
-
 
     func update(delta realDelta: Double) {
         guard !isScreenLocked else {
@@ -48,7 +45,6 @@ final class FocusSessionTracker {
             endRun()
         }
     }
-
 
     func creditBreak() {
         lastBreakAt = Date()
@@ -70,7 +66,6 @@ final class FocusSessionTracker {
         }
         focusRunSeconds = 0
     }
-
 
     private func reportRunEnded() {
         guard focusRunSeconds > 120 else { return }

@@ -2,7 +2,6 @@ import Foundation
 import Observation
 import UserNotifications
 
-
 @MainActor
 @Observable
 final class NotificationService: NSObject, UNUserNotificationCenterDelegate {

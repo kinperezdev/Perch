@@ -1,9 +1,8 @@
 import SwiftUI
 
-
 struct CompanionFaceView: View {
     enum FaceState {
-        case idle, talking, listening, happy, excited, concerned, sleepy, thinking
+        case idle, talking, listening, happy, excited, concerned, sleepy, thinking, playing
 
         static func inferred(from text: String, fallback: FaceState = .talking) -> FaceState {
             let lower = text.lowercased()
@@ -34,12 +33,14 @@ struct CompanionFaceView: View {
             ZStack {
                 if state == .listening { listeningRings(t: t) }
                 orb
+                if state == .playing { headphones }
                 features(t: t)
                 if state == .sleepy { snore(t: t) }
+                if state == .playing { musicNotes(t: t) }
             }
             .scaleEffect(x: 1 + breath(t), y: 1 - breath(t))
             .offset(y: bob(t))
-            .rotationEffect(.degrees(headTilt))
+            .rotationEffect(.degrees(headTilt(t: t)))
         }
         .frame(width: size * 1.45, height: size * 1.45)
         .scaleEffect(pulse ? 1.08 : 1)
@@ -102,11 +103,9 @@ struct CompanionFaceView: View {
         }
     }
 
-
     private var eyeTilt: Double {
         state == .concerned ? 16 : 0
     }
-
 
     private func eyeDriftX(_ t: TimeInterval) -> CGFloat {
         switch state {
@@ -154,8 +153,37 @@ struct CompanionFaceView: View {
                 .fill(dark)
                 .frame(width: size * 0.1, height: size * 0.045)
                 .offset(x: size * 0.05)
-        case .idle, .listening:
+        case .idle, .listening, .playing:
             EmptyView()
+        }
+    }
+    
+    private var headphones: some View {
+        ZStack {
+            Path { path in
+                let w = size * 1.15
+                let h = size * 0.6
+                path.addArc(
+                    center: CGPoint(x: w/2, y: h),
+                    radius: w/2,
+                    startAngle: .degrees(180),
+                    endAngle: .degrees(0),
+                    clockwise: false
+                )
+            }
+            .stroke(Color.white.opacity(0.8), style: StrokeStyle(lineWidth: size * 0.08, lineCap: .round))
+            .frame(width: size * 1.15, height: size * 0.6)
+            .offset(y: -size * 0.15)
+            
+            HStack(spacing: size * 0.82) {
+                Capsule()
+                    .fill(Color.white.opacity(0.95))
+                    .frame(width: size * 0.18, height: size * 0.45)
+                Capsule()
+                    .fill(Color.white.opacity(0.95))
+                    .frame(width: size * 0.18, height: size * 0.45)
+            }
+            .offset(y: size * 0.05)
         }
     }
 
@@ -175,6 +203,7 @@ struct CompanionFaceView: View {
         case .sleepy: amplitude = 0.9; frequency = 0.7
         case .concerned: amplitude = 0.8; frequency = 1.1
         case .thinking: amplitude = 1.0; frequency = 1.3
+        case .playing: amplitude = 3.0; frequency = 4.2
         default: amplitude = 1.2; frequency = 1.6
         }
         return CGFloat(sin(t * frequency)) * amplitude
@@ -185,13 +214,14 @@ struct CompanionFaceView: View {
         return CGFloat(sin(t * speed)) * 0.013
     }
 
-    private var headTilt: Double {
+    private func headTilt(t: TimeInterval) -> Double {
         switch state {
-        case .listening: 5
-        case .thinking: -5
-        case .concerned: -3
-        case .sleepy: 6
-        default: 0
+        case .listening: return 5
+        case .thinking: return -5
+        case .concerned: return -3
+        case .sleepy: return 6
+        case .playing: return sin(t * 3.0) * 12
+        default: return 0
         }
     }
 
@@ -221,6 +251,17 @@ struct CompanionFaceView: View {
             .opacity(1 - cycle)
     }
 
+    private func musicNotes(t: TimeInterval) -> some View {
+        let cycle = t.truncatingRemainder(dividingBy: 1.8) / 1.8
+        let rise = CGFloat(cycle) * size * 0.5
+        let sway = CGFloat(sin(t * 6)) * size * 0.1
+        return Image(systemName: "music.note")
+            .font(.system(size: size * 0.3, weight: .bold))
+            .foregroundStyle(.white.opacity(0.8))
+            .offset(x: size * 0.55 + sway, y: -size * 0.2 - rise)
+            .opacity(1 - cycle)
+    }
+
         // MARK: State change and blinking
 
     private func bounceOnce() {
@@ -235,16 +276,16 @@ struct CompanionFaceView: View {
 
     private func blinkLoop() async {
         while !Task.isCancelled {
-            let pause = Double.random(in: 2.4...4.6)
+            let pause = state == .playing ? Double.random(in: 1.2...2.5) : Double.random(in: 2.4...4.6)
             try? await Task.sleep(nanoseconds: UInt64(pause * 1_000_000_000))
             guard !Task.isCancelled else { return }
             withAnimation(.easeOut(duration: 0.09)) { blink = true }
-            try? await Task.sleep(nanoseconds: 120_000_000)
+            let closedDuration: UInt64 = state == .playing ? 600_000_000 : 120_000_000
+            try? await Task.sleep(nanoseconds: closedDuration)
             withAnimation(.easeIn(duration: 0.12)) { blink = false }
         }
     }
 }
-
 
 struct SmileShape: Shape {
     func path(in rect: CGRect) -> Path {

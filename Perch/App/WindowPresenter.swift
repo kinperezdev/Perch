@@ -61,8 +61,9 @@ final class WindowPresenter: NSObject, NSWindowDelegate {
 
     private func showStandardWindow<Content: View>(id: String, size: NSSize, @ViewBuilder content: () -> Content) {
         if let existing = windows[id] {
+            NSApp.activate(ignoringOtherApps: true)
             existing.makeKeyAndOrderFront(nil)
-            NSApp.activate()
+            existing.orderFrontRegardless()
             return
         }
         let window = NSWindow(
@@ -77,14 +78,16 @@ final class WindowPresenter: NSObject, NSWindowDelegate {
         window.contentView = NSHostingView(rootView: content().environment(\.dynamicTypeSize, .medium))
         window.center()
         windows[id] = window
+        NSApp.activate(ignoringOtherApps: true)
         window.makeKeyAndOrderFront(nil)
-        NSApp.activate()
+        window.orderFrontRegardless()
     }
 
     private func show<Content: View>(id: String, size: NSSize, @ViewBuilder content: () -> Content) {
         if let existing = windows[id] {
+            NSApp.activate(ignoringOtherApps: true)
             existing.makeKeyAndOrderFront(nil)
-            NSApp.activate()
+            existing.orderFrontRegardless()
             return
         }
         let window = NSWindow(
@@ -101,8 +104,9 @@ final class WindowPresenter: NSObject, NSWindowDelegate {
         window.contentView = NSHostingView(rootView: content().environment(\.dynamicTypeSize, .medium))
         window.center()
         windows[id] = window
+        NSApp.activate(ignoringOtherApps: true)
         window.makeKeyAndOrderFront(nil)
-        NSApp.activate()
+        window.orderFrontRegardless()
     }
 
     private func close(id: String) {

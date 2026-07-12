@@ -1,7 +1,6 @@
 import Foundation
 import Observation
 
-
 @MainActor
 @Observable
 final class HabitMemoryStore {
@@ -39,6 +38,10 @@ final class HabitMemoryStore {
         var checkInsAccepted = 0
 
         var mealsLogged: Int { [breakfastLogged, lunchLogged, dinnerLogged].filter { $0 }.count }
+        
+        var totalLogs: Int {
+            breaksTaken + waterCount + mealsLogged + (showerLogged ? 1 : 0)
+        }
 
         var id: String { date }
     }
@@ -51,7 +54,6 @@ final class HabitMemoryStore {
 
     private(set) var snapshot = Snapshot()
     @ObservationIgnored private var saveTask: Task<Void, Never>?
-
 
     @ObservationIgnored var onWaterLogged: (() -> Void)?
     @ObservationIgnored var onBreakTaken: (() -> Void)?
@@ -177,7 +179,6 @@ final class HabitMemoryStore {
         return Self.mealPrompted(day, meal: meal) && !Self.mealLogged(day, meal: meal)
     }
 
-
     func intervalMultiplier(kind: ReminderKind, at date: Date = Date()) -> Double {
         guard let stat = snapshot.stats[Self.statKey(kind, date)], stat.shown >= 4 else { return 1.0 }
         if stat.ignoreRate > 0.8 { return 1.9 }
@@ -185,7 +186,6 @@ final class HabitMemoryStore {
         if stat.acceptanceRate > 0.7 { return 0.85 }
         return 1.0
     }
-
 
     func learnedPatterns() -> (wellTo: [String], ignores: [String]) {
         var totals: [String: (shown: Int, accepted: Int, ignored: Int)] = [:]

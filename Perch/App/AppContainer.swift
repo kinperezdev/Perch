@@ -1,7 +1,6 @@
 import Foundation
 import Observation
 
-
 @MainActor
 @Observable
 final class AppContainer {
@@ -16,6 +15,7 @@ final class AppContainer {
     let tracker: FocusSessionTracker
     let calendar: CalendarAwarenessService
     let voice: VoiceService
+    let music: BreakMusicService
     let notifications: NotificationService
     let subscriptions: SubscriptionManager
     let chat: CompanionChatService
@@ -33,15 +33,14 @@ final class AppContainer {
         let tracker = FocusSessionTracker(prefs: prefs, memory: memory)
         let calendar = CalendarAwarenessService()
         let voice = VoiceService(prefs: prefs)
+        let music = BreakMusicService(prefs: prefs)
         let notifications = NotificationService(prefs: prefs)
         let chat = CompanionChatService(
             prefs: prefs,
-            intelligence: intelligence,
             brain: brain,
             memory: memory,
             tracker: tracker,
-            voice: voice,
-            gateProvider: { subscriptions.gate }
+            voice: voice
         )
         let engine = ReminderEngine(
             prefs: prefs,
@@ -55,6 +54,7 @@ final class AppContainer {
             memory: memory,
             personality: personality,
             voice: voice,
+            music: music,
             notifications: notifications,
             tracker: tracker,
             subscriptions: subscriptions,
@@ -72,6 +72,7 @@ final class AppContainer {
         self.tracker = tracker
         self.calendar = calendar
         self.voice = voice
+        self.music = music
         self.notifications = notifications
         self.chat = chat
         self.engine = engine

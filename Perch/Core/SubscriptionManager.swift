@@ -2,7 +2,6 @@ import Foundation
 import Observation
 import RevenueCat
 
-
 @MainActor
 @Observable
 final class SubscriptionManager {
@@ -23,7 +22,6 @@ final class SubscriptionManager {
         let package: Package?
     }
 
-
     private static var resolvedKey: String {
         if let env = ProcessInfo.processInfo.environment["PERCH_REVENUECAT_KEY"], !env.isEmpty {
             return env
@@ -42,7 +40,6 @@ final class SubscriptionManager {
         return dict["RevenueCatAPIKey"] as? String
     }
 
-
     static let perchProEntitlementID = "Perch Pro"
 
     private(set) var mode: Mode
@@ -52,7 +49,6 @@ final class SubscriptionManager {
     private(set) var lastError: String?
 
     var gate: FeatureGate { FeatureGate(tier: tier) }
-
 
     var currentPlanName: String {
         if tier == .free { return "Free" }
@@ -83,7 +79,6 @@ final class SubscriptionManager {
 
         // MARK: Customer info
 
-
     private func observeCustomerInfo() {
         Task { [weak self] in
             for await info in Purchases.shared.customerInfoStream {
@@ -100,7 +95,6 @@ final class SubscriptionManager {
             lastError = Self.friendlyMessage(for: error)
         }
     }
-
 
     func refresh(with info: CustomerInfo) {
         apply(info)
@@ -187,7 +181,6 @@ final class SubscriptionManager {
         }
     }
 
-
     func resetDemoTier() {
         guard mode == .demo else { return }
         tier = .free
@@ -213,7 +206,6 @@ final class SubscriptionManager {
         }
         return error.localizedDescription
     }
-
 
     private static func introText(for product: StoreProduct) -> String? {
         guard let intro = product.introductoryDiscount else { return nil }

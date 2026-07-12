@@ -121,9 +121,11 @@ final class CompanionIntelligence {
 
         Rules you must always follow:
         - One short check in line only, like something a friend would say out loud. Under 18 words.
-        - Always end with a caring question that invites a quick reply (yes / no / later).
+        - Do not ask questions at the end because the UI provides answer buttons automatically. Just state the context or reminder playfully or warmly.
+        - Stay strictly on the single goal you are given. Never drift into asking how they are doing, \
+        how their day is going, or complimenting productivity, unless the goal itself says to.
         - No lists, no quotes. Contractions are good, formal phrasing is not.
-        - Use natural, conversational punctuation: contractions and the occasional exclamation mark or ellipsis are fine. Use at most one emoji, and only when it truly fits. Most check ins should have no emoji at all.
+        - Use natural, conversational punctuation: contractions and the occasional exclamation mark or ellipsis are fine. NEVER use emojis.
         - Never print parentheses, timestamps, or meta labels like "(System note...)" in your reply. Those are for your eyes only, to inform what you say, not to repeat.
         - Warm and human. Never guilt trip, never lecture, never mention productivity metrics.
         - Weave the concrete facts you are given (duration, meal, meeting, minutes) into the line naturally.
@@ -167,8 +169,9 @@ final class CompanionIntelligence {
         case .meetingPrep: "Help them get ready for the upcoming meeting."
         case .meetingRecovery: "Their meeting just ended. Suggest a tiny recovery pause."
         case .routine: "Deliver their personal routine reminder."
-        case .sessionStart: "Greet them warmly as they start a fresh focus session and promise to keep watch."
-        case .status, .welcome: "Reassure them you are quietly watching over their session."
+        case .sessionStart: "Greet them warmly as they start a fresh focus session. You MUST ask explicitly if they want you to keep watch or track breaks (it must be a strict Yes/No question). Do NOT ask open-ended questions like 'How are you feeling?'"
+        case .status: "Ask how they are feeling right now, a quick mood check. They answer with one tap: Good, Am okay, or Stressing."
+        case .welcome: "Reassure them you are quietly watching over their session."
         }
         facts.append("Goal: \(goal)")
         if !customInstructions.isEmpty {
@@ -183,6 +186,13 @@ final class CompanionIntelligence {
             .replacingOccurrences(of: "\n", with: " ")
             .trimmingCharacters(in: .whitespacesAndNewlines)
         text = text.trimmingCharacters(in: CharacterSet(charactersIn: "\"'`"))
+        text = text.replacingOccurrences(
+            of: #"(?:\s*[\-–—•·|/]*\s*\b(?:done|later|okay|yes|no|timer|thanks|ready)\b){2,}[\s\-–—•·|/]*$"#,
+            with: "",
+            options: [.regularExpression, .caseInsensitive]
+        )
+        text = String(text.unicodeScalars.filter { !$0.properties.isEmojiPresentation })
+        text = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty, text.count <= 220 else { return nil }
         return text
     }
@@ -215,7 +225,7 @@ final class CompanionIntelligence {
 }
 enum OllamaClient {
 
-    private static let base = URL(string: "http://127.0.0.1:11434")!
+    private static let base = URL(string: "http:
 
     static func firstModel() async -> String? {
         struct Tags: Decodable {

@@ -79,7 +79,6 @@ final class PerchBrain {
         scheduleSave()
     }
 
-
     func recordMeal(at date: Date = Date()) {
         brain.lifetimeMealLogs += 1
         let hour = Calendar.current.component(.hour, from: date)
@@ -266,8 +265,6 @@ final class PerchBrain {
             upsertObservation("Milestone: 200 positive responses. They trust Perch.", category: "milestone")
         }
     }
-
-
 
     private func evaluateMealPattern() {
         guard brain.lifetimeMealLogs >= 3, let top = brain.mealLogHours.max(by: { $0.value < $1.value }) else { return }

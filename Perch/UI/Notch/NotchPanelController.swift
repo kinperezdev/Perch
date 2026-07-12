@@ -8,12 +8,10 @@ struct NotchMetrics: Equatable {
     var notchWidth: CGFloat = 200
 }
 
-
 final class NotchPanel: NSPanel {
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { false }
 }
-
 
 @MainActor
 final class NotchPanelController {
@@ -47,7 +45,6 @@ final class NotchPanelController {
         panel.contentView = hosting
         self.panel = panel
     }
-
 
     @discardableResult
     func refreshMetrics() -> NotchMetrics {

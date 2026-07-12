@@ -30,7 +30,22 @@ struct GeneralSettingsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+            Section("Break timer") {
+                Picker("Timer duration", selection: $prefs.timerDurationMinutes) {
+                    Text("1 minute").tag(1)
+                    Text("2 minutes").tag(2)
+                    Text("5 minutes").tag(5)
+                    Text("10 minutes").tag(10)
+                    Text("15 minutes").tag(15)
+                    Text("20 minutes").tag(20)
+                }
+                Toggle("Play lofi music during break timers", isOn: $prefs.breakMusicEnabled)
+                Text("Perch composes its own lofi beats: a different track fades in for every break and fades out when the timer ends. Silent during quiet hours.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
             Section("System") {
+                Toggle("Auto-hide check-ins after 30 seconds", isOn: $prefs.autoHideMessages)
                 Toggle("Launch Perch at login", isOn: $launchAtLogin)
                     .onChange(of: launchAtLogin) { _, enable in
                         updateLoginItem(enable)
