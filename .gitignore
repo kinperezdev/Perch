@@ -1,0 +1,9 @@
+.DS_Store
+build/
+DerivedData/
+xcuserdata/
+*.xcuserstate
+.swiftpm/
+
+# Real secrets: copy Secrets.example.plist to Secrets.plist and paste your key.
+Perch/Secrets.plist
