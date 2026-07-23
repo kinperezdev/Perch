@@ -538,6 +538,14 @@ struct OnboardingView: View {
                     try? SMAppService.mainApp.register()
                     launchAtLogin = SMAppService.mainApp.status == .enabled
                 }
+                permissionRow(
+                    symbol: "moon.zzz.fill",
+                    title: "Sleep Mac at Goodnight",
+                    detail: "Let the Goodnight button put this Mac to sleep",
+                    granted: container.prefs.allowSleepAtGoodnight
+                ) {
+                    container.prefs.allowSleepAtGoodnight = true
+                }
             }
             .frame(maxWidth: 460)
         }
@@ -627,7 +635,7 @@ struct OnboardingView: View {
                 .foregroundStyle(.white.opacity(0.7))
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 420)
-            Text("Start free with smart check ins, or unlock AI memory, chat, calendar awareness, and weekly insights with Pro.")
+            Text("Start free with smart check ins, or unlock AI memory, calendar awareness, and weekly insights with Pro.")
                 .font(.perchRounded(11.5))
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)

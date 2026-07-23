@@ -157,13 +157,6 @@ final class PerchBrain {
         scheduleSave()
     }
 
-    func absorbChatMessage(_ text: String) {
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard trimmed.count >= 8, trimmed.count <= 260 else { return }
-        guard shouldRemember(trimmed) else { return }
-        addNote("They said: \(trimmed)")
-    }
-
     func wipe(keepingUserName userName: String = "") {
         saveTask?.cancel()
         brain = Brain()
@@ -224,23 +217,6 @@ final class PerchBrain {
         }()
         brain.currentStreakDays = (brain.lastActiveDate == yesterday) ? brain.currentStreakDays + 1 : 1
         brain.lastActiveDate = today
-    }
-
-    private func shouldRemember(_ text: String) -> Bool {
-        let lowered = text.lowercased()
-        let crisisSignals = [
-            "kill myself", "suicide", "suicidal", "end my life", "end it all",
-            "hurt myself", "harm myself", "self harm", "self-harm",
-            "don't want to live", "dont want to live", "no reason to live",
-        ]
-        if crisisSignals.contains(where: lowered.contains) { return false }
-        let memorySignals = [
-            "remember", "call me", "my name", "i am ", "i'm ", "im ",
-            "i like", "i love", "i hate", "i prefer", "i usually", "i always",
-            "i struggle", "i need", "i want", "my goal", "my project",
-            "working on", "building", "i feel", "i get", "i keep",
-        ]
-        return memorySignals.contains(where: lowered.contains)
     }
 
     private func evaluatePeakHours() {

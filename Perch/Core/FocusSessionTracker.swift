@@ -11,6 +11,7 @@ final class FocusSessionTracker {
     private(set) var idleSeconds: Double = 0
     private(set) var lastBreakAt: Date?
     private(set) var isScreenLocked = false
+    private(set) var isResting = false
 
     @ObservationIgnored private let prefs: PreferencesStore
     @ObservationIgnored private let memory: HabitMemoryStore
@@ -28,6 +29,7 @@ final class FocusSessionTracker {
     var todayActiveSeconds: Double { memory.today().activeSeconds }
 
     func update(delta realDelta: Double) {
+        guard !isResting else { return }
         guard !isScreenLocked else {
             endRun()
             return
@@ -51,6 +53,17 @@ final class FocusSessionTracker {
         reportRunEnded()
         focusRunSeconds = 0
         memory.creditBreak()
+    }
+
+    func beginRest() {
+        guard !isResting else { return }
+        reportRunEnded()
+        focusRunSeconds = 0
+        isResting = true
+    }
+
+    func endRest() {
+        isResting = false
     }
 
         // MARK: Private

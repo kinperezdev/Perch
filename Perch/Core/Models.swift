@@ -32,10 +32,8 @@ struct FeatureGate {
     var allPersonalities: Bool { tier >= .pro }
     var adaptiveMemory: Bool { tier >= .pro }
 
-    var aiChat: Bool { true }
     var calendarAwareness: Bool { tier >= .pro }
     var voiceInteraction: Bool { tier >= .pro }
-    var advancedQuickActions: Bool { tier >= .pro }
     var weeklySummary: Bool { tier >= .pro }
     var customPersonality: Bool { tier >= .premium }
     var voiceStyles: Bool { tier >= .premium }
@@ -135,6 +133,7 @@ enum ReminderKind: String, Codable, CaseIterable, Identifiable {
         case .eyes: 20
         case .stretch: 60
         case .walk, .overwork: 300
+        case .windDown: 3600
         default: 60
         }
     }
@@ -151,8 +150,7 @@ enum ReminderKind: String, Codable, CaseIterable, Identifiable {
         case .meal: "I ate"
         case .meetingPrep: "Ready"
         case .meetingRecovery: "Taking it"
-        case .windDown: "On it"
-        case .sleep: "Okay, goodnight"
+        case .windDown, .sleep: "Goodnight"
         case .status, .welcome, .sessionStart: "All good"
         case .routine: "Done"
         }

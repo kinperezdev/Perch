@@ -54,6 +54,7 @@ final class PreferencesStore {
     }
     var notificationsMirror: Bool { didSet { save(notificationsMirror, "notificationsMirror") } }
     var breakMusicEnabled: Bool { didSet { save(breakMusicEnabled, "breakMusicEnabled") } }
+    var allowSleepAtGoodnight: Bool { didSet { save(allowSleepAtGoodnight, "allowSleepAtGoodnight") } }
 
     var shortcutKeyCode: Int { didSet { save(shortcutKeyCode, "shortcutKeyCode") } }
     var shortcutModifiers: UInt { didSet { save(shortcutModifiers, "shortcutModifiers") } }
@@ -100,6 +101,7 @@ final class PreferencesStore {
         voiceIdentifier = defaults.string(forKey: "voiceIdentifier") ?? ""
         notificationsMirror = defaults.object(forKey: "notificationsMirror") as? Bool ?? false
         breakMusicEnabled = defaults.object(forKey: "breakMusicEnabled") as? Bool ?? true
+        allowSleepAtGoodnight = defaults.object(forKey: "allowSleepAtGoodnight") as? Bool ?? false
 
         shortcutKeyCode = defaults.object(forKey: "shortcutKeyCode") as? Int ?? 49
         shortcutModifiers = defaults.object(forKey: "shortcutModifiers") as? UInt ?? Self.defaultModifiers

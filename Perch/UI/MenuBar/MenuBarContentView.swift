@@ -78,8 +78,8 @@ struct MenuBarContentView: View {
                 actionButton("Check on me", symbol: "sparkles") {
                     Task { await container.engine.forceCheckIn() }
                 }
-                actionButton("Talk", symbol: "bubble.left.and.bubble.right.fill") {
-                    container.coordinator.openChat()
+                actionButton("Dashboard", symbol: "rectangle.grid.2x2.fill") {
+                    WindowPresenter.shared.showDashboard(container)
                 }
             }
             HStack(spacing: 8) {
@@ -145,23 +145,6 @@ struct MenuBarContentView: View {
 
     private var footer: some View {
         VStack(spacing: 6) {
-            HStack {
-                Button {
-                    WindowPresenter.shared.showDashboard(container)
-                } label: {
-                    Label("Dashboard", systemImage: "rectangle.grid.2x2.fill")
-                        .font(.perchRounded(11.5))
-                }
-                .buttonStyle(.plain)
-                .foregroundStyle(.primary)
-                Spacer()
-                Text(QuickAnswerShortcutManager.describe(
-                    keyCode: container.prefs.shortcutKeyCode,
-                    modifiers: container.prefs.shortcutModifiers
-                ))
-                .font(.system(size: 10, design: .rounded))
-                .foregroundStyle(.tertiary)
-            }
             HStack {
                 Button("Settings") {
                     WindowPresenter.shared.showSettings(container)

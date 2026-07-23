@@ -48,13 +48,7 @@ struct NotchCompanionView: View {
     }
 
     private func topPadding(for metrics: NotchMetrics) -> CGFloat {
-        guard metrics.hasNotch else { return 10 }
-        switch coordinator.phase {
-        case .timer, .confirmation:
-            return 0
-        default:
-            return 4
-        }
+        metrics.hasNotch ? 8 : 14
     }
 
     @ViewBuilder
@@ -68,8 +62,6 @@ struct NotchCompanionView: View {
             timerView
         case .confirmation:
             confirmationView
-        case .chat:
-            CompanionChatView(coordinator: coordinator)
         }
     }
 
@@ -115,6 +107,7 @@ struct NotchCompanionView: View {
                     .foregroundStyle(.white.opacity(0.94))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 6)
+                    .padding(.top, 4)
 
                 HStack(spacing: 6) {
                     leftActions(for: checkIn)
@@ -214,6 +207,10 @@ struct NotchCompanionView: View {
         case .sessionStart:
             let isNowQuestion = checkIn.message.contains("Starting another session") || checkIn.message.contains("locking in") || checkIn.message.contains("Starting a focus session") || checkIn.message.contains("Ready") || checkIn.message.contains("Starting focus now")
             Button(action: { coordinator.respond(.done) }) { Text(isNowQuestion ? "Sure" : "Okay") }
+                .buttonStyle(PillButtonStyle(accent: accent))
+                .keyboardShortcut("1", modifiers: [])
+        case .windDown, .sleep:
+            Button(action: { coordinator.goodnight() }) { Text("Goodnight") }
                 .buttonStyle(PillButtonStyle(accent: accent))
                 .keyboardShortcut("1", modifiers: [])
         default:

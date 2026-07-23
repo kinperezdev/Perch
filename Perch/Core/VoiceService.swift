@@ -31,6 +31,14 @@ final class VoiceService {
         synthesizer.speak(utterance)
     }
 
+    func waitUntilFinished(timeout: Duration = .seconds(30)) async {
+        let clock = ContinuousClock()
+        let deadline = clock.now.advanced(by: timeout)
+        while synthesizer.isSpeaking, clock.now < deadline {
+            try? await Task.sleep(for: .milliseconds(100))
+        }
+    }
+
     func preview(_ text: String = "Hi, I'm Perch. I'll speak up when it matters.", voiceIdentifier: String? = nil) {
         let cleaned = Self.spokenClip(text)
         guard !cleaned.isEmpty else { return }

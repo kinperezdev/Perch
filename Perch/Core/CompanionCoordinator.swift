@@ -10,7 +10,6 @@ final class CompanionCoordinator {
         case message
         case timer
         case confirmation
-        case chat
     }
 
     private(set) var phase: Phase = .hidden
@@ -33,7 +32,6 @@ final class CompanionCoordinator {
     @ObservationIgnored private let tracker: FocusSessionTracker
     @ObservationIgnored private let subscriptions: SubscriptionManager
     @ObservationIgnored private let brain: PerchBrain
-    @ObservationIgnored let chat: CompanionChatService
     @ObservationIgnored private let panel = NotchPanelController()
 
     @ObservationIgnored private var timeoutTask: Task<Void, Never>?
@@ -51,8 +49,7 @@ final class CompanionCoordinator {
         notifications: NotificationService,
         tracker: FocusSessionTracker,
         subscriptions: SubscriptionManager,
-        brain: PerchBrain,
-        chat: CompanionChatService
+        brain: PerchBrain
     ) {
         self.prefs = prefs
         self.memory = memory
@@ -63,7 +60,6 @@ final class CompanionCoordinator {
         self.tracker = tracker
         self.subscriptions = subscriptions
         self.brain = brain
-        self.chat = chat
     }
     func prepare() {
         panel.attach(NotchCompanionView(coordinator: self).environment(prefs))
@@ -133,6 +129,7 @@ final class CompanionCoordinator {
         let seconds = current.computedTimerSeconds(prefs: prefs)
         timerTotal = seconds
         timerRemaining = seconds
+        tracker.beginRest()
         reveal(.timer)
         music.start()
         timerTask?.cancel()
@@ -150,6 +147,7 @@ final class CompanionCoordinator {
         guard phase == .timer, let current else { return }
         timerTask?.cancel()
         music.stop()
+        tracker.endRest()
         lastCheckInAnswered = true
         let response: CheckInResponse = completed ? .timerCompleted : .done
         if current.kind.isTrackable {
@@ -165,7 +163,6 @@ final class CompanionCoordinator {
         case .meal: memory.logMeal()
         case .breakTime: tracker.creditBreak()
         case .shower: memory.logShower()
-        case .feeling: break
         }
     }
 
@@ -190,6 +187,16 @@ final class CompanionCoordinator {
         showConfirmation(personality.thanksLine())
     }
 
+    func goodnight() {
+        guard let current, current.kind == .windDown || current.kind == .sleep else { return }
+        respond(.done)
+        guard prefs.allowSleepAtGoodnight else { return }
+        Task {
+            await voice.waitUntilFinished()
+            SystemSleepService.sleepMac()
+        }
+    }
+
     func quickAnswerPressed() {
         switch phase {
         case .hidden:
@@ -201,7 +208,7 @@ final class CompanionCoordinator {
             }
         case .message:
             panel.makeKey()
-        case .chat, .confirmation:
+        case .confirmation:
             hide()
         case .timer:
             break
@@ -215,18 +222,11 @@ final class CompanionCoordinator {
         startTimeout(seconds: 30)
     }
 
-    func openChat() {
-        cancelTimeout()
-        chat.clear()
-        chat.openIfNeeded()
-        reveal(.chat)
-        panel.makeKey()
-    }
-
     func hide() {
         cancelTimeout()
         timerTask?.cancel()
         music.stop()
+        tracker.endRest()
         confirmationTask?.cancel()
         phase = .hidden
         panel.hide(afterDelay: 0.45)
@@ -272,8 +272,6 @@ final class CompanionCoordinator {
             return CGSize(width: max(anchor + 120, 320), height: 76)
         case .message:
             return CGSize(width: max(anchor + notchMessageExtra, 520), height: 140)
-        case .chat:
-            return CGSize(width: max(anchor + notchMessageExtra, 520), height: 300)
         }
     }
 

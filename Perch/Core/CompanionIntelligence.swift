@@ -83,21 +83,6 @@ final class CompanionIntelligence {
         guard let raw, let cleaned = Self.sanitize(raw) else { return fallback }
         return cleaned
     }
-    func onlineChat(system: String, prompt: String) async -> String? {
-        switch engine {
-        case .appleIntelligence:
-            let session = LanguageModelSession(instructions: system)
-            guard !session.isResponding else { return nil }
-            return await Self.withTimeout(seconds: 6) {
-                try? await session.respond(to: prompt, options: GenerationOptions(temperature: 0.8)).content
-            }
-        case .ollama(let model):
-            return await OllamaClient.generate(model: model, system: system, prompt: prompt)
-        case .none:
-            return nil
-        }
-    }
-
     private func preparedSession(for personality: Personality, brainContext: String = "") -> LanguageModelSession {
         let instructions = Self.checkInInstructions(for: personality, brainContext: brainContext)
         if let session, sessionPersonality == personality, sessionInstructions == instructions { return session }
@@ -225,7 +210,7 @@ final class CompanionIntelligence {
 }
 enum OllamaClient {
 
-    private static let base = URL(string: "http:
+    private static let base = URL(string: "http://localhost:11434")!
 
     static func firstModel() async -> String? {
         struct Tags: Decodable {

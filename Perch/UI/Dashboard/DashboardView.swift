@@ -4,8 +4,11 @@ struct DashboardView: View {
     @Environment(AppContainer.self) private var container
     @Environment(\.openSettings) private var openSettings
     @State private var showingAchievements = false
+    @State private var confirmedAction: String?
 
     private var accent: [Color] { container.prefs.activePersonality.accentColors }
+
+    private let chartHeight: CGFloat = 64 * PerchStyle.scale
 
     private var contextualFaceState: CompanionFaceView.FaceState {
         if container.memory.today().checkInsAccepted > 0 { return .happy }
@@ -32,7 +35,7 @@ struct DashboardView: View {
             .padding(.bottom, 24)
             .padding(.top, 8)
         }
-        .frame(width: 720 * PerchStyle.scale, height: 580 * PerchStyle.scale)
+        .frame(width: 720 * PerchStyle.scale, height: 450 * PerchStyle.scale)
         .preferredColorScheme(.dark)
     }
 
@@ -166,7 +169,7 @@ struct DashboardView: View {
                         dayBar(day, maxLogs: maxLogs)
                     }
                 }
-                .frame(height: 160 * PerchStyle.scale, alignment: .bottom)
+                .frame(height: chartHeight, alignment: .bottom)
                 HStack(alignment: .top, spacing: 8) {
                     Image(systemName: "lightbulb.fill")
                         .font(.system(size: 11))
@@ -190,7 +193,9 @@ struct DashboardView: View {
                 .padding(.vertical, 18)
             }
         }
-        .padding(14)
+        .padding(.horizontal, 14)
+        .padding(.top, 14)
+        .padding(.bottom, 26)
         .frame(maxWidth: .infinity, alignment: .leading)
         .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
@@ -200,7 +205,7 @@ struct DashboardView: View {
         return VStack(spacing: 4) {
             Capsule()
                 .fill(PerchStyle.accentGradient(accent))
-                .frame(height: max(CGFloat(ratio) * 128, 3))
+                .frame(height: max(CGFloat(ratio) * chartHeight, 3))
             Text(weekdayLetter(forDayKey: day.date))
                 .font(.system(size: 8.5, design: .rounded))
                 .foregroundStyle(.secondary)
@@ -214,9 +219,6 @@ struct DashboardView: View {
         VStack(alignment: .leading, spacing: 10) {
             sectionKicker("Quick actions")
             LazyVGrid(columns: [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)], spacing: 8) {
-                actionButton("Talk", symbol: "bubble.left.and.bubble.right.fill") {
-                    container.coordinator.openChat()
-                }
                 actionButton("Log water", symbol: "drop.fill") {
                     container.memory.logWater()
                 }
@@ -229,32 +231,33 @@ struct DashboardView: View {
                 actionButton("Took a shower", symbol: "shower.fill") {
                     container.memory.logShower()
                 }
-                if container.prefs.isPaused() {
-                    actionButton("Resume", symbol: "play.fill") {
-                        container.prefs.pausedUntil = nil
-                    }
-                } else {
-                    actionButton("Pause 1h", symbol: "pause.fill") {
-                        container.prefs.pausedUntil = Date().addingTimeInterval(3600)
-                    }
-                }
             }
         }
         .frame(width: 230 * PerchStyle.scale)
     }
 
     private func actionButton(_ title: String, symbol: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
+        let isConfirmed = confirmedAction == title
+        return Button {
+            action()
+            withAnimation(.easeInOut(duration: 0.15)) { confirmedAction = title }
+            Task {
+                try? await Task.sleep(for: .seconds(1.2))
+                withAnimation(.easeInOut(duration: 0.2)) { confirmedAction = nil }
+            }
+        } label: {
             VStack(spacing: 4) {
-                Image(systemName: symbol)
+                Image(systemName: isConfirmed ? "checkmark" : symbol)
                     .font(.system(size: 14))
+                    .foregroundStyle(isConfirmed ? Color.green : Color.primary)
                 Text(title)
                     .font(.perchRounded(9.5, weight: .medium))
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 9)
+            .padding(.vertical, 11)
+            .animation(.easeInOut(duration: 0.15), value: isConfirmed)
         }
         .buttonStyle(.glass)
     }

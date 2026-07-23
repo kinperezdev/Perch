@@ -11,6 +11,8 @@ Traditional productivity trackers only measure your output, which just induces m
 
 Perch is a tiny, beautiful AI wellbeing companion for macOS. It lives near the MacBook notch and quietly watches safe signals (active session length, idle time, and calendar). It checks in proactively at the right moments—reminding you to drink water, stretch, eat meals, go to sleep when it's late, and physically step away when you are overworking. 
 
+Focus and active-session totals count only working time. When a guided rest is in progress, Perch pauses both counters and resumes them after the rest ends.
+
 It's not a productivity tracker; it's a companion looking out for you while you are locked in.
 
 ---

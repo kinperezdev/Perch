@@ -18,7 +18,6 @@ final class AppContainer {
     let music: BreakMusicService
     let notifications: NotificationService
     let subscriptions: SubscriptionManager
-    let chat: CompanionChatService
     let engine: ReminderEngine
     let coordinator: CompanionCoordinator
     let shortcuts: QuickAnswerShortcutManager
@@ -35,13 +34,6 @@ final class AppContainer {
         let voice = VoiceService(prefs: prefs)
         let music = BreakMusicService(prefs: prefs)
         let notifications = NotificationService(prefs: prefs)
-        let chat = CompanionChatService(
-            prefs: prefs,
-            brain: brain,
-            memory: memory,
-            tracker: tracker,
-            voice: voice
-        )
         let engine = ReminderEngine(
             prefs: prefs,
             memory: memory,
@@ -58,8 +50,7 @@ final class AppContainer {
             notifications: notifications,
             tracker: tracker,
             subscriptions: subscriptions,
-            brain: brain,
-            chat: chat
+            brain: brain
         )
         let shortcuts = QuickAnswerShortcutManager(prefs: prefs)
 
@@ -74,7 +65,6 @@ final class AppContainer {
         self.voice = voice
         self.music = music
         self.notifications = notifications
-        self.chat = chat
         self.engine = engine
         self.coordinator = coordinator
         self.shortcuts = shortcuts

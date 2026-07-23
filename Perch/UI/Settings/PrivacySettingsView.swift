@@ -48,12 +48,13 @@ struct PrivacySettingsView: View {
                     }
                 }
                 Toggle("Also deliver check ins as notifications", isOn: $prefs.notificationsMirror)
+                Toggle("Allow Goodnight to put this Mac to sleep", isOn: $prefs.allowSleepAtGoodnight)
                 Text("Calendar unlocks meeting prep and recovery check ins. Notifications catch check ins you miss when the bubble times out.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
             Section("Your memory") {
-                Text("Habit memory, brain memory, and chat history stay in local files on this Mac. You can delete them at any time.")
+                Text("Habit memory and brain memory stay in local files on this Mac. You can delete them at any time.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Button("Delete all memory", role: .destructive) {
@@ -66,7 +67,6 @@ struct PrivacySettingsView: View {
                     Button("Delete memory", role: .destructive) {
                         container.memory.wipe()
                         container.brain.wipe(keepingUserName: container.prefs.userName)
-                        container.chat.clear()
                     }
                 }
             }
