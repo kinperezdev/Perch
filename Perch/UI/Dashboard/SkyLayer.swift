@@ -70,15 +70,18 @@ struct SkyLayer: View {
 
     /// A tiny deterministic RNG seeded per shooting-star cycle, so each star
     /// gets a different path but stays consistent for the length of its own
-    /// streak instead of jittering frame to frame.
+    /// streak instead of jittering frame to frame. SplitMix64, chosen because
+    /// (unlike xorshift) it decorrelates well even for sequential seeds like
+    /// 1, 2, 3... which is exactly what an incrementing cycle index is.
     private struct SeededGenerator: RandomNumberGenerator {
         private var state: UInt64
-        init(seed: Int) { state = UInt64(bitPattern: Int64(seed)) &+ 0x9E37_79B9_7F4A_7C15 }
+        init(seed: Int) { state = UInt64(bitPattern: Int64(seed)) }
         mutating func next() -> UInt64 {
-            state ^= state << 13
-            state ^= state >> 7
-            state ^= state << 17
-            return state
+            state = state &+ 0x9E37_79B9_7F4A_7C15
+            var z = state
+            z = (z ^ (z >> 30)) &* 0xBF58_476D_1CE4_E5B9
+            z = (z ^ (z >> 27)) &* 0x94D0_49BB_1331_11EB
+            return z ^ (z >> 31)
         }
     }
 
