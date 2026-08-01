@@ -5,6 +5,9 @@ struct SettingsView: View {
 
     @State private var selection: String? = "General"
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
+    @State private var sky = SkyService()
+
+    private var accent: [Color] { container.prefs.activePersonality.accentColors }
 
     var body: some View {
         NavigationSplitView(columnVisibility: $columnVisibility) {
@@ -12,10 +15,13 @@ struct SettingsView: View {
                 Label("General", systemImage: "gearshape").tag("General")
                 Label("Care", systemImage: "heart").tag("Care")
                 Label("Vibe & Voice", systemImage: "face.smiling").tag("Vibe")
+                Label("Active Apps", systemImage: "square.stack.3d.up").tag("ActiveApps")
                 Label("Shortcut", systemImage: "keyboard").tag("Shortcut")
                 Label("Privacy", systemImage: "lock.shield").tag("Privacy")
                 Label("Plan", systemImage: "crown").tag("Plan")
             }
+            .scrollContentBackground(.hidden)
+            .background(sidebarBackground)
             .navigationSplitViewColumnWidth(min: 160, ideal: 180)
             .toolbar(removing: .sidebarToggle)
         } detail: {
@@ -24,12 +30,15 @@ struct SettingsView: View {
                 case "General": GeneralSettingsView()
                 case "Care": RemindersSettingsView()
                 case "Vibe": PersonalitySettingsView()
+                case "ActiveApps": ActiveAppsSettingsView()
                 case "Shortcut": ShortcutSettingsView()
                 case "Privacy": PrivacySettingsView()
                 case "Plan": SubscriptionSettingsView()
                 default: Text("Select a setting section")
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(detailBackground)
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button {
@@ -44,6 +53,39 @@ struct SettingsView: View {
             }
         }
         .frame(minWidth: 720, minHeight: 520)
+        .preferredColorScheme(.dark)
+        .task { sky.refreshIfNeeded() }
+    }
+
+    private var sidebarBackground: some View {
+        ZStack(alignment: .top) {
+            LinearGradient(
+                colors: [Color(hex: 0x0B0B0E), Color(hex: 0x121216)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            SkyLayer(isNight: sky.isNight, condition: sky.condition)
+                .frame(height: 160)
+            LinearGradient(
+                colors: [.clear, Color(hex: 0x0B0B0E).opacity(0.85), Color(hex: 0x0B0B0E)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .frame(height: 160)
+            .frame(maxHeight: .infinity, alignment: .top)
+            AuroraGlow(accent: accent)
+                .frame(maxHeight: .infinity, alignment: .bottom)
+        }
+        .ignoresSafeArea()
+    }
+
+    private var detailBackground: some View {
+        LinearGradient(
+            colors: [Color(hex: 0x0B0B0E), Color(hex: 0x121216)],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+        .ignoresSafeArea()
     }
 }
 

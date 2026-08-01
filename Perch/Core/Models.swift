@@ -5,13 +5,11 @@ import Foundation
 enum PlanTier: String, Codable, Comparable {
     case free
     case pro
-    case premium
 
     private var rank: Int {
         switch self {
         case .free: 0
         case .pro: 1
-        case .premium: 2
         }
     }
 
@@ -21,9 +19,15 @@ enum PlanTier: String, Codable, Comparable {
         switch self {
         case .free: "Free"
         case .pro: "Pro"
-        case .premium: "Premium"
         }
     }
+}
+
+// MARK: - Active app scoping
+
+enum FocusAppMode: String, Codable {
+    case allApps
+    case specificApps
 }
 
 struct FeatureGate {
@@ -35,8 +39,7 @@ struct FeatureGate {
     var calendarAwareness: Bool { tier >= .pro }
     var voiceInteraction: Bool { tier >= .pro }
     var weeklySummary: Bool { tier >= .pro }
-    var customPersonality: Bool { tier >= .premium }
-    var voiceStyles: Bool { tier >= .premium }
+    var voiceStyles: Bool { tier >= .pro }
     var maxRoutines: Int { tier == .free ? 3 : 20 }
 }
 

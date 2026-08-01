@@ -101,15 +101,7 @@ final class SubscriptionManager {
     }
 
     private func apply(_ info: CustomerInfo) {
-        if info.entitlements[Self.perchProEntitlementID]?.isActive == true {
-            tier = .premium
-        } else if info.entitlements["premium"]?.isActive == true {
-            tier = .premium
-        } else if info.entitlements["pro"]?.isActive == true {
-            tier = .pro
-        } else {
-            tier = .free
-        }
+        tier = info.entitlements[Self.perchProEntitlementID]?.isActive == true ? .pro : .free
     }
 
         // MARK: Offerings
@@ -126,15 +118,14 @@ final class SubscriptionManager {
                 .map { package in
                     PlanOption(
                         id: package.identifier,
-                        tier: .premium,
-                        periodLabel: Self.periodLabel(for: package.packageType),
+                        tier: .pro,
+                        periodLabel: "One-time",
                         priceLabel: package.storeProduct.localizedPriceString,
-                        note: package.packageType == .lifetime ? "Pay once" : nil,
-                        introText: Self.introText(for: package.storeProduct),
+                        note: "Pay once, unlock everything",
+                        introText: nil,
                         package: package
                     )
                 }
-                .sorted { Self.sortOrder($0.periodLabel) < Self.sortOrder($1.periodLabel) }
         } catch {
             lastError = Self.friendlyMessage(for: error)
         }
@@ -207,45 +198,7 @@ final class SubscriptionManager {
         return error.localizedDescription
     }
 
-    private static func introText(for product: StoreProduct) -> String? {
-        guard let intro = product.introductoryDiscount else { return nil }
-        let count = intro.subscriptionPeriod.value
-        let unit: String
-        switch intro.subscriptionPeriod.unit {
-        case .day: unit = count == 1 ? "day" : "days"
-        case .week: unit = count == 1 ? "week" : "weeks"
-        case .month: unit = count == 1 ? "month" : "months"
-        case .year: unit = count == 1 ? "year" : "years"
-        @unknown default: unit = "days"
-        }
-        if intro.paymentMode == .freeTrial {
-            return "\(count) \(unit) free"
-        }
-        return "\(intro.localizedPriceString) intro"
-    }
-
-    private static func sortOrder(_ periodLabel: String) -> Int {
-        switch periodLabel {
-        case "Monthly": 0
-        case "Yearly": 1
-        case "Lifetime": 2
-        default: 3
-        }
-    }
-
-    private static func periodLabel(for type: PackageType) -> String {
-        switch type {
-        case .monthly: "Monthly"
-        case .annual: "Yearly"
-        case .weekly: "Weekly"
-        case .lifetime: "Lifetime"
-        default: "Plan"
-        }
-    }
-
     private static let demoPlans: [PlanOption] = [
-        PlanOption(id: "monthly", tier: .premium, periodLabel: "Monthly", priceLabel: "$9.99", note: nil, introText: "7 days free", package: nil),
-        PlanOption(id: "yearly", tier: .premium, periodLabel: "Yearly", priceLabel: "$79.99", note: "Save 33%", introText: "7 days free", package: nil),
-        PlanOption(id: "lifetime", tier: .premium, periodLabel: "Lifetime", priceLabel: "$99.99", note: "Pay once", introText: nil, package: nil),
+        PlanOption(id: "pro_unlock", tier: .pro, periodLabel: "One-time", priceLabel: "$10", note: "Pay once, unlock everything", introText: nil, package: nil),
     ]
 }

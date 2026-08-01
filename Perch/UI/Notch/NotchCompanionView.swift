@@ -3,6 +3,7 @@ import SwiftUI
 struct NotchCompanionView: View {
     let coordinator: CompanionCoordinator
     @Environment(PreferencesStore.self) private var prefs
+    @State private var sky = SkyService()
 
     private var accent: [Color] { coordinator.accentColors }
 
@@ -15,6 +16,7 @@ struct NotchCompanionView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .animation(.spring(response: 0.45, dampingFraction: 0.82), value: coordinator.phase)
+        .task { sky.refreshIfNeeded() }
     }
 
         // MARK: Bubble chrome
@@ -41,7 +43,19 @@ struct NotchCompanionView: View {
         .padding(.horizontal, 12)
         .padding(.bottom, 9)
         .frame(maxWidth: .infinity)
-        .background(shape.fill(Color(red: 0, green: 0, blue: 0)))
+        .background(
+            ZStack {
+                shape.fill(Color(red: 0, green: 0, blue: 0))
+                SkyLayer(isNight: sky.isNight, condition: sky.condition)
+                    .clipShape(shape)
+                LinearGradient(
+                    colors: [.clear, .black.opacity(0.8), .black],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .clipShape(shape)
+            }
+        )
         .compositingGroup()
         .padding(.top, metrics.hasNotch ? 0 : 6)
         .onHover { coordinator.isHovering = $0 }

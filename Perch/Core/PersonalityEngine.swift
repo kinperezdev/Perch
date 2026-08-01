@@ -96,23 +96,17 @@ enum Personality: String, Codable, CaseIterable, Identifiable {
 @MainActor
 final class PersonalityEngine {
     private let prefs: PreferencesStore
-    private let intelligence: CompanionIntelligence
     private var lastVariantIndex: [String: Int] = [:]
 
-    init(prefs: PreferencesStore, intelligence: CompanionIntelligence) {
+    init(prefs: PreferencesStore) {
         self.prefs = prefs
-        self.intelligence = intelligence
     }
 
     var activePersonality: Personality {
         prefs.activePersonality
     }
 
-    var companionName: String {
-        prefs.usesCustomPersonality && !prefs.customCompanionName.isEmpty
-            ? prefs.customCompanionName
-            : "Perch"
-    }
+    var companionName: String { "Perch" }
 
     func templateLine(for kind: ReminderKind, context: CheckInContext) -> String {
         if let custom = customLine(context: context) { return custom }
@@ -121,26 +115,6 @@ final class PersonalityEngine {
         guard !variants.isEmpty else { return "Time for a quick check in." }
         let index = pickIndex(count: variants.count, key: "\(personality.rawValue)|\(kind.rawValue)")
         return fill(variants[index], context: context)
-    }
-
-    func composeLine(for kind: ReminderKind, context: CheckInContext, aiAllowed: Bool, brainContext: String = "") async -> String {
-        
-        if let custom = customLine(context: context) { return custom }
-        let fallback = templateLine(for: kind, context: context)
-        guard aiAllowed else { return fallback }
-        var line = await intelligence.compose(
-            kind: kind,
-            personality: activePersonality,
-            context: context,
-            callName: activePersonality.callName(userName: prefs.userName),
-            brainContext: brainContext,
-            customInstructions: prefs.usesCustomPersonality ? prefs.customInstructions : "",
-            fallback: fallback
-        )
-        if prefs.usesCustomPersonality, !prefs.customSignoff.isEmpty, Bool.random() {
-            line += " \(prefs.customSignoff)"
-        }
-        return line
     }
 
     func confirmation(for response: CheckInResponse, kind: ReminderKind? = nil) -> String {

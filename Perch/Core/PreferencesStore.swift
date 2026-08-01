@@ -16,14 +16,7 @@ final class PreferencesStore {
             save(personality.rawValue, "personality")
         }
     }
-    var activePersonality: Personality {
-        usesCustomPersonality ? customBaseStyle : personality
-    }
-    var usesCustomPersonality: Bool { didSet { save(usesCustomPersonality, "usesCustomPersonality") } }
-    var customCompanionName: String { didSet { save(customCompanionName, "customCompanionName") } }
-    var customBaseStyle: Personality { didSet { save(customBaseStyle.rawValue, "customBaseStyle") } }
-    var customSignoff: String { didSet { save(customSignoff, "customSignoff") } }
-    var customInstructions: String { didSet { save(customInstructions, "customInstructions") } }
+    var activePersonality: Personality { personality }
 
     var workStartMinutes: Int { didSet { save(workStartMinutes, "workStartMinutes") } }
     var workEndMinutes: Int { didSet { save(workEndMinutes, "workEndMinutes") } }
@@ -53,11 +46,17 @@ final class PreferencesStore {
         }
     }
     var notificationsMirror: Bool { didSet { save(notificationsMirror, "notificationsMirror") } }
+    var doNotDisturb: Bool { didSet { save(doNotDisturb, "doNotDisturb") } }
     var breakMusicEnabled: Bool { didSet { save(breakMusicEnabled, "breakMusicEnabled") } }
     var allowSleepAtGoodnight: Bool { didSet { save(allowSleepAtGoodnight, "allowSleepAtGoodnight") } }
 
     var shortcutKeyCode: Int { didSet { save(shortcutKeyCode, "shortcutKeyCode") } }
     var shortcutModifiers: UInt { didSet { save(shortcutModifiers, "shortcutModifiers") } }
+
+    var focusAppMode: FocusAppMode { didSet { save(focusAppMode.rawValue, "focusAppMode") } }
+    var allowedAppBundleIDs: Set<String> {
+        didSet { save(Array(allowedAppBundleIDs).sorted(), "allowedAppBundleIDs") }
+    }
 
     var pausedUntil: Date? { didSet { save(pausedUntil, "pausedUntil") } }
     var demoMode: Bool { didSet { save(demoMode, "demoMode") } }
@@ -68,11 +67,6 @@ final class PreferencesStore {
         hasOnboarded = defaults.bool(forKey: "hasOnboarded")
         userName = defaults.string(forKey: "userName") ?? ""
         personality = Personality(rawValue: defaults.string(forKey: "personality") ?? "") ?? .professional
-        usesCustomPersonality = defaults.bool(forKey: "usesCustomPersonality")
-        customCompanionName = defaults.string(forKey: "customCompanionName") ?? "Perch"
-        customBaseStyle = Personality(rawValue: defaults.string(forKey: "customBaseStyle") ?? "") ?? .mentor
-        customSignoff = defaults.string(forKey: "customSignoff") ?? ""
-        customInstructions = defaults.string(forKey: "customInstructions") ?? "I am a casual bro/homie. Be supportive but direct. Use casual slang."
 
         workStartMinutes = defaults.object(forKey: "workStartMinutes") as? Int ?? 9 * 60
         workEndMinutes = defaults.object(forKey: "workEndMinutes") as? Int ?? 18 * 60
@@ -100,11 +94,16 @@ final class PreferencesStore {
         voiceOverrides = defaults.dictionary(forKey: "voiceOverrides") as? [String: String] ?? [:]
         voiceIdentifier = defaults.string(forKey: "voiceIdentifier") ?? ""
         notificationsMirror = defaults.object(forKey: "notificationsMirror") as? Bool ?? false
+        doNotDisturb = defaults.bool(forKey: "doNotDisturb")
         breakMusicEnabled = defaults.object(forKey: "breakMusicEnabled") as? Bool ?? true
         allowSleepAtGoodnight = defaults.object(forKey: "allowSleepAtGoodnight") as? Bool ?? false
 
         shortcutKeyCode = defaults.object(forKey: "shortcutKeyCode") as? Int ?? 49
         shortcutModifiers = defaults.object(forKey: "shortcutModifiers") as? UInt ?? Self.defaultModifiers
+
+        focusAppMode = FocusAppMode(rawValue: defaults.string(forKey: "focusAppMode") ?? "") ?? .allApps
+        allowedAppBundleIDs = Set(defaults.stringArray(forKey: "allowedAppBundleIDs") ?? [])
+
         pausedUntil = defaults.object(forKey: "pausedUntil") as? Date
         demoMode = defaults.bool(forKey: "demoMode")
         autoHideMessages = defaults.object(forKey: "autoHideMessages") as? Bool ?? true

@@ -28,7 +28,7 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
     }
 
     func mirror(_ checkIn: CheckIn) {
-        guard prefs.notificationsMirror, authorized else { return }
+        guard prefs.notificationsMirror, !prefs.doNotDisturb, authorized else { return }
         let content = UNMutableNotificationContent()
         content.title = checkIn.kind.displayName
         content.body = checkIn.message

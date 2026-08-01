@@ -11,7 +11,7 @@ struct OnboardingView: View {
     @State private var welcomeStage = 0
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
 
-    private let lastPage = 9
+    private let lastPage = 8
     @State private var newRoutineLabel = ""
     @State private var newRoutineTime = Date()
     @State private var newRoutineMessage = ""
@@ -38,6 +38,7 @@ struct OnboardingView: View {
         .frame(width: 700 * PerchStyle.scale, height: 560 * PerchStyle.scale)
         .animation(.spring(response: 0.45, dampingFraction: 0.86), value: page)
         .preferredColorScheme(.dark)
+        .trackCursorForCompanion()
     }
 
     private var background: some View {
@@ -47,6 +48,8 @@ struct OnboardingView: View {
                 startPoint: .top,
                 endPoint: .bottom
             )
+            AuroraGlow(accent: accent)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
             Rectangle()
                 .fill(.white.opacity(0.06))
                 .frame(height: 1)
@@ -67,12 +70,11 @@ struct OnboardingView: View {
         case 0: welcomePage
         case 1: namePage
         case 2: personalityPage
-        case 3: customRulesPage
-        case 4: rhythmPage
-        case 5: carePage
-        case 6: routinesPage
-        case 7: permissionsPage
-        case 8: shortcutPage
+        case 3: rhythmPage
+        case 4: carePage
+        case 5: routinesPage
+        case 6: permissionsPage
+        case 7: shortcutPage
         default: planPage
         }
     }
@@ -81,7 +83,7 @@ struct OnboardingView: View {
 
     private var welcomePage: some View {
         VStack(spacing: 16) {
-            CompanionFaceView(state: .excited, accent: accent, size: 76)
+            CompanionFaceView(state: .excited, accent: accent, size: 76, showsMouth: false)
                 .opacity(welcomeStage >= 1 ? 1 : 0)
                 .scaleEffect(welcomeStage >= 1 ? 1 : 0.5)
             Text("Perch")
@@ -157,58 +159,6 @@ struct OnboardingView: View {
         }
     }
 
-    private var customRulesPage: some View {
-        VStack(spacing: 16) {
-            kicker("Intelligence")
-            Text("Custom AI Rules")
-                .font(.perchRounded(24, weight: .bold))
-            Text("Write your own system prompt or import a brain to control exactly how Perch thinks and speaks.")
-                .font(.perchRounded(13))
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: 440)
-
-            @Bindable var prefs = container.prefs
-            if container.subscriptions.gate.customPersonality {
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack {
-                        Toggle("Override intelligence rules", isOn: $prefs.usesCustomPersonality)
-                            .font(.perchRounded(14, weight: .semibold))
-                            .onChange(of: prefs.usesCustomPersonality) { _, enabled in
-                                if enabled { prefs.customBaseStyle = prefs.personality }
-                            }
-                        Spacer()
-                        if prefs.usesCustomPersonality {
-                            Button("Import Brain") {
-                                importBrain(prefs: prefs)
-                            }
-                            .buttonStyle(.plain)
-                            .font(.perchRounded(13, weight: .semibold))
-                            .foregroundStyle(.blue)
-                        }
-                    }
-                    if prefs.usesCustomPersonality {
-                        TextEditor(text: $prefs.customInstructions)
-                            .font(.system(size: 11, design: .monospaced))
-                            .frame(height: 120)
-                            .padding(8)
-                            .background(.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    }
-                }
-                .frame(maxWidth: 500)
-                .padding(.top, 10)
-            } else {
-                VStack(spacing: 12) {
-                    ProTag(text: "PRO FEATURE")
-                    Text("Unlock custom intelligence with Perch Pro.")
-                        .font(.perchRounded(12))
-                        .foregroundStyle(.secondary)
-                }
-                .padding(.top, 40)
-            }
-        }
-    }
-
     private func personalityChip(_ personality: Personality) -> some View {
         let isSelected = container.prefs.personality == personality
         let isLocked = personality.requiresPro && !container.subscriptions.gate.allPersonalities
@@ -218,7 +168,6 @@ struct OnboardingView: View {
             } else {
                 lockedNote = false
                 withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
-                    container.prefs.usesCustomPersonality = false
                     container.prefs.personality = personality
                 }
                 container.voice.preview(MessageLibrary.sample(personality: personality))
@@ -514,14 +463,6 @@ struct OnboardingView: View {
                 .foregroundStyle(.secondary)
             VStack(spacing: 10) {
                 permissionRow(
-                    symbol: "bell.badge.fill",
-                    title: "Notifications",
-                    detail: "Optional mirror of check ins",
-                    granted: container.notifications.authorized
-                ) {
-                    Task { await container.notifications.requestAuthorization() }
-                }
-                permissionRow(
                     symbol: "calendar",
                     title: "Calendar",
                     detail: "Meeting prep and recovery. Pro feature, read only",
@@ -635,7 +576,7 @@ struct OnboardingView: View {
                 .foregroundStyle(.white.opacity(0.7))
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 420)
-            Text("Start free with smart check ins, or unlock AI memory, calendar awareness, and weekly insights with Pro.")
+            Text("Start free with smart check ins, or unlock adaptive memory, calendar awareness, and weekly insights with Pro.")
                 .font(.perchRounded(11.5))
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -701,11 +642,5 @@ struct OnboardingView: View {
     private func finish() {
         container.prefs.hasOnboarded = true
         onFinish()
-    }
-
-    private func importBrain(prefs: PreferencesStore) {
-        if let text = importInstructionsFile() {
-            prefs.customInstructions = text
-        }
     }
 }

@@ -4,11 +4,10 @@ struct PerchPaywallView: View {
     @Environment(AppContainer.self) private var container
     let onClose: () -> Void
 
-    @State private var selectedID: String?
     @State private var isLoadingOfferings = true
 
     private var accent: [Color] { container.personality.activePersonality.accentColors }
-    private var options: [SubscriptionManager.PlanOption] { container.subscriptions.planOptions }
+    private var option: SubscriptionManager.PlanOption? { container.subscriptions.planOptions.first }
 
     var body: some View {
         ZStack {
@@ -24,25 +23,20 @@ struct PerchPaywallView: View {
                 }
                 featureList
                     .padding(.vertical, 4)
+                Spacer(minLength: 0)
                 if isLoadingOfferings {
                     ProgressView()
                         .controlSize(.small)
-                        .frame(maxHeight: .infinity)
-                } else if options.isEmpty {
+                } else if let option {
+                    priceCard(option)
+                } else {
                     VStack(spacing: 10) {
-                        Text(container.subscriptions.lastError ?? "Couldn't load plans.")
+                        Text(container.subscriptions.lastError ?? "Couldn't load the plan.")
                             .font(.perchRounded(11.5))
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
                         Button("Try again") { Task { await loadOfferings() } }
                             .buttonStyle(.glass)
-                    }
-                    .frame(maxHeight: .infinity)
-                } else {
-                    VStack(spacing: 8) {
-                        ForEach(options) { option in
-                            optionRow(option)
-                        }
                     }
                 }
                 purchaseButton
@@ -50,7 +44,7 @@ struct PerchPaywallView: View {
             }
             .padding(24)
         }
-        .frame(width: 440 * PerchStyle.scale, height: 640 * PerchStyle.scale)
+        .frame(width: 440 * PerchStyle.scale, height: 560 * PerchStyle.scale)
         .preferredColorScheme(.dark)
         .task { await loadOfferings() }
     }
@@ -59,9 +53,6 @@ struct PerchPaywallView: View {
         isLoadingOfferings = true
         await container.subscriptions.loadOfferings()
         isLoadingOfferings = false
-        if selectedID == nil {
-            selectedID = options.first { $0.periodLabel == "Yearly" }?.id ?? options.first?.id
-        }
     }
 
     private var background: some View {
@@ -81,11 +72,11 @@ struct PerchPaywallView: View {
     private var featureList: some View {
         VStack(alignment: .leading, spacing: 6) {
             featureRow("Memory that adapts timing to your habits")
-            featureRow("All six personalities, plus a custom companion")
-            featureRow("Personalized AI companion check-ins")
+            featureRow("All six personalities")
             featureRow("Calendar and meeting awareness")
             featureRow("Weekly wellbeing summary and insights")
-            featureRow("More personal routines")
+            featureRow("Voice check ins, in your own voice or a style")
+            featureRow("Up to 20 personal routines")
         }
     }
 
@@ -100,54 +91,35 @@ struct PerchPaywallView: View {
         }
     }
 
-    private func optionRow(_ option: SubscriptionManager.PlanOption) -> some View {
-        let isSelected = selectedID == option.id
-        return Button {
-            selectedID = option.id
-        } label: {
-            HStack(spacing: 10) {
-                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 15))
-                    .foregroundStyle(isSelected ? accent[0] : .white.opacity(0.3))
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(option.periodLabel)
-                        .font(.perchRounded(13.5, weight: .semibold))
-                    if let introText = option.introText {
-                        Text(introText)
-                            .font(.perchRounded(9.5, weight: .medium))
-                            .foregroundStyle(accent[0])
-                    }
-                }
-                if let note = option.note {
-                    Text(note)
-                        .font(.system(size: 9, weight: .bold, design: .rounded))
-                        .foregroundStyle(.black.opacity(0.8))
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(PerchStyle.accentGradient(accent), in: Capsule())
-                }
-                Spacer()
-                Text(option.priceLabel)
-                    .font(.perchRounded(14, weight: .bold))
-                    .monospacedDigit()
+    private func priceCard(_ option: SubscriptionManager.PlanOption) -> some View {
+        HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 1) {
+                Text("One-time purchase")
+                    .font(.perchRounded(13.5, weight: .semibold))
+                Text("Pay once, unlock everything, forever.")
+                    .font(.perchRounded(9.5, weight: .medium))
+                    .foregroundStyle(.secondary)
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 12)
-            .background(
-                RoundedRectangle(cornerRadius: 13, style: .continuous)
-                    .fill(isSelected ? AnyShapeStyle(accent[0].opacity(0.13)) : AnyShapeStyle(.white.opacity(0.05)))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 13, style: .continuous)
-                    .strokeBorder(isSelected ? accent[0].opacity(0.55) : .white.opacity(0.07), lineWidth: 1.2)
-            )
+            Spacer()
+            Text(option.priceLabel)
+                .font(.perchRounded(20, weight: .heavy))
+                .monospacedDigit()
         }
-        .buttonStyle(.plain)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 14)
+        .background(
+            RoundedRectangle(cornerRadius: 13, style: .continuous)
+                .fill(accent[0].opacity(0.13))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 13, style: .continuous)
+                .strokeBorder(accent[0].opacity(0.55), lineWidth: 1.2)
+        )
     }
 
     private var purchaseButton: some View {
         Button {
-            guard let option = options.first(where: { $0.id == selectedID }) else { return }
+            guard let option else { return }
             Task {
                 await container.subscriptions.purchase(option)
                 if container.subscriptions.tier != .free {
@@ -165,7 +137,7 @@ struct PerchPaywallView: View {
             }
         }
         .buttonStyle(BigActionButtonStyle(accent: accent))
-        .disabled(selectedID == nil || container.subscriptions.isWorking || options.isEmpty)
+        .disabled(option == nil || container.subscriptions.isWorking)
     }
 
     private var footer: some View {

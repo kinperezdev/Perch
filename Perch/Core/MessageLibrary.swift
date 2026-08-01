@@ -14,7 +14,7 @@ enum MessageLibrary {
             "Bro, are you drinking water? Your brain runs on it, trust."]
         case (.water, .professional): return [
             "Have you had water recently? A glass now will keep your focus sharp.",
-            "Hydration reminder. Did you take a short water break before your next block?"]
+            "Quick check: have you had a water break yet?"]
         case (.water, .mentor): return [
             "Have you drank any water, {name}? It keeps the mind clear.",
             "Did you pause for water? The work will still be here in ninety seconds."]
@@ -34,7 +34,7 @@ enum MessageLibrary {
             "{name}, how about a quick stretch break? Can't ship greatness with a stiff neck."]
         case (.stretch, .professional): return [
             "You have been focused for {duration}. Have you taken a short stretch break?",
-            "Long session detected: {duration}. Would you like to stand and stretch briefly?"]
+            "You've been at it for {duration}. Want to stand and stretch for a bit?"]
         case (.stretch, .mentor): return [
             "It's been {duration} of deep work. Did you stand, breathe, and stretch?",
             "{name}, the body carries the mind. Have you given it a minute of movement?"]
@@ -54,7 +54,7 @@ enum MessageLibrary {
             "Are you giving your eyes a breather, bro? Twenty seconds, something 20 feet away."]
         case (.eyes, .professional): return [
             "Have you focused on a distant object recently to prevent eye strain?",
-            "Screen time is adding up. Did you take a brief distance gaze to reset your eyes?"]
+            "Screen time is adding up. Did you look at something far away to rest your eyes?"]
         case (.eyes, .mentor): return [
             "Have you let your gaze travel somewhere far? The eyes need horizons too.",
             "Did you take twenty seconds of distance, {name}? Small habits protect long careers."]
@@ -94,7 +94,7 @@ enum MessageLibrary {
             "Bro, how about a short walk? The best ideas show up when you step away."]
         case (.walk, .professional): return [
             "You have been at your desk for {duration}. Would you consider a short walk?",
-            "Extended session: {duration}. Did you take a brief walk to restore focus?"]
+            "You've been at your desk {duration}. Did you get up for a short walk?"]
         case (.walk, .mentor): return [
             "{duration} of sitting, {name}. Have you given yourself a few minutes to walk?",
             "Did you step away briefly? Distance from the problem is often the fastest path through it."]
@@ -153,8 +153,8 @@ enum MessageLibrary {
             "Bro. {duration} straight. Certified grinder, but even legends take five. Breathe.",
             "{name}, you've been locked in {duration}. Respect. Now step off for a few, seriously."]
         case (.overwork, .professional): return [
-            "You have worked for {duration} without a meaningful break. A recovery pause is advised.",
-            "Long focus block: {duration}. Sustained output requires a reset. Please take one."]
+            "You have worked for {duration} without a real break. It's time to pause.",
+            "That's {duration} straight. Take a break before you keep going."]
         case (.overwork, .mentor): return [
             "{duration} of continuous work, {name}. The craft rewards rhythm, not exhaustion.",
             "You've gone {duration} deep. Surface for air. Marathons are run in segments."]
@@ -174,7 +174,7 @@ enum MessageLibrary {
             "Past quitting time bro. Save your progress. Life's the main quest too."]
         case (.windDown, .professional): return [
             "You are past your set work hours. Consider wrapping up your current task.",
-            "End of day reached. A clean stop now protects tomorrow's performance."]
+            "Your workday's over. Wrapping up now sets you up better for tomorrow."]
         case (.windDown, .mentor): return [
             "The workday you designed has ended, {name}. Honor it. Stopping is a skill.",
             "Done is a decision. Make it, and let the evening do its quiet work."]
@@ -194,7 +194,7 @@ enum MessageLibrary {
             "{name}, log off. The grind respects those who sleep."]
         case (.sleep, .professional): return [
             "It is past your quiet hours. Sleep will do more for tomorrow than this last task.",
-            "Late night detected. Recommend ending the session and resting."]
+            "It's getting late. Consider ending here and getting some rest."]
         case (.sleep, .mentor): return [
             "You did enough today, {name}. Rest matters too. Let sleep finish the work.",
             "The night shift belongs to your dreams, not your deadlines."]
@@ -234,7 +234,7 @@ enum MessageLibrary {
             "Meeting done bro. Shake it off, reset, then back to building."]
         case (.meetingRecovery, .professional): return [
             "Your meeting has ended. A short reset before resuming deep work is recommended.",
-            "Meeting complete. Two quiet minutes now will improve your next block."]
+            "Meeting's done. A couple quiet minutes will help before you dive back in."]
         case (.meetingRecovery, .mentor): return [
             "Meetings spend a different energy, {name}. Refill it before returning to the craft.",
             "The meeting is over. Let it fully end before the next thing begins."]
@@ -274,7 +274,7 @@ enum MessageLibrary {
             "{duration} locked in, bro. You good, or you need a breather?"]
         case (.status, .professional): return [
             "You're at {duration} of focus. How are you feeling?",
-            "Current session: {duration}. How is it going in there?"]
+            "You're {duration} in. How's it going?"]
         case (.status, .mentor): return [
             "{duration} of steady work, {name}. How is your energy holding up?",
             "The session flows well at {duration}. Are you still in a good rhythm?"]
@@ -311,7 +311,7 @@ enum MessageLibrary {
         case (.welcome, .homie): return [
             "Yo {name}! I'm perched. You build, I'll watch your six. Let's cook."]
         case (.welcome, .professional): return [
-            "Setup complete. I will monitor your session quietly and check in at the right moments."]
+            "I'm here now. I'll quietly keep an eye on things and check in at the right moments."]
         case (.welcome, .mentor): return [
             "I'm with you now, {name}. Build with intention. I'll guard the pace."]
         case (.welcome, .coach): return [
@@ -336,7 +336,7 @@ enum MessageLibrary {
             switch personality {
             case .mother: return ["Okay sweetheart, but I'll come back. Promise me.", "Alright, but don't make me ask twice, sweetheart."]
             case .homie: return ["Bet. I'll circle back in a few.", "Aight, snoozed. Don't ghost me though."]
-            case .professional: return ["Understood. I'll remind you shortly.", "Noted. A follow up is scheduled."]
+            case .professional: return ["Understood. I'll remind you shortly.", "Noted. I'll check back soon."]
             case .mentor: return ["Alright. I'll return when the moment is better.", "Fine. Some moments arrive a little later."]
             case .coach: return ["Copy that. Short delay, then we go.", "Snooze logged. We go again shortly."]
             case .playful: return ["Fine, but I'm setting a tiny dramatic timer.", "Snooze accepted. My tiny timer is dramatic but fair."]

@@ -1,26 +1,6 @@
 import AppKit
 import SwiftUI
 
-// MARK: - File import
-
-@MainActor
-func importInstructionsFile() -> String? {
-    NSApp.activate(ignoringOtherApps: true)
-    let panel = NSOpenPanel()
-    panel.allowsMultipleSelection = false
-    panel.canChooseDirectories = false
-    panel.canChooseFiles = true
-    guard panel.runModal() == .OK, let url = panel.url else { return nil }
-    guard let text = try? String(contentsOf: url, encoding: .utf8) else {
-        let alert = NSAlert()
-        alert.messageText = "Couldn't read that file"
-        alert.informativeText = "Perch needs a plain text file."
-        alert.runModal()
-        return nil
-    }
-    return text
-}
-
 // MARK: - Color helpers
 
 extension Color {

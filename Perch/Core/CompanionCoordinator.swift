@@ -74,8 +74,7 @@ final class CompanionCoordinator {
 
     func present(kind: ReminderKind, context: CheckInContext) async -> Bool {
         guard phase == .hidden else { return false }
-        let brainCtx = brain.contextSummary()
-        let message = await personality.composeLine(for: kind, context: context, aiAllowed: true, brainContext: brainCtx)
+        let message = personality.templateLine(for: kind, context: context)
         guard phase == .hidden else { return false }
 
         let checkIn = CheckIn(kind: kind, message: message, context: context)

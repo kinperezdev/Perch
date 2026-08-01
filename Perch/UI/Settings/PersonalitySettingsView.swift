@@ -13,7 +13,7 @@ struct PersonalitySettingsView: View {
                     ForEach(Personality.allCases) { personality in
                         PersonalityCard(
                             personality: personality,
-                            isSelected: !prefs.usesCustomPersonality && prefs.personality == personality,
+                            isSelected: prefs.personality == personality,
                             isLocked: personality.requiresPro && !container.subscriptions.gate.allPersonalities
                         ) {
                             select(personality, prefs: prefs)
@@ -43,14 +43,6 @@ struct PersonalitySettingsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-            Section("Custom companion") {
-                customPersonalityEditor(prefs: prefs)
-            }
-            Section("On-device intelligence") {
-                Label(container.intelligence.availabilityNote, systemImage: "brain")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
         }
         .formStyle(.grouped)
     }
@@ -60,7 +52,6 @@ struct PersonalitySettingsView: View {
             WindowPresenter.shared.showPaywall(container)
             return
         }
-        prefs.usesCustomPersonality = false
         prefs.personality = personality
         if prefs.voiceEnabled {
             container.voice.preview(MessageLibrary.sample(personality: personality))
@@ -117,53 +108,6 @@ struct PersonalitySettingsView: View {
         }
     }
 
-    @ViewBuilder
-    private func customPersonalityEditor(prefs: PreferencesStore) -> some View {
-        @Bindable var prefs = prefs
-        if container.subscriptions.gate.customPersonality {
-            Toggle("Use a custom companion", isOn: $prefs.usesCustomPersonality)
-            if prefs.usesCustomPersonality {
-                TextField("Companion name", text: $prefs.customCompanionName)
-                Picker("Base style", selection: $prefs.customBaseStyle) {
-                    ForEach(Personality.allCases) { personality in
-                        Text(personality.displayName).tag(personality)
-                    }
-                }
-                TextField("Signature phrase", text: $prefs.customSignoff, prompt: Text("e.g. Now go build."))
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Text("Custom AI Rules (System Prompt)")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Spacer()
-                        Button("Import Brain") {
-                            importBrain(prefs: prefs)
-                        }
-                        .font(.caption)
-                    }
-                    TextEditor(text: $prefs.customInstructions)
-                        .font(.system(size: 11, design: .monospaced))
-                        .frame(height: 60)
-                        .padding(4)
-                        .background(.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 6))
-                }
-            }
-        } else {
-            HStack(spacing: 6) {
-                Text("Name your own companion and tune its voice.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Spacer()
-                ProTag(text: "PREMIUM")
-            }
-        }
-    }
-
-    private func importBrain(prefs: PreferencesStore) {
-        if let text = importInstructionsFile() {
-            prefs.customInstructions = text
-        }
-    }
 }
 
 struct PersonalityCard: View {

@@ -28,17 +28,11 @@ final class WindowPresenter: NSObject, NSWindowDelegate {
     }
 
     func showPaywall(_ container: AppContainer) {
-        show(id: "paywall", size: NSSize(width: 440 * PerchStyle.scale, height: 640 * PerchStyle.scale)) {
+        show(id: "paywall", size: NSSize(width: 440 * PerchStyle.scale, height: 560 * PerchStyle.scale)) {
             PerchPaywallView(onClose: { [weak self] in
                 self?.close(id: "paywall")
             })
             .environment(container)
-        }
-    }
-
-    func showCustomerCenter(_ container: AppContainer) {
-        show(id: "customercenter", size: NSSize(width: 440 * PerchStyle.scale, height: 300 * PerchStyle.scale)) {
-            CustomerCenterHost().environment(container)
         }
     }
 
@@ -73,6 +67,9 @@ final class WindowPresenter: NSObject, NSWindowDelegate {
             defer: false
         )
         window.title = "Settings"
+        window.titlebarAppearsTransparent = true
+        window.appearance = NSAppearance(named: .darkAqua)
+        window.backgroundColor = NSColor(Color(hex: 0x0B0B0E))
         window.isReleasedWhenClosed = false
         window.delegate = self
         window.contentView = NSHostingView(rootView: content().environment(\.dynamicTypeSize, .medium))

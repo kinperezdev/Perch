@@ -153,7 +153,7 @@ struct MenuBarContentView: View {
                 .buttonStyle(.plain)
                 .font(.perchRounded(11.5))
                 Spacer()
-                if container.subscriptions.tier != .premium {
+                if container.subscriptions.tier != .pro {
                     Button("Upgrade") { WindowPresenter.shared.showPaywall(container) }
                         .buttonStyle(.glassProminent)
                         .font(.perchRounded(11, weight: .semibold))

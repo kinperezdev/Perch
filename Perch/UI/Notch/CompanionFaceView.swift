@@ -22,10 +22,12 @@ struct CompanionFaceView: View {
     var state: FaceState = .idle
     var accent: [Color]
     var size: CGFloat = 40
+    var showsMouth: Bool = true
 
     @State private var blink = false
     @State private var pulse = false
     @State private var bounceTask: Task<Void, Never>?
+    @State private var faceCenter: CGPoint?
 
     var body: some View {
         TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
@@ -44,6 +46,18 @@ struct CompanionFaceView: View {
         }
         .frame(width: size * 1.45, height: size * 1.45)
         .scaleEffect(pulse ? 1.08 : 1)
+        .background(
+            GeometryReader { proxy in
+                Color.clear
+                    .onChange(of: proxy.frame(in: .global)) { _, frame in
+                        faceCenter = CGPoint(x: frame.midX, y: frame.midY)
+                    }
+                    .onAppear {
+                        let frame = proxy.frame(in: .global)
+                        faceCenter = CGPoint(x: frame.midX, y: frame.midY)
+                    }
+            }
+        )
         .onChange(of: state) { _, _ in bounceOnce() }
         .task { await blinkLoop() }
     }
@@ -70,12 +84,29 @@ struct CompanionFaceView: View {
         // MARK: Features
 
     private func features(t: TimeInterval) -> some View {
-        VStack(spacing: size * 0.09) {
+        let look = lookOffset(t: t)
+        return VStack(spacing: size * 0.09) {
             eyes(t: t)
-            mouth(t: t)
+            if showsMouth { mouth(t: t) }
         }
-        .offset(x: eyeDriftX(t), y: featureOffsetY)
+        .offset(x: look.width, y: featureOffsetY + look.height)
         .animation(.spring(response: 0.32, dampingFraction: 0.72), value: state)
+    }
+
+    /// Where the eyes should shift to look toward the cursor, in this window.
+    /// Falls back to the original idle drift when the cursor is outside the
+    /// window or this face hasn't reported its position yet.
+    private func lookOffset(t: TimeInterval) -> CGSize {
+        guard let cursor = CursorTracker.shared.location, let center = faceCenter else {
+            return CGSize(width: eyeDriftX(t), height: 0)
+        }
+        let dx = cursor.x - center.x
+        let dy = cursor.y - center.y
+        let distance = max(sqrt(dx * dx + dy * dy), 1)
+        let maxShift = size * 0.09
+        let reach: CGFloat = 220
+        let factor = min(distance, reach) / reach
+        return CGSize(width: (dx / distance) * maxShift * factor, height: (dy / distance) * maxShift * 0.6 * factor)
     }
 
     private func eyes(t: TimeInterval) -> some View {
@@ -97,10 +128,22 @@ struct CompanionFaceView: View {
         case .happy: size * 0.11
         case .excited: size * 0.3
         case .concerned: size * 0.2
-        case .sleepy: size * 0.07
+        case .sleepy: size * 0.07 + size * 0.13 * CGFloat(cursorCloseness())
         case .thinking: size * 0.16
         default: size * 0.24
         }
+    }
+
+    /// 1 when the cursor is right next to the face, fading to 0 by `reach` away.
+    /// Lets a sleepy Perch gradually peek open as the cursor gets close, instead
+    /// of snapping between fully shut and fully open.
+    private func cursorCloseness() -> Double {
+        guard let cursor = CursorTracker.shared.location, let center = faceCenter else { return 0 }
+        let dx = cursor.x - center.x
+        let dy = cursor.y - center.y
+        let distance = sqrt(dx * dx + dy * dy)
+        let reach: CGFloat = 160
+        return Double(1 - min(distance, reach) / reach)
     }
 
     private var eyeTilt: Double {
@@ -157,7 +200,12 @@ struct CompanionFaceView: View {
             EmptyView()
         }
     }
-    
+
+    private func talkingMouthHeight(_ t: TimeInterval) -> CGFloat {
+        let wave = CGFloat(abs(sin(t * 9)))
+        return size * 0.05 + size * 0.09 * wave
+    }
+
     private var headphones: some View {
         ZStack {
             Path { path in
@@ -185,11 +233,6 @@ struct CompanionFaceView: View {
             }
             .offset(y: size * 0.05)
         }
-    }
-
-    private func talkingMouthHeight(_ t: TimeInterval) -> CGFloat {
-        let wave = CGFloat(abs(sin(t * 9)))
-        return size * 0.05 + size * 0.09 * wave
     }
 
         // MARK: Ambient motion

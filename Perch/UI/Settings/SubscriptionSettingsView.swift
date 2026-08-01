@@ -17,18 +17,13 @@ struct SubscriptionSettingsView: View {
                             .foregroundStyle(.secondary)
                     }
                     Spacer()
-                    if container.subscriptions.tier != .premium {
+                    if container.subscriptions.tier != .pro {
                         Button("Upgrade") { WindowPresenter.shared.showPaywall(container) }
                             .buttonStyle(.borderedProminent)
                     }
                 }
             }
             Section {
-                if container.subscriptions.mode == .revenueCat, container.subscriptions.tier != .free {
-                    Button("Manage subscription") {
-                        WindowPresenter.shared.showCustomerCenter(container)
-                    }
-                }
                 Button("Restore purchases") {
                     Task { await container.subscriptions.restorePurchases() }
                 }
@@ -39,7 +34,7 @@ struct SubscriptionSettingsView: View {
                     Button("Reset demo plan to Free") {
                         container.subscriptions.resetDemoTier()
                     }
-                    Text("Running in demo mode: no RevenueCat key configured. Purchases are simulated locally.")
+                    Text("Demo mode is on. Purchases here aren't real yet.")
                         .font(.caption)
                         .foregroundStyle(.orange)
                 }
@@ -58,8 +53,7 @@ struct SubscriptionSettingsView: View {
     private var planBlurb: String {
         switch container.subscriptions.tier {
         case .free: "Smart check ins, two personalities, manual habits"
-        case .pro: "Adaptive memory, all personalities, calendar"
-        case .premium: "Everything unlocked: memory, weekly insights, calendar, custom companion"
+        case .pro: "Everything unlocked: memory, weekly insights, calendar, all personalities"
         }
     }
 }

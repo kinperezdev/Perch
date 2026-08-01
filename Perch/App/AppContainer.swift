@@ -10,7 +10,6 @@ final class AppContainer {
     let prefs: PreferencesStore
     let memory: HabitMemoryStore
     let brain: PerchBrain
-    let intelligence: CompanionIntelligence
     let personality: PersonalityEngine
     let tracker: FocusSessionTracker
     let calendar: CalendarAwarenessService
@@ -26,9 +25,8 @@ final class AppContainer {
         let prefs = PreferencesStore()
         let memory = HabitMemoryStore()
         let brain = PerchBrain()
-        let intelligence = CompanionIntelligence(prefs: prefs)
         let subscriptions = SubscriptionManager()
-        let personality = PersonalityEngine(prefs: prefs, intelligence: intelligence)
+        let personality = PersonalityEngine(prefs: prefs)
         let tracker = FocusSessionTracker(prefs: prefs, memory: memory)
         let calendar = CalendarAwarenessService()
         let voice = VoiceService(prefs: prefs)
@@ -57,7 +55,6 @@ final class AppContainer {
         self.prefs = prefs
         self.memory = memory
         self.brain = brain
-        self.intelligence = intelligence
         self.subscriptions = subscriptions
         self.personality = personality
         self.tracker = tracker
@@ -95,7 +92,6 @@ final class AppContainer {
     }
 
     func start() {
-        intelligence.start()
         coordinator.prepare()
         engine.start()
         shortcuts.registerFromPrefs()

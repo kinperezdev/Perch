@@ -5,6 +5,7 @@ struct DashboardView: View {
     @Environment(\.openSettings) private var openSettings
     @State private var showingAchievements = false
     @State private var confirmedAction: String?
+    @State private var sky = SkyService()
 
     private var accent: [Color] { container.prefs.activePersonality.accentColors }
 
@@ -33,10 +34,12 @@ struct DashboardView: View {
             }
             .padding(.horizontal, 30)
             .padding(.bottom, 24)
-            .padding(.top, 8)
+            .padding(.top, 20)
         }
-        .frame(width: 720 * PerchStyle.scale, height: 450 * PerchStyle.scale)
+        .frame(width: 720 * PerchStyle.scale, height: 480 * PerchStyle.scale)
         .preferredColorScheme(.dark)
+        .trackCursorForCompanion()
+        .task { sky.refreshIfNeeded() }
     }
 
     private var background: some View {
@@ -46,6 +49,10 @@ struct DashboardView: View {
                 startPoint: .top,
                 endPoint: .bottom
             )
+            SkyLayer(isNight: sky.isNight, condition: sky.condition)
+                .frame(height: 220)
+            AuroraGlow(accent: accent)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
             Rectangle()
                 .fill(.white.opacity(0.06))
                 .frame(height: 1)
@@ -83,6 +90,15 @@ struct DashboardView: View {
             Spacer()
 
             Button {
+                container.prefs.doNotDisturb.toggle()
+            } label: {
+                Image(systemName: container.prefs.doNotDisturb ? "moon.fill" : "moon")
+            }
+            .buttonStyle(.glass)
+            .tint(container.prefs.doNotDisturb ? .orange : nil)
+            .help(container.prefs.doNotDisturb ? "Do Not Disturb is on. Check ins still happen, notifications are silenced." : "Turn on Do Not Disturb to silence notifications. Check ins keep working.")
+
+            Button {
                 showingAchievements = true
             } label: {
                 Image(systemName: "medal.fill")
@@ -96,7 +112,7 @@ struct DashboardView: View {
                 Image(systemName: "gearshape.fill")
             }
             .buttonStyle(.glass)
-            if container.subscriptions.tier != .premium {
+            if container.subscriptions.tier != .pro {
                 Button("Upgrade") { WindowPresenter.shared.showPaywall(container) }
                     .buttonStyle(.glassProminent)
                     .tint(accent[0])
@@ -120,7 +136,7 @@ struct DashboardView: View {
         let today = container.memory.today()
         return VStack(spacing: 10) {
             HStack(spacing: 10) {
-                statTile("Focus", value: shortDuration(seconds: container.tracker.focusRunSeconds), symbol: "flame.fill")
+                statTile("Active", value: shortDuration(seconds: container.tracker.focusRunSeconds), symbol: "flame.fill")
                 statTile("Check-ins", value: "\(today.checkInsAccepted)", symbol: "checkmark.circle.fill")
                 statTile("Water", value: "\(today.waterCount)", symbol: "drop.fill")
             }
@@ -163,6 +179,7 @@ struct DashboardView: View {
         let maxLogs = max(week.days.map(\.totalLogs).max() ?? 1, 1)
         return VStack(alignment: .leading, spacing: 10) {
             sectionKicker("This week")
+                .padding(.bottom, 10)
             if container.subscriptions.gate.weeklySummary {
                 HStack(alignment: .bottom, spacing: 10) {
                     ForEach(week.days) { day in
@@ -194,7 +211,7 @@ struct DashboardView: View {
             }
         }
         .padding(.horizontal, 14)
-        .padding(.top, 14)
+        .padding(.top, 22)
         .padding(.bottom, 26)
         .frame(maxWidth: .infinity, alignment: .leading)
         .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16, style: .continuous))

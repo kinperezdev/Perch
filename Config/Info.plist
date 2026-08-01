@@ -32,6 +32,8 @@
 	<string>Perch reads upcoming events so it can help you prepare for meetings and recover after them. Events never leave your Mac.</string>
 	<key>NSCalendarsUsageDescription</key>
 	<string>Perch reads upcoming events so it can help you prepare for meetings and recover after them. Events never leave your Mac.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Perch uses your location on-device to check the local weather, so the dashboard background can reflect it.</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright 2026 Kin Clark Perez. All rights reserved.</string>
 	<key>NSPrincipalClass</key>

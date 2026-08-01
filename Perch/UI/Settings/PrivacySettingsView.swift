@@ -18,7 +18,7 @@ struct PrivacySettingsView: View {
             Section("What stays private") {
                 Label("Messages, documents, and passwords", systemImage: "xmark.circle")
                 Label("Browser content and screen contents", systemImage: "xmark.circle")
-                Label("Memory and AI stay on this Mac. Nothing is sent to the cloud", systemImage: "lock.circle")
+                Label("Memory stays on this Mac. Nothing is sent to the cloud", systemImage: "lock.circle")
             }
             .font(.perchRounded(12))
             .foregroundStyle(.secondary)
@@ -35,19 +35,10 @@ struct PrivacySettingsView: View {
                         }
                     }
                 }
-                HStack {
-                    Text("Notifications")
-                    Spacer()
-                    if container.notifications.authorized {
-                        Label("Granted", systemImage: "checkmark.circle.fill")
-                            .foregroundStyle(.green)
-                    } else {
-                        Button("Allow notifications") {
-                            Task { await container.notifications.requestAuthorization() }
-                        }
-                    }
-                }
                 Toggle("Also deliver check ins as notifications", isOn: $prefs.notificationsMirror)
+                    .onChange(of: prefs.notificationsMirror) { _, enabled in
+                        if enabled { Task { await container.notifications.requestAuthorization() } }
+                    }
                 Toggle("Allow Goodnight to put this Mac to sleep", isOn: $prefs.allowSleepAtGoodnight)
                 Text("Calendar unlocks meeting prep and recovery check ins. Notifications catch check ins you miss when the bubble times out.")
                     .font(.caption)

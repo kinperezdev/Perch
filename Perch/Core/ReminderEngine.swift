@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 
 @MainActor
@@ -75,6 +76,13 @@ final class ReminderEngine {
         guard prefs.hasOnboarded, !prefs.isPaused(at: now), !prefs.isQuietHours(at: now) else {
             pending = nil
             return
+        }
+        if prefs.focusAppMode == .specificApps {
+            let frontmost = NSWorkspace.shared.frontmostApplication?.bundleIdentifier
+            guard let frontmost, prefs.allowedAppBundleIDs.contains(frontmost) else {
+                pending = nil
+                return
+            }
         }
         if isPresenting?() == true || isDelivering { return }
 
