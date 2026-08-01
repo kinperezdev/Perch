@@ -53,6 +53,7 @@ final class FocusSessionTracker {
         reportRunEnded()
         focusRunSeconds = 0
         memory.creditBreak()
+        memory.resetActiveTime()
     }
 
     func beginRest() {
@@ -77,6 +78,7 @@ final class FocusSessionTracker {
             reportRunEnded()
             memory.creditBreak()
         }
+        memory.resetActiveTime()
         focusRunSeconds = 0
     }
 
@@ -88,7 +90,10 @@ final class FocusSessionTracker {
     private func observeSystemState() {
         let distributed = DistributedNotificationCenter.default()
         distributed.addObserver(forName: .init("com.apple.screenIsLocked"), object: nil, queue: .main) { _ in
-            Task { @MainActor [weak self] in self?.isScreenLocked = true }
+            Task { @MainActor [weak self] in
+                self?.isScreenLocked = true
+                self?.endRun()
+            }
         }
         distributed.addObserver(forName: .init("com.apple.screenIsUnlocked"), object: nil, queue: .main) { _ in
             Task { @MainActor [weak self] in self?.isScreenLocked = false }

@@ -118,6 +118,15 @@ final class HabitMemoryStore {
         }
     }
 
+    /// Zeroes today's active time after a real break (screen off, sleep, or a
+    /// long idle stretch), so the count reflects the current stretch of work
+    /// rather than holding a stale total from before you stepped away.
+    func resetActiveTime(at date: Date = Date()) {
+        mutate { snap in
+            snap.days[Self.dayIndex(&snap, date)].activeSeconds = 0
+        }
+    }
+
     func addOverwork(seconds: Double, at date: Date = Date()) {
         mutate { snap in
             snap.days[Self.dayIndex(&snap, date)].overworkSeconds += seconds

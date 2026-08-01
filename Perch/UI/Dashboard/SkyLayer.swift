@@ -52,27 +52,58 @@ struct SkyLayer: View {
                     .fill(.white)
                     .frame(width: star.size, height: star.size)
                     .opacity(0.35 + 0.5 * (0.5 + 0.5 * sin(t * star.speed + star.phase)))
-                    .position(x: star.x * size.width, y: star.y * size.height)
+                    .position(x: driftedX(star: star, t: t, width: size.width), y: star.y * size.height)
             }
             shootingStar(t: t, size: size)
         }
     }
 
+    /// Stars drift slowly to the left, wrapping back around once they pass
+    /// the edge, so the night sky feels like it's gently moving rather than
+    /// just twinkling in place.
+    private func driftedX(star: (x: Double, y: Double, size: Double, speed: Double, phase: Double), t: TimeInterval, width: CGFloat) -> CGFloat {
+        guard width > 0 else { return star.x * width }
+        let driftSpeed: CGFloat = 2.2
+        let raw = (star.x * width - CGFloat(t) * driftSpeed).truncatingRemainder(dividingBy: width)
+        return raw < 0 ? raw + width : raw
+    }
+
+    /// A tiny deterministic RNG seeded per shooting-star cycle, so each star
+    /// gets a different path but stays consistent for the length of its own
+    /// streak instead of jittering frame to frame.
+    private struct SeededGenerator: RandomNumberGenerator {
+        private var state: UInt64
+        init(seed: Int) { state = UInt64(bitPattern: Int64(seed)) &+ 0x9E37_79B9_7F4A_7C15 }
+        mutating func next() -> UInt64 {
+            state ^= state << 13
+            state ^= state >> 7
+            state ^= state << 17
+            return state
+        }
+    }
+
     private func shootingStar(t: TimeInterval, size: CGSize) -> some View {
         let cycle = 11.0
+        let cycleIndex = Int(t / cycle)
         let progress = t.truncatingRemainder(dividingBy: cycle) / cycle
         let active = progress < 0.18
         let localProgress = progress / 0.18
-        let startX = size.width * 0.15
-        let startY = size.height * 0.06
-        let endX = size.width * 0.55
-        let endY = size.height * 0.42
+
+        var rng = SeededGenerator(seed: cycleIndex)
+        let startX = size.width * CGFloat.random(in: 0.05...0.75, using: &rng)
+        let startY = size.height * CGFloat.random(in: 0.02...0.3, using: &rng)
+        let travelX = size.width * CGFloat.random(in: 0.2...0.4, using: &rng)
+        let travelY = size.height * CGFloat.random(in: 0.15...0.4, using: &rng)
+        let endX = startX + travelX
+        let endY = startY + travelY
+
         let x = startX + (endX - startX) * localProgress
         let y = startY + (endY - startY) * localProgress
+        let angle = atan2(Double(travelY), Double(travelX)) * 180 / .pi
         return Capsule()
             .fill(LinearGradient(colors: [.white.opacity(0), .white.opacity(0.9)], startPoint: .leading, endPoint: .trailing))
             .frame(width: 46, height: 2)
-            .rotationEffect(.degrees(28))
+            .rotationEffect(.degrees(angle))
             .position(x: x, y: y)
             .opacity(active ? (1 - localProgress) * 0.95 : 0)
     }

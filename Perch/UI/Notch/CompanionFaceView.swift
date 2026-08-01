@@ -115,7 +115,7 @@ struct CompanionFaceView: View {
     }
 
     private func eyes(t: TimeInterval) -> some View {
-        let width: CGFloat = size * (state == .excited ? 0.13 : 0.11)
+        let width: CGFloat = size * (state == .excited ? 0.16 : 0.14)
         let height: CGFloat = blink ? size * 0.05 : eyeOpenHeight
         return HStack(spacing: size * 0.19) {
             Capsule()
@@ -130,7 +130,7 @@ struct CompanionFaceView: View {
 
     private var eyeOpenHeight: CGFloat {
         switch state {
-        case .happy: size * 0.11
+        case .happy: size * 0.24
         case .excited: size * 0.3
         case .concerned: size * 0.2
         case .sleepy: size * 0.07 + size * 0.13 * CGFloat(cursorCloseness())

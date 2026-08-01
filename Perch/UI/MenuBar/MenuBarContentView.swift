@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MenuBarContentView: View {
     @Environment(AppContainer.self) private var container
+    @State private var sky = SkyService()
 
     private var accent: [Color] { container.prefs.activePersonality.accentColors }
 
@@ -21,6 +22,32 @@ struct MenuBarContentView: View {
         }
         .padding(14)
         .frame(width: 330)
+        .background(background)
+        .preferredColorScheme(.dark)
+        .task { sky.refreshIfNeeded() }
+    }
+
+    private var background: some View {
+        ZStack(alignment: .top) {
+            LinearGradient(
+                colors: [Color(hex: 0x0B0B0E), Color(hex: 0x121216)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            SkyLayer(isNight: sky.isNight, condition: sky.condition)
+                .frame(height: 140)
+                .mask(
+                    LinearGradient(
+                        stops: [
+                            .init(color: .white, location: 0),
+                            .init(color: .white, location: 0.55),
+                            .init(color: .clear, location: 1),
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+        }
     }
 
     private var header: some View {
@@ -55,11 +82,6 @@ struct MenuBarContentView: View {
         return VStack(spacing: 7) {
             StatRow(
                 symbol: "flame.fill",
-                label: "Current focus",
-                value: shortDuration(seconds: container.tracker.focusRunSeconds)
-            )
-            StatRow(
-                symbol: "sum",
                 label: "Active today",
                 value: shortDuration(seconds: today.activeSeconds)
             )
@@ -88,6 +110,9 @@ struct MenuBarContentView: View {
                 }
                 actionButton("I took a break", symbol: "figure.walk") {
                     container.tracker.creditBreak()
+                    if container.prefs.allowSleepAtGoodnight {
+                        SystemSleepService.sleepMac()
+                    }
                 }
             }
             HStack(spacing: 8) {

@@ -169,6 +169,7 @@ final class CompanionCoordinator {
         guard phase == .message else { return }
         cancelTimeout()
         lastCheckInAnswered = true
+        memory.recordResponse(kind: .status, response: .done)
         if mood == .great {
             brain.recordPositiveResponse()
         }

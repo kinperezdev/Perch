@@ -3,7 +3,6 @@ import SwiftUI
 struct DashboardView: View {
     @Environment(AppContainer.self) private var container
     @Environment(\.openSettings) private var openSettings
-    @State private var showingAchievements = false
     @State private var confirmedAction: String?
     @State private var sky = SkyService()
 
@@ -64,7 +63,7 @@ struct DashboardView: View {
 
     private var header: some View {
         HStack(spacing: 14) {
-            CompanionFaceView(state: contextualFaceState, accent: accent, size: 44, personality: container.prefs.activePersonality)
+            CompanionFaceView(state: contextualFaceState, accent: accent, size: 44, showsMouth: false, personality: container.prefs.activePersonality)
             VStack(alignment: .leading, spacing: 3) {
                 Text(greeting)
                     .font(.perchRounded(23, weight: .heavy))
@@ -99,13 +98,6 @@ struct DashboardView: View {
             .help(container.prefs.doNotDisturb ? "Do Not Disturb is on. Check ins still happen, notifications are silenced." : "Turn on Do Not Disturb to silence notifications. Check ins keep working.")
 
             Button {
-                showingAchievements = true
-            } label: {
-                Image(systemName: "medal.fill")
-            }
-            .buttonStyle(.glass)
-
-            Button {
                 WindowPresenter.shared.showSettings(container)
                 NSApp.activate(ignoringOtherApps: true)
             } label: {
@@ -117,9 +109,6 @@ struct DashboardView: View {
                     .buttonStyle(.glassProminent)
                     .tint(accent[0])
             }
-        }
-        .sheet(isPresented: $showingAchievements) {
-            AchievementsView()
         }
     }
 
@@ -136,7 +125,7 @@ struct DashboardView: View {
         let today = container.memory.today()
         return VStack(spacing: 10) {
             HStack(spacing: 10) {
-                statTile("Active", value: shortDuration(seconds: container.tracker.focusRunSeconds), symbol: "flame.fill")
+                statTile("Active", value: shortDuration(seconds: container.tracker.todayActiveSeconds), symbol: "flame.fill")
                 statTile("Check-ins", value: "\(today.checkInsAccepted)", symbol: "checkmark.circle.fill")
                 statTile("Water", value: "\(today.waterCount)", symbol: "drop.fill")
             }
@@ -244,6 +233,9 @@ struct DashboardView: View {
                 }
                 actionButton("Took a break", symbol: "figure.walk") {
                     container.tracker.creditBreak()
+                    if container.prefs.allowSleepAtGoodnight {
+                        SystemSleepService.sleepMac()
+                    }
                 }
                 actionButton("Took a shower", symbol: "shower.fill") {
                     container.memory.logShower()

@@ -3,6 +3,12 @@ import SwiftUI
 struct ActiveAppsSettingsView: View {
     @Environment(AppContainer.self) private var container
     @State private var apps: [AppEntry] = []
+    @State private var searchText = ""
+
+    private var filteredApps: [AppEntry] {
+        guard !searchText.isEmpty else { return apps }
+        return apps.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+    }
 
     var body: some View {
         @Bindable var prefs = container.prefs
@@ -25,20 +31,25 @@ struct ActiveAppsSettingsView: View {
             if prefs.focusAppMode == .specificApps {
                 Section("Active apps") {
                     if apps.isEmpty {
-                        Text("No apps found. Open the apps you want Perch to watch, then come back here.")
+                        Text("No apps found on this Mac.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    } else if filteredApps.isEmpty {
+                        Text("No apps match \"\(searchText)\".")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     } else {
-                        ForEach(apps) { app in
+                        ForEach(filteredApps) { app in
                             appRow(app, prefs: prefs)
                         }
                     }
-                    Button("Refresh running apps") { refresh(selected: prefs.allowedAppBundleIDs) }
+                    Button("Refresh app list") { refresh(selected: prefs.allowedAppBundleIDs) }
                         .font(.caption)
                 }
             }
         }
         .formStyle(.grouped)
+        .searchable(text: $searchText, prompt: "Search apps")
         .task { refresh(selected: prefs.allowedAppBundleIDs) }
     }
 
@@ -62,6 +73,6 @@ struct ActiveAppsSettingsView: View {
     }
 
     private func refresh(selected: Set<String>) {
-        apps = RunningAppsProvider.pickerList(selected: selected)
+        apps = RunningAppsProvider.allAppsPickerList(selected: selected)
     }
 }

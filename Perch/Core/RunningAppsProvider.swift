@@ -17,16 +17,29 @@ struct AppEntry: Identifiable, Hashable {
 
 @MainActor
 enum RunningAppsProvider {
-    /// Currently running regular (Dock-visible) apps, excluding Perch itself.
-    static func runningApps() -> [AppEntry] {
-        NSWorkspace.shared.runningApplications
-            .filter { $0.activationPolicy == .regular }
-            .filter { $0.bundleIdentifier != Bundle.main.bundleIdentifier }
-            .compactMap { app in
-                guard let bundleID = app.bundleIdentifier else { return nil }
-                return AppEntry(bundleID: bundleID, name: app.localizedName ?? bundleID)
+    /// Every installed app found in the usual Applications folders, running or
+    /// not, so the picker isn't limited to whatever happens to be open right now.
+    static func allInstalledApps() -> [AppEntry] {
+        let directories = [
+            "/Applications",
+            "/System/Applications",
+            "/System/Applications/Utilities",
+            NSHomeDirectory() + "/Applications",
+        ]
+        let ownBundleID = Bundle.main.bundleIdentifier
+        var byID: [String: AppEntry] = [:]
+        for directory in directories {
+            guard let contents = try? FileManager.default.contentsOfDirectory(atPath: directory) else { continue }
+            for item in contents where item.hasSuffix(".app") {
+                let url = URL(fileURLWithPath: directory).appendingPathComponent(item)
+                guard let bundle = Bundle(url: url), let bundleID = bundle.bundleIdentifier, bundleID != ownBundleID else { continue }
+                let name = (bundle.infoDictionary?["CFBundleDisplayName"] as? String)
+                    ?? (bundle.infoDictionary?["CFBundleName"] as? String)
+                    ?? item.replacingOccurrences(of: ".app", with: "")
+                byID[bundleID] = AppEntry(bundleID: bundleID, name: name)
             }
-            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+        }
+        return byID.values.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
 
     /// Resolves a bundle ID to a display name even if the app isn't currently running,
@@ -42,11 +55,12 @@ enum RunningAppsProvider {
         return AppEntry(bundleID: bundleID, name: bundleID)
     }
 
-    /// Running apps plus any already-selected apps that aren't currently running,
-    /// so the picker never silently drops a saved selection.
-    static func pickerList(selected: Set<String>) -> [AppEntry] {
+    /// Every installed app plus any already-selected apps not found in the
+    /// usual Applications folders, so the picker never silently drops a saved
+    /// selection while still letting you pick apps that aren't open yet.
+    static func allAppsPickerList(selected: Set<String>) -> [AppEntry] {
         var byID: [String: AppEntry] = [:]
-        for entry in runningApps() { byID[entry.bundleID] = entry }
+        for entry in allInstalledApps() { byID[entry.bundleID] = entry }
         for bundleID in selected where byID[bundleID] == nil {
             byID[bundleID] = resolve(bundleID: bundleID)
         }

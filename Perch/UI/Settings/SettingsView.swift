@@ -8,6 +8,9 @@ struct SettingsView: View {
     @State private var sky = SkyService()
 
     private var accent: [Color] { container.prefs.activePersonality.accentColors }
+    private var appVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
+    }
 
     var body: some View {
         NavigationSplitView(columnVisibility: $columnVisibility) {
@@ -22,6 +25,18 @@ struct SettingsView: View {
             }
             .scrollContentBackground(.hidden)
             .background(sidebarBackground)
+            .safeAreaInset(edge: .bottom) {
+                VStack(spacing: 2) {
+                    Text("Perch")
+                        .font(.perchRounded(11, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.7))
+                    Text("Version \(appVersion)")
+                        .font(.perchRounded(9))
+                        .foregroundStyle(.white.opacity(0.4))
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.bottom, 14)
+            }
             .navigationSplitViewColumnWidth(min: 160, ideal: 180)
             .toolbar(removing: .sidebarToggle)
         } detail: {
