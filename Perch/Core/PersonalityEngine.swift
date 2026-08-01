@@ -128,10 +128,10 @@ final class PersonalityEngine {
                 case .routine: actionVerb = "do your routine"
                 default: actionVerb = "eat"
                 }
-                return "to \(actionVerb) and not forget about it"
+                return "Don't forget to \(actionVerb)."
             }
             if case .snoozed = response {
-                return "okay i will remind you later but this time please do it so"
+                return "Okay, I'll remind you again. Please actually do it this time."
             }
         }
         let personality = activePersonality

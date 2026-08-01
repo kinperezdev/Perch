@@ -23,6 +23,9 @@ struct CompanionFaceView: View {
     var accent: [Color]
     var size: CGFloat = 40
     var showsMouth: Bool = true
+    var personality: Personality? = nil
+    var lookBias: CGSize? = nil
+    var glows: Bool = true
 
     @State private var blink = false
     @State private var pulse = false
@@ -36,6 +39,7 @@ struct CompanionFaceView: View {
                 if state == .listening { listeningRings(t: t) }
                 orb
                 if state == .playing { headphones }
+                personalityAccessory(t: t)
                 features(t: t)
                 if state == .sleepy { snore(t: t) }
                 if state == .playing { musicNotes(t: t) }
@@ -78,7 +82,7 @@ struct CompanionFaceView: View {
                 )
             )
             .frame(width: size, height: size)
-            .shadow(color: accent.first?.opacity(0.55) ?? .clear, radius: size * 0.28)
+            .shadow(color: glows ? (accent.first?.opacity(0.55) ?? .clear) : .clear, radius: size * 0.28)
     }
 
         // MARK: Features
@@ -97,6 +101,7 @@ struct CompanionFaceView: View {
     /// Falls back to the original idle drift when the cursor is outside the
     /// window or this face hasn't reported its position yet.
     private func lookOffset(t: TimeInterval) -> CGSize {
+        if let lookBias { return lookBias }
         guard let cursor = CursorTracker.shared.location, let center = faceCenter else {
             return CGSize(width: eyeDriftX(t), height: 0)
         }
@@ -235,6 +240,134 @@ struct CompanionFaceView: View {
         }
     }
 
+        // MARK: Personality accessories
+
+    @ViewBuilder
+    private func personalityAccessory(t: TimeInterval) -> some View {
+        switch personality {
+        case .mother: motherAccessory
+        case .homie: homieAccessory
+        case .professional: professionalAccessory
+        case .mentor: mentorAccessory(t: t)
+        case .coach: coachAccessory
+        case .playful: playfulAccessory
+        case nil: EmptyView()
+        }
+    }
+
+    /// A flower clip tucked above one ear.
+    private var motherAccessory: some View {
+        ZStack {
+            ForEach(0..<5, id: \.self) { i in
+                Ellipse()
+                    .fill(Color(hex: 0xFF6F91))
+                    .frame(width: size * 0.13, height: size * 0.2)
+                    .offset(y: -size * 0.1)
+                    .rotationEffect(.degrees(Double(i) * 72))
+            }
+            Circle()
+                .fill(Color.yellow)
+                .frame(width: size * 0.11, height: size * 0.11)
+        }
+        .offset(x: size * 0.34, y: -size * 0.36)
+    }
+
+    /// A flat-brim cap tilted over the crown, homie's snapback.
+    private var homieAccessory: some View {
+        let capWidth = size * 0.96
+        let capHeight = size * 0.5
+        return ZStack(alignment: .topLeading) {
+            UnevenRoundedRectangle(
+                topLeadingRadius: capHeight,
+                bottomLeadingRadius: 0,
+                bottomTrailingRadius: 0,
+                topTrailingRadius: capHeight,
+                style: .continuous
+            )
+            .fill(Color(hex: 0x2B2B30))
+            .frame(width: capWidth, height: capHeight)
+            Circle()
+                .fill(Color.white.opacity(0.9))
+                .frame(width: size * 0.055, height: size * 0.055)
+                .offset(x: capWidth * 0.5 - size * 0.0275, y: -size * 0.015)
+            Capsule()
+                .fill(Color(hex: 0x1C1C1F))
+                .frame(width: capWidth * 0.38, height: size * 0.09)
+                .offset(x: capWidth * 0.9, y: capHeight - size * 0.03)
+        }
+        .rotationEffect(.degrees(0))
+        .offset(x: size * 0.01, y: -size * 0.45)
+    }
+
+    /// A necktie knotted just below the chin.
+    private var professionalAccessory: some View {
+        VStack(spacing: -size * 0.01) {
+            Capsule()
+                .fill(Color(hex: 0x8E1A1A))
+                .frame(width: size * 0.11, height: size * 0.07)
+            NecktieShape()
+                .fill(Color(hex: 0xC22B2B))
+                .frame(width: size * 0.16, height: size * 0.24)
+        }
+        .offset(y: size * 0.56)
+    }
+
+    /// Round wire glasses resting over the eyes, tracking the same look
+    /// direction as the eyes instead of sitting fixed in place.
+    private func mentorAccessory(t: TimeInterval) -> some View {
+        let look = lookOffset(t: t)
+        return HStack(spacing: size * 0.05) {
+            Circle().stroke(Color.black.opacity(0.85), lineWidth: size * 0.028)
+                .frame(width: size * 0.3, height: size * 0.3)
+            Circle().stroke(Color.black.opacity(0.85), lineWidth: size * 0.028)
+                .frame(width: size * 0.3, height: size * 0.3)
+        }
+        .overlay(
+            Capsule()
+                .fill(Color.black.opacity(0.85))
+                .frame(width: size * 0.08, height: size * 0.022)
+        )
+        .offset(x: look.width, y: -size * 0.03 + look.height)
+    }
+
+    /// A whistle on a cord around the neck.
+    private var coachAccessory: some View {
+        VStack(spacing: -size * 0.02) {
+            HStack(spacing: size * 0.08) {
+                Capsule()
+                    .fill(Color.white.opacity(0.6))
+                    .frame(width: size * 0.02, height: size * 0.2)
+                    .rotationEffect(.degrees(-28))
+                Capsule()
+                    .fill(Color.white.opacity(0.6))
+                    .frame(width: size * 0.02, height: size * 0.2)
+                    .rotationEffect(.degrees(28))
+            }
+            ZStack {
+                Circle()
+                    .fill(Color(hex: 0xC7CCD1))
+                    .frame(width: size * 0.16, height: size * 0.16)
+                Capsule()
+                    .fill(Color.white.opacity(0.9))
+                    .frame(width: size * 0.06, height: size * 0.022)
+            }
+        }
+        .offset(y: size * 0.5)
+    }
+
+    /// A bouncy antenna with a little ball on top, playful's spark.
+    private var playfulAccessory: some View {
+        VStack(spacing: 0) {
+            Circle()
+                .fill(Color(hex: 0xFFD23D))
+                .frame(width: size * 0.12, height: size * 0.12)
+            Capsule()
+                .fill(Color.white.opacity(0.5))
+                .frame(width: size * 0.018, height: size * 0.22)
+        }
+        .offset(x: size * 0.14, y: -size * 0.58)
+    }
+
         // MARK: Ambient motion
 
     private func bob(_ t: TimeInterval) -> CGFloat {
@@ -338,6 +471,20 @@ struct SmileShape: Shape {
             to: CGPoint(x: rect.maxX, y: rect.minY),
             control: CGPoint(x: rect.midX, y: rect.maxY)
         )
+        return path
+    }
+}
+
+/// A tapering necktie: wide at the knot, narrowing to a point at the tip.
+struct NecktieShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.minX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.midX + rect.width * 0.18, y: rect.maxY * 0.75))
+        path.addLine(to: CGPoint(x: rect.midX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.midX - rect.width * 0.18, y: rect.maxY * 0.75))
+        path.closeSubpath()
         return path
     }
 }

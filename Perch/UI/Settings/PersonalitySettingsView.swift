@@ -120,7 +120,7 @@ struct PersonalityCard: View {
         Button(action: action) {
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
-                    CompanionFaceView(state: isSelected ? .excited : .idle, accent: personality.accentColors, size: 24)
+                    CompanionFaceView(state: isSelected ? .excited : .idle, accent: personality.accentColors, size: 24, personality: personality)
                     Spacer()
                     if isLocked {
                         ProTag()

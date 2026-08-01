@@ -36,12 +36,6 @@ final class WindowPresenter: NSObject, NSWindowDelegate {
         }
     }
 
-    func showWeeklySummary(_ container: AppContainer) {
-        show(id: "summary", size: NSSize(width: 460 * PerchStyle.scale, height: 520 * PerchStyle.scale)) {
-            WeeklySummaryView().environment(container)
-        }
-    }
-
     func showDashboard(_ container: AppContainer) {
         show(id: "dashboard", size: NSSize(width: 720 * PerchStyle.scale, height: 580 * PerchStyle.scale)) {
             DashboardView().environment(container)

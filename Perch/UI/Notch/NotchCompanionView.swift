@@ -98,7 +98,7 @@ struct NotchCompanionView: View {
         return VStack(spacing: 8) {
             HStack(spacing: 0) {
                 HStack(spacing: 8) {
-                    CompanionFaceView(state: faceState(for: checkIn), accent: accent, size: 26)
+                    CompanionFaceView(state: faceState(for: checkIn), accent: accent, size: 26, personality: coordinator.activePersonality)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -340,7 +340,7 @@ struct NotchCompanionView: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
                 
-                CompanionFaceView(state: .playing, accent: accent, size: 28)
+                CompanionFaceView(state: .playing, accent: accent, size: 28, personality: coordinator.activePersonality)
                     .padding(.top, 4)
             }
             .padding(.horizontal, 6)
@@ -361,7 +361,7 @@ struct NotchCompanionView: View {
         return VStack(spacing: 8) {
             HStack(spacing: 0) {
                 HStack(spacing: 8) {
-                    CompanionFaceView(state: .happy, accent: accent, size: 26)
+                    CompanionFaceView(state: .happy, accent: accent, size: 26, personality: coordinator.activePersonality)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 

@@ -162,7 +162,7 @@ final class SubscriptionManager {
         lastError = nil
         switch mode {
         case .demo:
-            lastError = "Demo mode: nothing to restore."
+            lastError = "Demo mode is on. There's nothing to restore."
         case .revenueCat:
             do {
                 apply(try await Purchases.shared.restorePurchases())
@@ -184,18 +184,18 @@ final class SubscriptionManager {
         if let code = error as? RevenueCat.ErrorCode {
             switch code {
             case .networkError, .offlineConnectionError:
-                return "No connection. Your purchase state will sync when you're back online."
+                return "No internet connection. This will update automatically once you're back online."
             case .paymentPendingError:
                 return "Payment is pending approval. Access unlocks once it clears."
             case .productAlreadyPurchasedError:
                 return "Already purchased. Try Restore purchases."
             case .configurationError, .invalidCredentialsError:
-                return "Store configuration issue. Check the RevenueCat dashboard setup."
+                return "The store isn't set up right now. Try again in a bit."
             default:
-                return code.localizedDescription
+                return "Something went wrong with that purchase. Try again."
             }
         }
-        return error.localizedDescription
+        return "Something went wrong with that purchase. Try again."
     }
 
     private static let demoPlans: [PlanOption] = [

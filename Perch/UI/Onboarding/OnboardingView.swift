@@ -49,7 +49,21 @@ struct OnboardingView: View {
                 endPoint: .bottom
             )
             AuroraGlow(accent: accent)
+                .opacity(0.55)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+            SkyLayer(isNight: true, condition: .clear)
+                .frame(height: 200)
+                .mask(
+                    LinearGradient(
+                        stops: [
+                            .init(color: .white, location: 0),
+                            .init(color: .white, location: 0.55),
+                            .init(color: .clear, location: 1),
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
             Rectangle()
                 .fill(.white.opacity(0.06))
                 .frame(height: 1)
@@ -83,24 +97,24 @@ struct OnboardingView: View {
 
     private var welcomePage: some View {
         VStack(spacing: 16) {
-            CompanionFaceView(state: .excited, accent: accent, size: 76, showsMouth: false)
-                .opacity(welcomeStage >= 1 ? 1 : 0)
-                .scaleEffect(welcomeStage >= 1 ? 1 : 0.5)
             Text("Perch")
                 .font(.system(size: 42, weight: .heavy, design: .rounded))
                 .opacity(welcomeStage >= 2 ? 1 : 0)
                 .offset(y: welcomeStage >= 2 ? 0 : 12)
-            Text("Protect the builder while they build.")
+            Text("I've got your back while you build.")
                 .font(.perchRounded(15, weight: .medium))
                 .foregroundStyle(.secondary)
                 .opacity(welcomeStage >= 3 ? 1 : 0)
-            Text("I live near your notch. While you're locked in, I quietly watch the safe stuff: how long you've been going, what's on your calendar, what you usually need. Then I check in at the right moments. No tracking dashboards, no guilt.")
+            Text("I live near your notch. While you're locked in, I quietly watch the safe stuff: how long you've been going, what's on your calendar, what you usually need. Then I check in at the right moments. No screen tracking, no guilt.")
                 .font(.perchRounded(12.5))
                 .foregroundStyle(.white.opacity(0.65))
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 440)
                 .opacity(welcomeStage >= 3 ? 1 : 0)
                 .offset(y: welcomeStage >= 3 ? 0 : 8)
+            PerchWalkAnimation(accent: accent, personality: container.prefs.personality)
+                .padding(.top, 6)
+                .opacity(welcomeStage >= 3 ? 1 : 0)
         }
         .task {
             guard welcomeStage == 0 else { return }
@@ -111,12 +125,138 @@ struct OnboardingView: View {
         }
     }
 
+    /// Perch walks in from the edge toward a pair of floating headphones
+    /// waiting at the center of the track, puts them on, then keeps walking
+    /// while the music plays. Loops for as long as the welcome page is shown.
+    private struct PerchWalkAnimation: View {
+        let accent: [Color]
+        let personality: Personality
+
+        @State private var leaderProgress: CGFloat = 0
+        @State private var leaderState: CompanionFaceView.FaceState = .idle
+        @State private var isWalking = false
+        @State private var showHeadphones = false
+        @State private var lookingLeft = true
+
+        private let trackWidth: CGFloat = 394
+        private let headSize: CGFloat = 46
+        private let headphonesProgress: CGFloat = 0.5
+
+        var body: some View {
+            TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
+                let t = timeline.date.timeIntervalSinceReferenceDate
+                ZStack(alignment: .leading) {
+                    if showHeadphones {
+                        let bob = -headSize * 0.6 + sin(t * 2.2) * 4
+                        let pulse = 0.6 + 0.4 * sin(t * 3.4)
+                        ZStack {
+                            Circle()
+                                .fill(
+                                    RadialGradient(
+                                        colors: [accent.first?.opacity(0.55 * pulse) ?? .white.opacity(0.4 * pulse), .clear],
+                                        center: .center, startRadius: 0, endRadius: headSize * 0.5
+                                    )
+                                )
+                                .frame(width: headSize * 1.1, height: headSize * 1.1)
+                                .scaleEffect(0.9 + 0.15 * pulse)
+                            ForEach(0..<3, id: \.self) { i in
+                                let angle = t * 1.6 + Double(i) * (2 * .pi / 3)
+                                Image(systemName: "sparkle")
+                                    .font(.system(size: headSize * 0.09, weight: .bold))
+                                    .foregroundStyle(.white.opacity(0.55 + 0.35 * sin(t * 3 + Double(i))))
+                                    .offset(x: cos(angle) * headSize * 0.42, y: sin(angle) * headSize * 0.42)
+                            }
+                            Image(systemName: "headphones")
+                                .font(.system(size: headSize * 0.34, weight: .semibold))
+                                .foregroundStyle(.white)
+                                .shadow(color: accent.first?.opacity(0.9) ?? .white, radius: 6 * pulse)
+                        }
+                        .offset(
+                            x: headphonesProgress * trackWidth + headSize * 0.32,
+                            y: bob
+                        )
+                        .transition(.opacity.combined(with: .scale(scale: 0.5)))
+                    }
+                    CompanionFaceView(
+                        state: leaderState,
+                        accent: accent,
+                        size: headSize,
+                        showsMouth: false,
+                        personality: personality,
+                        lookBias: currentLookBias,
+                        glows: false
+                    )
+                    .rotationEffect(.degrees(step(t: t).lean))
+                    .offset(x: leaderProgress * trackWidth, y: step(t: t).bob)
+                }
+            }
+            .frame(width: trackWidth + headSize, height: headSize * 1.6, alignment: .leading)
+            .task { await runLoop() }
+        }
+
+        /// Eyes look left during the entrance beat, right while walking
+        /// (facing the direction of travel), and forward otherwise.
+        private var currentLookBias: CGSize? {
+            if lookingLeft { return CGSize(width: -headSize * 0.09, height: 0) }
+            if isWalking { return CGSize(width: headSize * 0.09, height: 0) }
+            return nil
+        }
+
+        /// A gentle stepping cadence while walking: a small hop with a
+        /// forward lean at its peak, matching the walk cycle on the Perch
+        /// marketing site. Idle (not walking) returns to a flat, level rest.
+        private func step(t: TimeInterval) -> (bob: CGFloat, lean: Double) {
+            guard isWalking else { return (0, 0) }
+            let cycle = sin(t * 4.5)
+            let bob = -abs(cycle) * headSize * 0.1
+            let lean = cycle * 6
+            return (bob, lean)
+        }
+
+        private func runLoop() async {
+            while !Task.isCancelled {
+                withAnimation(.easeInOut(duration: 0.1)) {
+                    leaderProgress = 0
+                    leaderState = .idle
+                    isWalking = false
+                    showHeadphones = false
+                    lookingLeft = true
+                }
+                try? await Task.sleep(nanoseconds: 500_000_000)
+
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) { lookingLeft = false }
+                try? await Task.sleep(nanoseconds: 350_000_000)
+
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) { showHeadphones = true }
+                try? await Task.sleep(nanoseconds: 400_000_000)
+
+                isWalking = true
+                withAnimation(.easeInOut(duration: 1.8)) { leaderProgress = headphonesProgress }
+                try? await Task.sleep(nanoseconds: 1_800_000_000)
+                isWalking = false
+
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.6)) {
+                    showHeadphones = false
+                    leaderState = .playing
+                }
+                try? await Task.sleep(nanoseconds: 1_800_000_000)
+
+                isWalking = true
+                withAnimation(.easeInOut(duration: 1.8)) { leaderProgress = 0.85 }
+                try? await Task.sleep(nanoseconds: 1_800_000_000)
+                isWalking = false
+
+                try? await Task.sleep(nanoseconds: 700_000_000)
+            }
+        }
+    }
+
         // MARK: Name
 
     private var namePage: some View {
         @Bindable var prefs = container.prefs
         return VStack(spacing: 18) {
-            CompanionFaceView(state: .happy, accent: accent, size: 52)
+            CompanionFaceView(state: .happy, accent: accent, size: 52, personality: container.prefs.personality)
             kicker("Getting to know you")
             Text("What should I call you?")
                 .font(.perchRounded(24, weight: .bold))
@@ -177,7 +317,8 @@ struct OnboardingView: View {
                 CompanionFaceView(
                     state: isSelected ? .excited : .idle,
                     accent: personality.accentColors,
-                    size: 22
+                    size: 22,
+                    personality: personality
                 )
                 VStack(alignment: .leading, spacing: 1) {
                     Text(personality.displayName)
@@ -220,7 +361,7 @@ struct OnboardingView: View {
         )
         return VStack(spacing: 6) {
             HStack(alignment: .top, spacing: 10) {
-                CompanionFaceView(state: .talking, accent: personality.accentColors, size: 30)
+                CompanionFaceView(state: .talking, accent: personality.accentColors, size: 30, showsMouth: false, personality: personality)
                 VStack(alignment: .leading, spacing: 3) {
                     Text("PREVIEW")
                         .font(.system(size: 8, weight: .semibold, design: .rounded))
@@ -566,7 +707,7 @@ struct OnboardingView: View {
 
     private var planPage: some View {
         VStack(spacing: 14) {
-            CompanionFaceView(state: .happy, accent: accent, size: 52)
+            CompanionFaceView(state: .happy, accent: accent, size: 52, personality: container.prefs.activePersonality)
             kicker("Ready")
             Text("I've got you, \(container.prefs.activePersonality.callName(userName: container.prefs.userName))")
                 .font(.perchRounded(24, weight: .bold))

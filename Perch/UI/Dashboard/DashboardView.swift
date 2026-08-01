@@ -64,7 +64,7 @@ struct DashboardView: View {
 
     private var header: some View {
         HStack(spacing: 14) {
-            CompanionFaceView(state: contextualFaceState, accent: accent, size: 44)
+            CompanionFaceView(state: contextualFaceState, accent: accent, size: 44, personality: container.prefs.activePersonality)
             VStack(alignment: .leading, spacing: 3) {
                 Text(greeting)
                     .font(.perchRounded(23, weight: .heavy))

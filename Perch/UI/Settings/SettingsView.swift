@@ -66,13 +66,17 @@ struct SettingsView: View {
             )
             SkyLayer(isNight: sky.isNight, condition: sky.condition)
                 .frame(height: 160)
-            LinearGradient(
-                colors: [.clear, Color(hex: 0x0B0B0E).opacity(0.85), Color(hex: 0x0B0B0E)],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .frame(height: 160)
-            .frame(maxHeight: .infinity, alignment: .top)
+                .mask(
+                    LinearGradient(
+                        stops: [
+                            .init(color: .white, location: 0),
+                            .init(color: .white, location: 0.55),
+                            .init(color: .clear, location: 1),
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
             AuroraGlow(accent: accent)
                 .frame(maxHeight: .infinity, alignment: .bottom)
         }

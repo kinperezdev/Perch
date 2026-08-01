@@ -25,7 +25,7 @@ struct MenuBarContentView: View {
 
     private var header: some View {
         HStack(spacing: 10) {
-            CompanionFaceView(state: .idle, accent: accent, size: 30)
+            CompanionFaceView(state: .idle, accent: accent, size: 30, personality: container.prefs.activePersonality)
             VStack(alignment: .leading, spacing: 1) {
                 HStack(spacing: 6) {
                     Text(container.personality.companionName)

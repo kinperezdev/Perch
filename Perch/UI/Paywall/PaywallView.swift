@@ -13,11 +13,11 @@ struct PerchPaywallView: View {
         ZStack {
             background
             VStack(spacing: 14) {
-                CompanionFaceView(state: .happy, accent: accent, size: 44)
+                CompanionFaceView(state: .happy, accent: accent, size: 44, personality: container.personality.activePersonality)
                 VStack(spacing: 4) {
                     Text("Perch Pro")
                         .font(.system(size: 28, weight: .heavy, design: .rounded))
-                    Text("Protect the builder while they build.")
+                    Text("I've got your back while you build.")
                         .font(.perchRounded(12))
                         .foregroundStyle(.secondary)
                 }
@@ -156,7 +156,7 @@ struct PerchPaywallView: View {
                     .foregroundStyle(.secondary)
             }
             if container.subscriptions.mode == .demo {
-                Text("Demo mode: purchases are simulated locally.")
+                Text("Demo mode is on. Purchases here aren't real yet.")
                     .font(.system(size: 10, design: .rounded))
                     .foregroundStyle(.orange)
             }
