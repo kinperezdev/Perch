@@ -45,7 +45,7 @@ struct PrivacySettingsView: View {
                     .foregroundStyle(.secondary)
             }
             Section("Your memory") {
-                Text("Habit logs and what Perch has learned about your rhythm stay in local files on this Mac. You can delete them at any time.")
+                Text("Habit logs and what Perch has learned about your schedule stay in local files on this Mac. You can delete them at any time.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Button("Delete all memory", role: .destructive) {

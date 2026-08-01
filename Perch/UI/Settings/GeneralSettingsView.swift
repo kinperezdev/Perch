@@ -12,14 +12,14 @@ struct GeneralSettingsView: View {
             Section("You") {
                 TextField("Your name", text: $prefs.userName, prompt: Text("How should I call you?"))
             }
-            Section("Your rhythm") {
+            Section("Your schedule") {
                 DatePicker("Work starts", selection: timeOfDayBinding($prefs.workStartMinutes), displayedComponents: .hourAndMinute)
                 DatePicker("Work ends", selection: timeOfDayBinding($prefs.workEndMinutes), displayedComponents: .hourAndMinute)
                 DatePicker("Usual breakfast", selection: timeOfDayBinding($prefs.breakfastMinutes), displayedComponents: .hourAndMinute)
                 DatePicker("Usual lunch", selection: timeOfDayBinding($prefs.lunchMinutes), displayedComponents: .hourAndMinute)
                 DatePicker("Usual dinner", selection: timeOfDayBinding($prefs.dinnerMinutes), displayedComponents: .hourAndMinute)
                 DatePicker("Usual shower", selection: timeOfDayBinding($prefs.showerMinutes), displayedComponents: .hourAndMinute)
-                Text("These times shape my check ins: meals and shower near their windows, overwork and wind down around your work hours.")
+                Text("I use these to check in near your meals and shower, and around your work hours for overwork and wind-down reminders.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -65,7 +65,7 @@ struct GeneralSettingsView: View {
                 Button("Run setup again") {
                     WindowPresenter.shared.showOnboarding(container)
                 }
-                Text("Reopens the first run walkthrough: personality, rhythm, care preferences, permissions, and shortcut.")
+                Text("Reopens the first run walkthrough: personality, schedule, care preferences, permissions, and shortcut.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

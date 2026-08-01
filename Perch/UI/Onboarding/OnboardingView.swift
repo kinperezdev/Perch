@@ -401,7 +401,7 @@ struct OnboardingView: View {
     private var rhythmPage: some View {
         @Bindable var prefs = container.prefs
         return VStack(spacing: 12) {
-            kicker("Your rhythm")
+            kicker("Your schedule")
             Text("Your usual day")
                 .font(.perchRounded(24, weight: .bold))
             Text("So I know when you're overworking and when meals matter.")

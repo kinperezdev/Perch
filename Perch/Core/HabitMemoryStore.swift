@@ -235,7 +235,7 @@ final class HabitMemoryStore {
         if breaks >= 10 {
             return "You took \(breaks) real breaks this week. That is how long games are won."
         }
-        return "Still learning your rhythm. The more you respond, the better my timing gets."
+        return "Still learning your schedule. The more you respond, the better my timing gets."
     }
 
         // MARK: Maintenance

@@ -28,42 +28,42 @@ enum ChatScriptLibrary {
         let variants: [String] = switch (mood, personality) {
         case (.great, .mother): ["That's what I love to hear, {call}.",
                                  "Wonderful, {call}. Keep going gently."]
-        case (.great, .homie): ["Love it, {call}. Keep cooking.",
-                                "That's the vibe, {call}."]
+        case (.great, .homie): ["Love it, {call}. Keep going.",
+                                "That's great, {call}."]
         case (.great, .professional): ["Excellent. Carry on.",
                                        "Very good. Keep the pace."]
-        case (.great, .mentor): ["Good. Protect that rhythm, {call}.",
-                                 "Stay with that state, {call}."]
+        case (.great, .mentor): ["Good. Hold onto that, {call}.",
+                                 "Stay with that feeling, {call}."]
         case (.great, .coach): ["That's the energy, {call}!",
-                                "Peak form, {call}! Keep it up."]
-        case (.great, .playful): ["Vibes: immaculate. Carry on.",
-                                  "Filing under 'great days'. Onward!"]
+                                "Doing great, {call}! Keep it up."]
+        case (.great, .playful): ["Feeling great over here. Carry on.",
+                                  "Filing this under 'great days'. Onward!"]
 
         case (.okay, .mother): ["Okay is enough, {call}. I'm here.",
                                 "Steady is good too, {call}."]
         case (.okay, .homie): ["Steady is solid, {call}.",
                                "Okay works. Keep it moving, {call}."]
-        case (.okay, .professional): ["Noted. Keep a sustainable pace.",
+        case (.okay, .professional): ["Noted. Keep a steady pace.",
                                       "Understood. Steady is progress."]
         case (.okay, .mentor): ["Steady beats spectacular, {call}.",
                                 "Middle days build the road, {call}."]
-        case (.okay, .coach): ["Steady counts, {call}. Keep the rhythm.",
-                               "Still in the game, {call}. Keep playing."]
-        case (.okay, .playful): ["Okay is a respectable vibe. Onward.",
-                                 "Medium vibes logged. Proceeding gently."]
+        case (.okay, .coach): ["Steady counts, {call}. Keep it up.",
+                               "Still doing fine, {call}. Keep going."]
+        case (.okay, .playful): ["Okay is a fine place to be. Onward.",
+                                 "Middle-of-the-road day. Moving on gently."]
 
         case (.stressed, .mother): ["Breathe, {call}. One thing at a time.",
                                     "One breath, then one small thing, {call}."]
         case (.stressed, .homie): ["Deep breath, {call}. One thing at a time.",
-                                   "Ease up, {call}. One next move."]
+                                   "Ease up, {call}. One step at a time."]
         case (.stressed, .professional): ["Understood. Narrow it to one next step.",
                                           "Choose one next action. The rest waits."]
         case (.stressed, .mentor): ["Pick the one next step. Release the rest.",
                                     "Shrink the task, {call}. One step."]
-        case (.stressed, .coach): ["Timeout, {call}. Breathe, run one play.",
-                                   "Reset, {call}. One play at a time."]
-        case (.stressed, .playful): ["Emergency calm deployed. Breathe.",
-                                     "Tiny calm ray activated. One small thing."]
+        case (.stressed, .coach): ["Pause, {call}. Breathe, take one step at a time.",
+                                   "Reset, {call}. One step at a time."]
+        case (.stressed, .playful): ["Sending calm your way. Breathe.",
+                                     "Tiny calm moment, activated. One small thing."]
         }
         return pick(variants, key: "moodShort.\(mood).\(personality.rawValue)")
             .replacingOccurrences(of: "{call}", with: callName)

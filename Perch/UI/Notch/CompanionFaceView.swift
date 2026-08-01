@@ -316,18 +316,22 @@ struct CompanionFaceView: View {
     /// direction as the eyes instead of sitting fixed in place.
     private func mentorAccessory(t: TimeInterval) -> some View {
         let look = lookOffset(t: t)
+        let lensSize = size * 0.24 + eyeOpenHeight * 0.3
+        // Smaller eyes (sleepy, blinking) sit higher on the face, so lift the
+        // glasses to match instead of letting them sag toward the mouth.
+        let smallEyesLift = max(size * 0.24 - eyeOpenHeight, 0) * 0.6
         return HStack(spacing: size * 0.05) {
             Circle().stroke(Color.black.opacity(0.85), lineWidth: size * 0.028)
-                .frame(width: size * 0.3, height: size * 0.3)
+                .frame(width: lensSize, height: lensSize)
             Circle().stroke(Color.black.opacity(0.85), lineWidth: size * 0.028)
-                .frame(width: size * 0.3, height: size * 0.3)
+                .frame(width: lensSize, height: lensSize)
         }
         .overlay(
             Capsule()
                 .fill(Color.black.opacity(0.85))
                 .frame(width: size * 0.08, height: size * 0.022)
         )
-        .offset(x: look.width, y: -size * 0.03 + look.height)
+        .offset(x: look.width, y: featureOffsetY + look.height - smallEyesLift)
     }
 
     /// A whistle on a cord around the neck.
