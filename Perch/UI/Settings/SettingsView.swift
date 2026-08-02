@@ -103,12 +103,8 @@ struct SettingsView: View {
     }
 
     private var detailBackground: some View {
-        LinearGradient(
-            colors: [Color(hex: 0x0B0B0E), Color(hex: 0x121216)],
-            startPoint: .top,
-            endPoint: .bottom
-        )
-        .ignoresSafeArea()
+        Color(hex: 0x0B0B0E)
+            .ignoresSafeArea()
     }
 
     private func edgeFade(_ edge: VerticalEdge) -> some View {
