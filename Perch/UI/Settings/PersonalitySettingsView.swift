@@ -150,8 +150,7 @@ struct PersonalityCard: View {
                     SkyTintOverlay(tint: personality.accentColors[0], height: 92)
                         .opacity(isSelected ? 1 : 0.65)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                    GroundShape()
-                        .fill(personality.groundColor.opacity(isSelected ? 0.5 : 0.34))
+                    PersonalityScene(personality: personality, isSelected: isSelected)
                         .frame(height: 46)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
                     PersonalityMotif(personality: personality)
@@ -178,6 +177,20 @@ private struct PersonalityMotif: View {
 
     private var accent: [Color] { personality.accentColors }
 
+    /// A motif-specific icon, distinct from `symbolName` (used for
+    /// functional UI elsewhere), chosen to fit the scene it's planted on
+    /// rather than the personality in the abstract.
+    private var motifSymbolName: String {
+        switch personality {
+        case .mother: "leaf.fill"
+        case .homie: "basketball.fill"
+        case .professional: "building.2.fill"
+        case .mentor: "mountain.2.fill"
+        case .coach: "flag.checkered"
+        case .playful: "sparkles"
+        }
+    }
+
     var body: some View {
         Group {
             if personality == .mother {
@@ -187,14 +200,14 @@ private struct PersonalityMotif: View {
                 }
             } else {
                 ZStack {
-                    Image(systemName: personality.symbolName)
-                        .font(.system(size: 26))
-                        .foregroundStyle(accent[0].opacity(0.28))
+                    Image(systemName: motifSymbolName)
+                        .font(.system(size: 24))
+                        .foregroundStyle(accent[0].opacity(0.3))
                         .rotationEffect(.degrees(-6))
-                        .offset(x: 6)
-                    Image(systemName: personality.symbolName)
-                        .font(.system(size: 13))
-                        .foregroundStyle(accent[1].opacity(0.3))
+                        .offset(x: 4)
+                    Image(systemName: motifSymbolName)
+                        .font(.system(size: 12))
+                        .foregroundStyle(accent[1].opacity(0.32))
                         .rotationEffect(.degrees(10))
                         .offset(x: -16, y: -10)
                 }
@@ -221,6 +234,76 @@ private struct PersonalityMotif: View {
     }
 }
 
+/// The ground of each personality card is its own little place, not just a
+/// tinted hill: a grass field for Mom, a court for Homie, a skyline for the
+/// Assistant, mountains for Mentor, a track for Coach, a starfield for Spark.
+private struct PersonalityScene: View {
+    let personality: Personality
+    let isSelected: Bool
+
+    private var tint: Color { personality.groundColor }
+    private var opacity: Double { isSelected ? 0.5 : 0.34 }
+    private var lineOpacity: Double { isSelected ? 0.4 : 0.26 }
+
+    var body: some View {
+        switch personality {
+        case .mother, .mentor:
+            MountainShape(peaks: personality == .mentor ? 3 : 1)
+                .fill(tint.opacity(opacity))
+        case .homie:
+            ZStack(alignment: .bottom) {
+                Rectangle().fill(tint.opacity(opacity))
+                courtLines
+            }
+        case .professional:
+            SkylineShape()
+                .fill(tint.opacity(opacity))
+        case .coach:
+            ZStack(alignment: .bottom) {
+                GroundShape().fill(tint.opacity(opacity))
+                trackLines
+            }
+        case .playful:
+            ZStack(alignment: .bottom) {
+                GroundShape().fill(tint.opacity(opacity))
+                starScatter
+            }
+        }
+    }
+
+    private var courtLines: some View {
+        ZStack {
+            Rectangle()
+                .fill(.white.opacity(lineOpacity))
+                .frame(height: 1.2)
+            Circle()
+                .trim(from: 0.5, to: 1.0)
+                .stroke(.white.opacity(lineOpacity), lineWidth: 1.2)
+                .frame(width: 34, height: 34)
+                .offset(y: -12)
+        }
+    }
+
+    private var trackLines: some View {
+        ZStack {
+            Capsule().stroke(.white.opacity(lineOpacity), lineWidth: 1).frame(width: 90, height: 22)
+            Capsule().stroke(.white.opacity(lineOpacity * 0.7), lineWidth: 1).frame(width: 70, height: 14)
+        }
+        .offset(y: 4)
+    }
+
+    private var starScatter: some View {
+        ZStack {
+            ForEach(0..<4, id: \.self) { i in
+                Image(systemName: "sparkle")
+                    .font(.system(size: 6 + CGFloat(i) * 2))
+                    .foregroundStyle(.white.opacity(lineOpacity))
+                    .offset(x: CGFloat(-20 + i * 14), y: CGFloat(-2 - i * 4))
+            }
+        }
+    }
+}
+
 /// A gentle rising hill silhouette anchored to the bottom edge, giving each
 /// card a sense of ground/land for its motif to sit on instead of floating
 /// on a flat color field.
@@ -239,6 +322,63 @@ private struct GroundShape: Shape {
     }
 }
 
+/// One or more overlapping triangular peaks anchored to the bottom edge:
+/// a single low rise for Mom's grassy field, three for Mentor's mountains.
+private struct MountainShape: Shape {
+    var peaks: Int = 1
+
+    func path(in rect: CGRect) -> Path {
+        guard peaks > 1 else {
+            var path = Path()
+            path.move(to: CGPoint(x: 0, y: rect.maxY))
+            path.addLine(to: CGPoint(x: 0, y: rect.maxY - rect.height * 0.22))
+            path.addQuadCurve(
+                to: CGPoint(x: rect.maxX, y: rect.maxY - rect.height * 0.7),
+                control: CGPoint(x: rect.maxX * 0.62, y: rect.minY)
+            )
+            path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+            path.closeSubpath()
+            return path
+        }
+        let heights: [CGFloat] = [0.55, 0.95, 0.7]
+        let width = rect.width / CGFloat(peaks)
+        var path = Path()
+        path.move(to: CGPoint(x: 0, y: rect.maxY))
+        for i in 0..<peaks {
+            let peakX = width * (CGFloat(i) + 0.5)
+            let peakY = rect.maxY - rect.height * heights[i % heights.count]
+            path.addLine(to: CGPoint(x: peakX, y: peakY))
+        }
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        path.closeSubpath()
+        return path
+    }
+}
+
+/// A row of buildings of varying height, rising from the bottom edge.
+private struct SkylineShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        let buildings: [(x: CGFloat, w: CGFloat, h: CGFloat)] = [
+            (0.02, 0.16, 0.5), (0.2, 0.15, 0.85), (0.37, 0.13, 0.6),
+            (0.52, 0.18, 0.95), (0.73, 0.15, 0.65), (0.9, 0.1, 0.4),
+        ]
+        var path = Path()
+        let baseY = rect.maxY
+        path.move(to: CGPoint(x: 0, y: baseY))
+        for b in buildings {
+            let x = rect.width * b.x
+            let w = rect.width * b.w
+            let h = rect.height * b.h
+            path.addLine(to: CGPoint(x: x, y: baseY - h))
+            path.addLine(to: CGPoint(x: x + w, y: baseY - h))
+            path.addLine(to: CGPoint(x: x + w, y: baseY))
+        }
+        path.addLine(to: CGPoint(x: rect.width, y: baseY))
+        path.closeSubpath()
+        return path
+    }
+}
+
 private extension Personality {
     /// The "land" each personality's motif sits on, an environment tone
     /// rather than the personality's own accent (grass reads as green
@@ -246,11 +386,11 @@ private extension Personality {
     var groundColor: Color {
         switch self {
         case .mother: Color(hex: 0x4CAF6D)
-        case .homie: Color(hex: 0x55606B)
+        case .homie: Color(hex: 0x8A5A2B)
         case .professional: Color(hex: 0x3A4256)
         case .mentor: Color(hex: 0x3B7A57)
         case .coach: Color(hex: 0xB8461F)
-        case .playful: Color(hex: 0x4A3A78)
+        case .playful: Color(hex: 0x2A2050)
         }
     }
 }
