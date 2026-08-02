@@ -4,6 +4,7 @@ import SwiftUI
 struct ScrollSparkOverlay: View {
     @State private var sparks: [Spark] = []
     @State private var monitor: Any?
+    @State private var progress: CGFloat = 0
 
     private struct Spark: Identifiable {
         let id = UUID()
@@ -42,11 +43,14 @@ struct ScrollSparkOverlay: View {
     private func spawnSpark(deltaY: CGFloat, size: CGSize) {
         guard abs(deltaY) > 0.5, size.height > 0 else { return }
         let scrollingDown = deltaY < 0
+        let trackTop: CGFloat = 20
+        let trackHeight = max(size.height - 40, 1)
+        progress = min(max(progress - deltaY / 900, 0), 1)
         let scrollbarX = size.width - 6
-        let edgeY: CGFloat = scrollingDown ? 20 : size.height - 20
+        let thumbY = trackTop + progress * trackHeight
         let spark = Spark(
             x: scrollbarX + CGFloat.random(in: -3...1),
-            y: edgeY + CGFloat.random(in: -4...4),
+            y: thumbY + CGFloat.random(in: -3...3),
             goingDown: scrollingDown
         )
         sparks.append(spark)

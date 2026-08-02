@@ -65,20 +65,27 @@ private struct PersonalityScene: View {
     private var opacity: Double { isSelected ? 0.4 : 0.26 }
 
     var body: some View {
-        AnyShape(shape).fill(tint.opacity(opacity))
+        switch personality {
+        case .mentor:
+            AnyShape(MountainShape(peaks: 3)).fill(tint.opacity(opacity))
+        case .professional:
+            AnyShape(SkylineShape()).fill(tint.opacity(opacity))
+        case .mother:
+            symbol(HouseShape(), width: 26, height: 24)
+        case .homie:
+            symbol(Circle(), width: 22, height: 22)
+        case .coach:
+            symbol(FlagShape(), width: 22, height: 28)
+        case .playful:
+            symbol(StarShape(), width: 26, height: 26)
+        }
     }
 
-    private var shape: any Shape {
-        switch personality {
-        case .mother, .coach, .playful:
-            GroundShape()
-        case .mentor:
-            MountainShape(peaks: 3)
-        case .homie:
-            Rectangle()
-        case .professional:
-            SkylineShape()
-        }
+    private func symbol(_ shape: some Shape, width: CGFloat, height: CGFloat) -> some View {
+        shape
+            .fill(tint.opacity(opacity))
+            .frame(width: width, height: height)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
     }
 }
 
@@ -94,6 +101,50 @@ private struct GroundShape: Shape {
             control: CGPoint(x: rect.maxX * 0.62, y: rect.minY)
         )
         path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        path.closeSubpath()
+        return path
+    }
+}
+
+private struct HouseShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let roofHeight = rect.height * 0.45
+        path.move(to: CGPoint(x: rect.midX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY + roofHeight))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.minY + roofHeight))
+        path.closeSubpath()
+        return path
+    }
+}
+
+private struct FlagShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let poleWidth = rect.width * 0.16
+        path.addRect(CGRect(x: rect.minX, y: rect.minY, width: poleWidth, height: rect.height))
+        path.move(to: CGPoint(x: rect.minX + poleWidth, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY + rect.height * 0.22))
+        path.addLine(to: CGPoint(x: rect.minX + poleWidth, y: rect.minY + rect.height * 0.44))
+        path.closeSubpath()
+        return path
+    }
+}
+
+private struct StarShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let midX = rect.midX
+        let midY = rect.midY
+        let w = rect.width
+        let h = rect.height
+        path.move(to: CGPoint(x: midX, y: rect.minY))
+        path.addQuadCurve(to: CGPoint(x: rect.maxX, y: midY), control: CGPoint(x: midX + w * 0.12, y: midY - h * 0.12))
+        path.addQuadCurve(to: CGPoint(x: midX, y: rect.maxY), control: CGPoint(x: midX + w * 0.12, y: midY + h * 0.12))
+        path.addQuadCurve(to: CGPoint(x: rect.minX, y: midY), control: CGPoint(x: midX - w * 0.12, y: midY + h * 0.12))
+        path.addQuadCurve(to: CGPoint(x: midX, y: rect.minY), control: CGPoint(x: midX - w * 0.12, y: midY - h * 0.12))
         path.closeSubpath()
         return path
     }
