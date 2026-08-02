@@ -35,7 +35,7 @@ struct DashboardView: View {
             .padding(.bottom, 24)
             .padding(.top, 20)
         }
-        .frame(width: 720 * PerchStyle.scale, height: 480 * PerchStyle.scale)
+        .frame(width: 720 * PerchStyle.scale, height: 510 * PerchStyle.scale)
         .preferredColorScheme(.dark)
         .trackCursorForCompanion()
         .task { sky.refreshIfNeeded() }
