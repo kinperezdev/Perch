@@ -129,7 +129,9 @@ struct MenuBarContentView: View {
     private func actionButton(_ title: String, symbol: String, action: @escaping () -> Void) -> some View {
         Button {
             action()
-            dismiss()
+            Task { @MainActor in
+                dismiss()
+            }
         } label: {
             Label(title, systemImage: symbol)
                 .font(.perchRounded(11.5, weight: .medium))
@@ -148,7 +150,7 @@ struct MenuBarContentView: View {
                 Spacer()
                 Button("Resume") {
                     container.prefs.pausedUntil = nil
-                    dismiss()
+                    Task { @MainActor in dismiss() }
                 }
                 .buttonStyle(.glass)
                 .font(.perchRounded(11))
@@ -160,13 +162,13 @@ struct MenuBarContentView: View {
                 Menu("Pause") {
                     Button("For 1 hour") {
                         container.prefs.pausedUntil = Date().addingTimeInterval(3600)
-                        dismiss()
+                        Task { @MainActor in dismiss() }
                     }
                     Button("Until tomorrow") {
                         container.prefs.pausedUntil = Calendar.current.startOfDay(
                             for: Date().addingTimeInterval(86400)
                         )
-                        dismiss()
+                        Task { @MainActor in dismiss() }
                     }
                 }
                 .menuStyle(.borderlessButton)
@@ -182,7 +184,7 @@ struct MenuBarContentView: View {
                 Button("Settings") {
                     WindowPresenter.shared.showSettings(container)
                     NSApp.activate(ignoringOtherApps: true)
-                    dismiss()
+                    Task { @MainActor in dismiss() }
                 }
                 .buttonStyle(.plain)
                 .font(.perchRounded(11.5))
@@ -190,7 +192,7 @@ struct MenuBarContentView: View {
                 if container.subscriptions.tier != .pro {
                     Button("Upgrade") {
                         WindowPresenter.shared.showPaywall(container)
-                        dismiss()
+                        Task { @MainActor in dismiss() }
                     }
                     .buttonStyle(.glassProminent)
                     .font(.perchRounded(11, weight: .semibold))
