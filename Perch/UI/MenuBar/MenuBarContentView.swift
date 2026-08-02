@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MenuBarContentView: View {
     @Environment(AppContainer.self) private var container
+    @Environment(\.dismiss) private var dismiss
     @State private var sky = SkyService()
 
     private var accent: [Color] { container.prefs.activePersonality.accentColors }
@@ -126,7 +127,10 @@ struct MenuBarContentView: View {
     }
 
     private func actionButton(_ title: String, symbol: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
+        Button {
+            action()
+            dismiss()
+        } label: {
             Label(title, systemImage: symbol)
                 .font(.perchRounded(11.5, weight: .medium))
                 .frame(maxWidth: .infinity)
@@ -142,9 +146,12 @@ struct MenuBarContentView: View {
                     .font(.perchRounded(11))
                     .foregroundStyle(.orange)
                 Spacer()
-                Button("Resume") { container.prefs.pausedUntil = nil }
-                    .buttonStyle(.glass)
-                    .font(.perchRounded(11))
+                Button("Resume") {
+                    container.prefs.pausedUntil = nil
+                    dismiss()
+                }
+                .buttonStyle(.glass)
+                .font(.perchRounded(11))
             } else {
                 Label("Check ins active", systemImage: "checkmark.circle.fill")
                     .font(.perchRounded(11))
@@ -153,11 +160,13 @@ struct MenuBarContentView: View {
                 Menu("Pause") {
                     Button("For 1 hour") {
                         container.prefs.pausedUntil = Date().addingTimeInterval(3600)
+                        dismiss()
                     }
                     Button("Until tomorrow") {
                         container.prefs.pausedUntil = Calendar.current.startOfDay(
                             for: Date().addingTimeInterval(86400)
                         )
+                        dismiss()
                     }
                 }
                 .menuStyle(.borderlessButton)
@@ -173,14 +182,18 @@ struct MenuBarContentView: View {
                 Button("Settings") {
                     WindowPresenter.shared.showSettings(container)
                     NSApp.activate(ignoringOtherApps: true)
+                    dismiss()
                 }
                 .buttonStyle(.plain)
                 .font(.perchRounded(11.5))
                 Spacer()
                 if container.subscriptions.tier != .pro {
-                    Button("Upgrade") { WindowPresenter.shared.showPaywall(container) }
-                        .buttonStyle(.glassProminent)
-                        .font(.perchRounded(11, weight: .semibold))
+                    Button("Upgrade") {
+                        WindowPresenter.shared.showPaywall(container)
+                        dismiss()
+                    }
+                    .buttonStyle(.glassProminent)
+                    .font(.perchRounded(11, weight: .semibold))
                 }
                 Button("Quit") { NSApp.terminate(nil) }
                     .buttonStyle(.plain)
