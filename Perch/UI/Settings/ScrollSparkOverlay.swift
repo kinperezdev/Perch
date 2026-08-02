@@ -43,6 +43,7 @@ struct ScrollSparkOverlay: View {
 
     private func spawnSpark(deltaY: CGFloat, size: CGSize) {
         guard abs(deltaY) > 0.5, size.height > 0 else { return }
+        guard let contentView = NSApp.keyWindow?.contentView, hasVisibleVerticalScrollbar(in: contentView) else { return }
         let scrollingDown = deltaY < 0
         let trackTop: CGFloat = 20
         let trackHeight = max(size.height - 40, 1)
@@ -69,6 +70,16 @@ struct ScrollSparkOverlay: View {
         if sparks.count > 12 {
             sparks.removeFirst(sparks.count - 12)
         }
+    }
+
+    private func hasVisibleVerticalScrollbar(in view: NSView) -> Bool {
+        if let scroller = view as? NSScroller, scroller.bounds.height > scroller.bounds.width {
+            return !scroller.isHidden && scroller.knobProportion < 0.999
+        }
+        for subview in view.subviews where hasVisibleVerticalScrollbar(in: subview) {
+            return true
+        }
+        return false
     }
 }
 
