@@ -5,6 +5,7 @@ struct SettingsView: View {
 
     @State private var selection: String? = "General"
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
+    @State private var sky = SkyService()
 
     private var appVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
@@ -70,11 +71,34 @@ struct SettingsView: View {
         }
         .frame(minWidth: 720, minHeight: 520)
         .preferredColorScheme(.dark)
+        .toolbarBackground(.hidden, for: .windowToolbar)
+        .task { sky.refreshIfNeeded() }
     }
 
     private var sidebarBackground: some View {
-        Color(hex: 0x0B0B0E)
-            .ignoresSafeArea()
+        ZStack(alignment: .top) {
+            LinearGradient(
+                colors: [Color(hex: 0x0B0B0E), Color(hex: 0x121216)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            SkyTintOverlay(tint: sky.topTint, height: 140)
+                .allowsHitTesting(false)
+            SkyLayer(isNight: sky.isNight, condition: sky.condition)
+                .frame(height: 160)
+                .mask(
+                    LinearGradient(
+                        stops: [
+                            .init(color: .white, location: 0),
+                            .init(color: .white, location: 0.55),
+                            .init(color: .clear, location: 1),
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+        }
+        .ignoresSafeArea()
     }
 
     private var detailBackground: some View {

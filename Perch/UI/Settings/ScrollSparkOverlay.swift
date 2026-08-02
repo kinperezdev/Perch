@@ -48,9 +48,10 @@ struct ScrollSparkOverlay: View {
         progress = min(max(progress - deltaY / 900, 0), 1)
         let scrollbarX = size.width - 6
         let thumbY = trackTop + progress * trackHeight
+        let tipOffset: CGFloat = scrollingDown ? 8 : -8
         let spark = Spark(
             x: scrollbarX + CGFloat.random(in: -3...1),
-            y: thumbY + CGFloat.random(in: -3...3),
+            y: thumbY + tipOffset,
             goingDown: scrollingDown
         )
         sparks.append(spark)
