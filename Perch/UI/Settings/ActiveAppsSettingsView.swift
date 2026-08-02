@@ -30,8 +30,6 @@ struct ActiveAppsSettingsView: View {
                         get: { prefs.focusAppMode == .allApps },
                         set: { prefs.focusAppMode = $0 ? .allApps : .specificApps }
                     ))
-                    .toggleStyle(.button)
-                    .controlSize(.small)
                     .font(.caption)
                 }
             }
