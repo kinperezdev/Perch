@@ -307,7 +307,7 @@ struct CompanionFaceView: View {
                 .frame(width: size * 0.11, height: size * 0.07)
             NecktieShape()
                 .fill(Color(hex: 0xC22B2B))
-                .frame(width: size * 0.16, height: size * 0.24)
+                .frame(width: size * 0.17, height: size * 0.15)
         }
         .offset(y: size * 0.56)
     }
