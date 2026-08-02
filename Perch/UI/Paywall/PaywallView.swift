@@ -62,6 +62,19 @@ struct PerchPaywallView: View {
                 startPoint: .top,
                 endPoint: .bottom
             )
+            SkyLayer(isNight: true, condition: .clear)
+                .frame(height: 200)
+                .mask(
+                    LinearGradient(
+                        stops: [
+                            .init(color: .white, location: 0),
+                            .init(color: .white, location: 0.55),
+                            .init(color: .clear, location: 1),
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
             Rectangle()
                 .fill(.white.opacity(0.06))
                 .frame(height: 1)

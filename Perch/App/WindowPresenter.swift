@@ -47,6 +47,41 @@ final class WindowPresenter: NSObject, NSWindowDelegate {
         }
     }
 
+    private static let breakOverlayID = "breakOverlay"
+
+    func showBreakOverlay(_ container: AppContainer) {
+        guard windows[Self.breakOverlayID] == nil else { return }
+        guard let screen = NSScreen.main else { return }
+        let window = NSWindow(
+            contentRect: screen.frame,
+            styleMask: [.borderless],
+            backing: .buffered,
+            defer: false
+        )
+        window.isOpaque = true
+        window.backgroundColor = .black
+        window.level = .floating
+        window.isReleasedWhenClosed = false
+        window.collectionBehavior = [.canJoinAllSpaces, .stationary]
+        window.delegate = self
+        window.contentView = NSHostingView(
+            rootView: BreakOverlayView(onEnd: { [weak self] in self?.closeBreakOverlay() })
+                .environment(container)
+                .environment(\.dynamicTypeSize, .medium)
+        )
+        window.setFrame(screen.frame, display: true)
+        windows[Self.breakOverlayID] = window
+        NSApp.presentationOptions = [.hideDock, .hideMenuBar]
+        NSApp.activate(ignoringOtherApps: true)
+        window.makeKeyAndOrderFront(nil)
+        window.orderFrontRegardless()
+    }
+
+    func closeBreakOverlay() {
+        NSApp.presentationOptions = []
+        close(id: Self.breakOverlayID)
+    }
+
     private func showStandardWindow<Content: View>(id: String, size: NSSize, @ViewBuilder content: () -> Content) {
         if let existing = windows[id] {
             NSApp.activate(ignoringOtherApps: true)

@@ -10,7 +10,6 @@ struct OnboardingView: View {
     @State private var recordingShortcut = false
     @State private var welcomeStage = 0
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
-    @State private var sky = SkyService()
 
     private let lastPage = 8
     @State private var newRoutineLabel = ""
@@ -40,7 +39,6 @@ struct OnboardingView: View {
         .animation(.spring(response: 0.45, dampingFraction: 0.86), value: page)
         .preferredColorScheme(.dark)
         .trackCursorForCompanion()
-        .task { sky.refreshIfNeeded() }
     }
 
     private var background: some View {
@@ -50,7 +48,6 @@ struct OnboardingView: View {
                 startPoint: .top,
                 endPoint: .bottom
             )
-            SkyTintOverlay(tint: sky.topTint, height: 260)
             SkyLayer(isNight: true, condition: .clear)
                 .frame(height: 200)
                 .mask(

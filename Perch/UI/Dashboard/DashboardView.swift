@@ -232,9 +232,7 @@ struct DashboardView: View {
                 }
                 actionButton("Took a break", symbol: "figure.walk") {
                     container.tracker.creditBreak()
-                    if container.prefs.allowSleepAtGoodnight {
-                        SystemSleepService.sleepMac()
-                    }
+                    WindowPresenter.shared.showBreakOverlay(container)
                 }
                 actionButton("Took a shower", symbol: "shower.fill") {
                     container.memory.logShower()
