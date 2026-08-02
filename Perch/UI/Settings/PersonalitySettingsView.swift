@@ -142,10 +142,16 @@ struct PersonalityCard: View {
                     .lineLimit(3)
             }
             .padding(10)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity, minHeight: 152, alignment: .topLeading)
             .background(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(isSelected ? AnyShapeStyle(personality.accentColors[0].opacity(0.12)) : AnyShapeStyle(.quaternary.opacity(0.4)))
+                ZStack(alignment: .bottomTrailing) {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(isSelected ? AnyShapeStyle(personality.accentColors[0].opacity(0.12)) : AnyShapeStyle(.quaternary.opacity(0.4)))
+                    PersonalityMotif(personality: personality)
+                        .padding(.trailing, -6)
+                        .padding(.bottom, -6)
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -153,5 +159,56 @@ struct PersonalityCard: View {
             )
         }
         .buttonStyle(.plain)
+    }
+}
+
+/// A small, low-opacity decorative motif in the bottom-right corner of each
+/// personality card, hinting at that personality's vibe (e.g. flowers for
+/// Mom) without competing with the card's text.
+private struct PersonalityMotif: View {
+    let personality: Personality
+
+    private var accent: [Color] { personality.accentColors }
+
+    var body: some View {
+        Group {
+            if personality == .mother {
+                ZStack {
+                    flower(size: 30).offset(x: 8, y: 6)
+                    flower(size: 18).offset(x: -16, y: 16)
+                }
+            } else {
+                ZStack {
+                    Image(systemName: personality.symbolName)
+                        .font(.system(size: 34))
+                        .foregroundStyle(accent[0].opacity(0.14))
+                        .rotationEffect(.degrees(-8))
+                        .offset(x: 10, y: 8)
+                    Image(systemName: personality.symbolName)
+                        .font(.system(size: 16))
+                        .foregroundStyle(accent[1].opacity(0.2))
+                        .rotationEffect(.degrees(12))
+                        .offset(x: -14, y: -4)
+                }
+            }
+        }
+        .frame(width: 56, height: 56, alignment: .bottomTrailing)
+        .allowsHitTesting(false)
+    }
+
+    private func flower(size: CGFloat) -> some View {
+        ZStack {
+            ForEach(0..<5, id: \.self) { i in
+                Capsule()
+                    .fill(accent[0].opacity(0.24))
+                    .frame(width: size * 0.34, height: size * 0.62)
+                    .offset(y: -size * 0.31)
+                    .rotationEffect(.degrees(Double(i) * 72))
+            }
+            Circle()
+                .fill(accent[1].opacity(0.32))
+                .frame(width: size * 0.26, height: size * 0.26)
+        }
+        .frame(width: size, height: size)
     }
 }
