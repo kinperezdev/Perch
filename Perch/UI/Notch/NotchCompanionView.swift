@@ -15,7 +15,7 @@ struct NotchCompanionView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .animation(.spring(response: 0.45, dampingFraction: 0.82), value: coordinator.phase)
+        .animation(.spring(response: 0.4, dampingFraction: 1.0), value: coordinator.phase)
         .task { sky.refreshIfNeeded() }
     }
 
