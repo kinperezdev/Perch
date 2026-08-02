@@ -37,7 +37,7 @@ final class WindowPresenter: NSObject, NSWindowDelegate {
     }
 
     func showDashboard(_ container: AppContainer) {
-        show(id: "dashboard", size: NSSize(width: 720 * PerchStyle.scale, height: 580 * PerchStyle.scale)) {
+        show(id: "dashboard", size: NSSize(width: 720 * PerchStyle.scale, height: 480 * PerchStyle.scale)) {
             DashboardView().environment(container)
         }
     }

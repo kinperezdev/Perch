@@ -234,7 +234,7 @@ private struct SkylineShape: Shape {
 private extension Personality {
     var groundColor: Color {
         switch self {
-        case .mother: Color(hex: 0x4CAF6D)
+        case .mother: Color(hex: 0xFF8FA3)
         case .homie: Color(hex: 0x8A5A2B)
         case .professional: Color(hex: 0x3A4256)
         case .mentor: Color(hex: 0x3B7A57)
