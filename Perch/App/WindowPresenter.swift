@@ -99,19 +99,19 @@ final class WindowPresenter: NSObject, NSWindowDelegate {
         window.titlebarAppearsTransparent = true
         window.titlebarSeparatorStyle = .none
         window.appearance = NSAppearance(named: .darkAqua)
-        window.backgroundColor = NSColor(Color(hex: 0x0B0B0E))
+        window.backgroundColor = NSColor(hex: 0x0B0B0E)
         window.isReleasedWhenClosed = false
         window.delegate = self
         window.contentView = NSHostingView(rootView: content().environment(\.dynamicTypeSize, .medium))
         window.contentView?.wantsLayer = true
-        window.contentView?.layer?.backgroundColor = NSColor(Color(hex: 0x0B0B0E)).cgColor
+        window.contentView?.layer?.backgroundColor = NSColor(hex: 0x0B0B0E).cgColor
         window.center()
         windows[id] = window
         NSApp.activate(ignoringOtherApps: true)
         window.makeKeyAndOrderFront(nil)
         window.orderFrontRegardless()
         DispatchQueue.main.async {
-            self.flattenVibrancy(in: window, color: NSColor(Color(hex: 0x0B0B0E)))
+            self.flattenVibrancy(in: window, color: NSColor(hex: 0x0B0B0E))
         }
     }
 
