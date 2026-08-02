@@ -53,6 +53,8 @@ struct SettingsView: View {
             }
             .scrollContentBackground(.hidden)
             .background(detailBackground)
+            .overlay(alignment: .top) { edgeFade(.top) }
+            .overlay(alignment: .bottom) { edgeFade(.bottom) }
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button {
@@ -104,6 +106,21 @@ struct SettingsView: View {
             endPoint: .bottom
         )
         .ignoresSafeArea()
+    }
+
+    /// A soft fade at the detail pane's top/bottom edges so scrolled content
+    /// dissolves into the background instead of cutting off hard, the
+    /// sidebar is left untouched.
+    private func edgeFade(_ edge: VerticalEdge) -> some View {
+        LinearGradient(
+            colors: edge == .top
+                ? [Color(hex: 0x0B0B0E), Color(hex: 0x0B0B0E).opacity(0)]
+                : [Color(hex: 0x0B0B0E).opacity(0), Color(hex: 0x0B0B0E)],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+        .frame(height: 34)
+        .allowsHitTesting(false)
     }
 }
 
