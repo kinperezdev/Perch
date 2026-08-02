@@ -99,7 +99,11 @@ struct MenuBarContentView: View {
     private var quickActions: some View {
         VStack(spacing: 8) {
             HStack(spacing: 8) {
-                actionButton("Do Not Disturb", symbol: container.prefs.doNotDisturb ? "moon.fill" : "moon") {
+                actionButton(
+                    "Do Not Disturb",
+                    symbol: container.prefs.doNotDisturb ? "moon.fill" : "moon",
+                    isActive: container.prefs.doNotDisturb
+                ) {
                     container.prefs.doNotDisturb.toggle()
                 }
                 actionButton("Dashboard", symbol: "rectangle.grid.2x2.fill") {
@@ -126,7 +130,7 @@ struct MenuBarContentView: View {
         }
     }
 
-    private func actionButton(_ title: String, symbol: String, action: @escaping () -> Void) -> some View {
+    private func actionButton(_ title: String, symbol: String, isActive: Bool = false, action: @escaping () -> Void) -> some View {
         Button {
             action()
             Task { @MainActor in
@@ -139,6 +143,7 @@ struct MenuBarContentView: View {
                 .padding(.vertical, 4)
         }
         .buttonStyle(.glass)
+        .tint(isActive ? .orange : nil)
     }
 
     private var pauseRow: some View {
