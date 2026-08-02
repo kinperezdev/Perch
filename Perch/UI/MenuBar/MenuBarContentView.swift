@@ -34,6 +34,7 @@ struct MenuBarContentView: View {
                 startPoint: .top,
                 endPoint: .bottom
             )
+            SkyTintOverlay(tint: sky.topTint, height: 180)
             SkyLayer(isNight: sky.isNight, condition: sky.condition)
                 .frame(height: 140)
                 .mask(

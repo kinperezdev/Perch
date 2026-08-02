@@ -34,13 +34,16 @@ struct ActiveAppsSettingsView: View {
                         Text("No apps found on this Mac.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                    } else if filteredApps.isEmpty {
-                        Text("No apps match \"\(searchText)\".")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
                     } else {
-                        ForEach(filteredApps) { app in
-                            appRow(app, prefs: prefs)
+                        searchField
+                        if filteredApps.isEmpty {
+                            Text("No apps match \"\(searchText)\".")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        } else {
+                            ForEach(filteredApps) { app in
+                                appRow(app, prefs: prefs)
+                            }
                         }
                     }
                     Button("Refresh app list") { refresh(selected: prefs.allowedAppBundleIDs) }
@@ -49,8 +52,25 @@ struct ActiveAppsSettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .searchable(text: $searchText, prompt: "Search apps")
         .task { refresh(selected: prefs.allowedAppBundleIDs) }
+    }
+
+    private var searchField: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(.secondary)
+            TextField("Search apps", text: $searchText)
+                .textFieldStyle(.plain)
+            if !searchText.isEmpty {
+                Button {
+                    searchText = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
+            }
+        }
     }
 
     private func appRow(_ app: AppEntry, prefs: PreferencesStore) -> some View {

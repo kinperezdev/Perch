@@ -45,7 +45,11 @@ struct NotchCompanionView: View {
         .frame(maxWidth: .infinity)
         .background(
             ZStack {
-                shape.fill(Color(red: 0, green: 0, blue: 0))
+                shape.fill(LinearGradient(colors: [Color(hex: 0x0B0B0E), Color(hex: 0x121216)], startPoint: .top, endPoint: .bottom))
+                GeometryReader { geo in
+                    SkyTintOverlay(tint: sky.topTint, height: geo.size.height * 0.55)
+                }
+                .clipShape(shape)
                 SkyLayer(isNight: sky.isNight, condition: sky.condition)
                     .clipShape(shape)
                 LinearGradient(

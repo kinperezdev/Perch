@@ -7,7 +7,6 @@ struct SettingsView: View {
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
     @State private var sky = SkyService()
 
-    private var accent: [Color] { container.prefs.activePersonality.accentColors }
     private var appVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
     }
@@ -79,6 +78,8 @@ struct SettingsView: View {
                 startPoint: .top,
                 endPoint: .bottom
             )
+            SkyTintOverlay(tint: sky.topTint, height: 140)
+                .allowsHitTesting(false)
             SkyLayer(isNight: sky.isNight, condition: sky.condition)
                 .frame(height: 160)
                 .mask(
@@ -92,8 +93,6 @@ struct SettingsView: View {
                         endPoint: .bottom
                     )
                 )
-            AuroraGlow(accent: accent)
-                .frame(maxHeight: .infinity, alignment: .bottom)
         }
         .ignoresSafeArea()
     }

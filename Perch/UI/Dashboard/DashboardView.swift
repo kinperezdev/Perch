@@ -48,10 +48,9 @@ struct DashboardView: View {
                 startPoint: .top,
                 endPoint: .bottom
             )
+            SkyTintOverlay(tint: sky.topTint, height: 160)
             SkyLayer(isNight: sky.isNight, condition: sky.condition)
                 .frame(height: 220)
-            AuroraGlow(accent: accent)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
             Rectangle()
                 .fill(.white.opacity(0.06))
                 .frame(height: 1)

@@ -1,5 +1,24 @@
 import SwiftUI
 
+/// A soft color glow anchored to the top edge, fading to nothing partway down
+/// so the base background stays a constant dark near-black everywhere else,
+/// the same "colored light hitting the top of a dark surface" look used
+/// across Dashboard, Settings, the menu bar, notch, and onboarding.
+struct SkyTintOverlay: View {
+    let tint: Color
+    var height: CGFloat = 240
+
+    var body: some View {
+        LinearGradient(
+            colors: [tint.opacity(0.4), tint.opacity(0.12), .clear],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+        .frame(height: height)
+        .allowsHitTesting(false)
+    }
+}
+
 /// Sits in the top portion of the Dashboard background. Shows twinkling stars
 /// and an occasional shooting star at night, drifting clouds and birds by day,
 /// or falling rain (with a lightning flash for thunderstorms) when that's what
@@ -114,9 +133,9 @@ struct SkyLayer: View {
         // MARK: Day (clouds + birds)
 
     private static let cloudSeeds: [(y: Double, size: CGFloat, speed: Double, offset: Double)] = [
-        (y: 0.10, size: 70, speed: 0.006, offset: 0.0),
-        (y: 0.24, size: 50, speed: 0.009, offset: 0.4),
-        (y: 0.05, size: 42, speed: 0.011, offset: 0.75),
+        (y: 0.10, size: 34, speed: 0.006, offset: 0.0),
+        (y: 0.24, size: 24, speed: 0.009, offset: 0.4),
+        (y: 0.05, size: 20, speed: 0.011, offset: 0.75),
     ]
 
     private func dayLayer(t: TimeInterval, size: CGSize) -> some View {
