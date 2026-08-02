@@ -144,13 +144,14 @@ struct PersonalityCard: View {
             .padding(10)
             .frame(maxWidth: .infinity, minHeight: 152, alignment: .topLeading)
             .background(
-                ZStack(alignment: .bottomTrailing) {
+                ZStack {
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(.quaternary.opacity(0.4))
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(PerchStyle.accentGradient(personality.accentColors))
-                        .opacity(isSelected ? 0.18 : 0.09)
+                        .fill(Color(hex: 0x121216))
+                    SkyTintOverlay(tint: personality.accentColors[0], height: 92)
+                        .opacity(isSelected ? 1 : 0.65)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                     PersonalityMotif(personality: personality)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
                         .padding(.trailing, -6)
                         .padding(.bottom, -6)
                 }
