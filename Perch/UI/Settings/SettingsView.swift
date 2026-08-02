@@ -52,10 +52,11 @@ struct SettingsView: View {
                 }
             }
             .scrollContentBackground(.hidden)
+            .background(detailBackground)
+            .clipped()
             .overlay(alignment: .top) { edgeFade(.top) }
             .overlay(alignment: .bottom) { edgeFade(.bottom) }
             .overlay { ScrollSparkOverlay() }
-            .background(detailBackground)
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button {
@@ -104,7 +105,6 @@ struct SettingsView: View {
 
     private var detailBackground: some View {
         Color(hex: 0x0B0B0E)
-            .ignoresSafeArea()
     }
 
     private func edgeFade(_ edge: VerticalEdge) -> some View {
