@@ -111,9 +111,7 @@ struct MenuBarContentView: View {
                 }
                 actionButton("I took a break", symbol: "figure.walk") {
                     container.tracker.creditBreak()
-                    if container.prefs.allowSleepAtGoodnight {
-                        SystemSleepService.sleepMac()
-                    }
+                    WindowPresenter.shared.showBreakOverlay(container)
                 }
             }
             HStack(spacing: 8) {
