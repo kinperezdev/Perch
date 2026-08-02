@@ -71,9 +71,9 @@ private struct PersonalityScene: View {
         case .professional:
             AnyShape(SkylineShape()).fill(tint.opacity(opacity))
         case .mother:
-            symbol(HouseShape(), width: 26, height: 24)
+            symbol(FlowerShape(), width: 26, height: 26)
         case .homie:
-            symbol(Circle(), width: 22, height: 22)
+            symbol(HeadphonesShape(), width: 30, height: 26)
         case .coach:
             symbol(FlagShape(), width: 22, height: 28)
         case .playful:
@@ -106,16 +106,58 @@ private struct GroundShape: Shape {
     }
 }
 
-private struct HouseShape: Shape {
+private struct FlowerShape: Shape {
     func path(in rect: CGRect) -> Path {
         var path = Path()
-        let roofHeight = rect.height * 0.45
-        path.move(to: CGPoint(x: rect.midX, y: rect.minY))
-        path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY + roofHeight))
-        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
-        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
-        path.addLine(to: CGPoint(x: rect.minX, y: rect.minY + roofHeight))
+        let center = CGPoint(x: rect.midX, y: rect.midY)
+        let petalRadius = min(rect.width, rect.height) * 0.32
+        let distance = petalRadius * 0.85
+        for i in 0..<5 {
+            let angle = Double(i) / 5 * 2 * .pi - .pi / 2
+            let petalCenter = CGPoint(
+                x: center.x + CGFloat(cos(angle)) * distance,
+                y: center.y + CGFloat(sin(angle)) * distance
+            )
+            path.addEllipse(in: CGRect(
+                x: petalCenter.x - petalRadius,
+                y: petalCenter.y - petalRadius,
+                width: petalRadius * 2,
+                height: petalRadius * 2
+            ))
+        }
+        let centerRadius = petalRadius * 0.55
+        path.addEllipse(in: CGRect(
+            x: center.x - centerRadius,
+            y: center.y - centerRadius,
+            width: centerRadius * 2,
+            height: centerRadius * 2
+        ))
+        return path
+    }
+}
+
+private struct HeadphonesShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let bandThickness = rect.width * 0.14
+        let outerRadius = rect.width / 2
+        let innerRadius = outerRadius - bandThickness
+        let center = CGPoint(x: rect.midX, y: rect.minY + outerRadius)
+        path.addArc(center: center, radius: outerRadius, startAngle: .degrees(180), endAngle: .degrees(0), clockwise: false)
+        path.addArc(center: center, radius: innerRadius, startAngle: .degrees(0), endAngle: .degrees(180), clockwise: true)
         path.closeSubpath()
+
+        let earWidth = rect.width * 0.2
+        let earHeight = rect.height * 0.42
+        let earY = rect.maxY - earHeight
+        path.addRoundedRect(
+            in: CGRect(x: rect.minX, y: earY, width: earWidth, height: earHeight),
+            cornerSize: CGSize(width: earWidth * 0.4, height: earWidth * 0.4)
+        )
+        path.addRoundedRect(
+            in: CGRect(x: rect.maxX - earWidth, y: earY, width: earWidth, height: earHeight),
+            cornerSize: CGSize(width: earWidth * 0.4, height: earWidth * 0.4)
+        )
         return path
     }
 }
