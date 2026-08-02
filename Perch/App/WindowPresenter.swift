@@ -102,6 +102,8 @@ final class WindowPresenter: NSObject, NSWindowDelegate {
         window.isReleasedWhenClosed = false
         window.delegate = self
         window.contentView = NSHostingView(rootView: content().environment(\.dynamicTypeSize, .medium))
+        window.contentView?.wantsLayer = true
+        window.contentView?.layer?.backgroundColor = NSColor(Color(hex: 0x0B0B0E)).cgColor
         window.center()
         windows[id] = window
         NSApp.activate(ignoringOtherApps: true)

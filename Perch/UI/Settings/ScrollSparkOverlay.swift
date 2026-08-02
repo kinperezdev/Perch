@@ -20,16 +20,16 @@ struct ScrollSparkOverlay: View {
                         .position(x: spark.x, y: spark.y)
                 }
             }
-            .onAppear { startMonitoring(width: geo.size.width) }
+            .onAppear { startMonitoring(size: geo.size) }
             .onDisappear(perform: stopMonitoring)
         }
         .allowsHitTesting(false)
     }
 
-    private func startMonitoring(width: CGFloat) {
+    private func startMonitoring(size: CGSize) {
         guard monitor == nil else { return }
         monitor = NSEvent.addLocalMonitorForEvents(matching: .scrollWheel) { event in
-            spawnSpark(deltaY: event.scrollingDeltaY, width: width)
+            spawnSpark(deltaY: event.scrollingDeltaY, size: size)
             return event
         }
     }
@@ -39,21 +39,24 @@ struct ScrollSparkOverlay: View {
         monitor = nil
     }
 
-    private func spawnSpark(deltaY: CGFloat, width: CGFloat) {
-        guard abs(deltaY) > 0.5 else { return }
+    private func spawnSpark(deltaY: CGFloat, size: CGSize) {
+        guard abs(deltaY) > 0.5, size.height > 0 else { return }
+        let scrollingDown = deltaY < 0
+        let scrollbarX = size.width - 6
+        let edgeY: CGFloat = scrollingDown ? 20 : size.height - 20
         let spark = Spark(
-            x: width - CGFloat.random(in: 6...16),
-            y: CGFloat.random(in: 40...320),
-            goingDown: deltaY < 0
+            x: scrollbarX + CGFloat.random(in: -3...1),
+            y: edgeY + CGFloat.random(in: -4...4),
+            goingDown: scrollingDown
         )
         sparks.append(spark)
         let id = spark.id
         Task {
-            try? await Task.sleep(for: .seconds(0.5))
+            try? await Task.sleep(for: .seconds(0.45))
             sparks.removeAll { $0.id == id }
         }
-        if sparks.count > 24 {
-            sparks.removeFirst(sparks.count - 24)
+        if sparks.count > 20 {
+            sparks.removeFirst(sparks.count - 20)
         }
     }
 }
@@ -64,12 +67,12 @@ private struct SparkGlyph: View {
 
     var body: some View {
         Image(systemName: "sparkle")
-            .font(.system(size: 8, weight: .bold))
-            .foregroundStyle(.white.opacity(animate ? 0 : 0.85))
-            .offset(y: animate ? (goingDown ? 14 : -14) : 0)
-            .scaleEffect(animate ? 0.4 : 1)
+            .font(.system(size: 7, weight: .bold))
+            .foregroundStyle(.white.opacity(animate ? 0 : 0.9))
+            .offset(y: animate ? (goingDown ? 10 : -10) : 0)
+            .scaleEffect(animate ? 0.3 : 1)
             .onAppear {
-                withAnimation(.easeOut(duration: 0.5)) { animate = true }
+                withAnimation(.easeOut(duration: 0.45)) { animate = true }
             }
     }
 }

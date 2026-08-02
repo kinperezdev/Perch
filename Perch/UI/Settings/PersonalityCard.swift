@@ -61,136 +61,28 @@ private struct PersonalityScene: View {
     let personality: Personality
     let isSelected: Bool
 
-    private var accent: [Color] { personality.accentColors }
     private var tint: Color { personality.groundColor }
     private var opacity: Double { isSelected ? 0.4 : 0.26 }
-    private var lineOpacity: Double { isSelected ? 0.3 : 0.18 }
 
     var body: some View {
+        AnyShape(shape).fill(tint.opacity(opacity))
+    }
+
+    private var shape: any Shape {
         switch personality {
-        case .mother:
-            ZStack(alignment: .bottomLeading) {
-                GroundShape().fill(tint.opacity(opacity))
-                house(size: 22).padding(.leading, 10)
-            }
+        case .mother, .coach, .playful:
+            GroundShape()
         case .mentor:
-            MountainShape(peaks: 3).fill(tint.opacity(opacity))
+            MountainShape(peaks: 3)
         case .homie:
-            ZStack(alignment: .bottomTrailing) {
-                Rectangle().fill(tint.opacity(opacity))
-                courtLines
-                hoop(size: 22).padding(.trailing, 10)
-            }
+            Rectangle()
         case .professional:
             SkylineShape()
-                .fill(tint.opacity(opacity))
-        case .coach:
-            ZStack(alignment: .bottom) {
-                GroundShape().fill(tint.opacity(opacity))
-                trackLines
-            }
-        case .playful:
-            ZStack(alignment: .bottom) {
-                GroundShape().fill(tint.opacity(opacity))
-                windmill(size: 26)
-            }
         }
-    }
-
-    private func house(size: CGFloat) -> some View {
-        VStack(spacing: 0) {
-            Triangle()
-                .fill(accent[0].opacity(0.42))
-                .frame(width: size, height: size * 0.5)
-            Rectangle()
-                .fill(accent[1].opacity(0.34))
-                .frame(width: size * 0.76, height: size * 0.5)
-        }
-    }
-
-    private func hoop(size: CGFloat) -> some View {
-        VStack(spacing: 0) {
-            ZStack(alignment: .bottom) {
-                Rectangle()
-                    .fill(.white.opacity(lineOpacity + 0.1))
-                    .frame(width: size * 0.46, height: size * 0.3)
-                Capsule()
-                    .stroke(accent[0].opacity(0.45), lineWidth: 1.2)
-                    .frame(width: size * 0.24, height: size * 0.1)
-                    .offset(y: 4)
-            }
-            Rectangle()
-                .fill(.white.opacity(lineOpacity))
-                .frame(width: size * 0.05, height: size * 0.55)
-        }
-    }
-
-    private func windmill(size: CGFloat) -> some View {
-        VStack(spacing: 0) {
-            ZStack {
-                windmillBlade(color: accent[0], size: size, angle: 18)
-                windmillBlade(color: accent[1], size: size, angle: 108)
-                windmillBlade(color: accent[0], size: size, angle: 198)
-                windmillBlade(color: accent[1], size: size, angle: 288)
-            }
-            .frame(width: size, height: size * 0.8)
-            Rectangle()
-                .fill(accent[0].opacity(0.36))
-                .frame(width: size * 0.06, height: size * 0.5)
-        }
-    }
-
-    private func windmillBlade(color: Color, size: CGFloat, angle: Double) -> some View {
-        Capsule()
-            .fill(color.opacity(0.4))
-            .frame(width: size * 0.14, height: size * 0.5)
-            .offset(y: -size * 0.25)
-            .rotationEffect(.degrees(angle))
-    }
-
-    private var courtLines: some View {
-        ZStack {
-            Rectangle()
-                .fill(.white.opacity(lineOpacity))
-                .frame(height: 1)
-            Circle()
-                .trim(from: 0.5, to: 1.0)
-                .stroke(.white.opacity(lineOpacity), lineWidth: 1)
-                .frame(width: 26, height: 26)
-                .offset(y: -10)
-        }
-    }
-
-    private var trackLines: some View {
-        TrackArc()
-            .stroke(.white.opacity(lineOpacity), style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
-            .frame(height: 16)
-            .padding(.horizontal, 12)
-            .padding(.bottom, 6)
     }
 }
 
 // MARK: - Shapes
-
-private struct Triangle: Shape {
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        path.move(to: CGPoint(x: rect.midX, y: rect.minY))
-        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
-        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
-        path.closeSubpath()
-        return path
-    }
-}
-
-private struct TrackArc: Shape {
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        path.move(to: CGPoint(x: 0, y: rect.maxY))
-        path.addQuadCurve(to: CGPoint(x: rect.maxX, y: rect.maxY), control: CGPoint(x: rect.midX, y: rect.minY))
-        return path
-    }
-}
 
 private struct GroundShape: Shape {
     func path(in rect: CGRect) -> Path {
