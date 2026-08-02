@@ -110,6 +110,25 @@ final class WindowPresenter: NSObject, NSWindowDelegate {
         NSApp.activate(ignoringOtherApps: true)
         window.makeKeyAndOrderFront(nil)
         window.orderFrontRegardless()
+        DispatchQueue.main.async {
+            self.flattenVibrancy(in: window, color: NSColor(Color(hex: 0x0B0B0E)))
+        }
+    }
+
+    private func flattenVibrancy(in window: NSWindow, color: NSColor) {
+        guard let themeFrame = window.contentView?.superview else { return }
+        flattenVibrancy(in: themeFrame, color: color)
+    }
+
+    private func flattenVibrancy(in view: NSView, color: NSColor) {
+        if let effectView = view as? NSVisualEffectView {
+            effectView.blendingMode = .withinWindow
+            effectView.wantsLayer = true
+            effectView.layer?.backgroundColor = color.cgColor
+        }
+        for subview in view.subviews {
+            flattenVibrancy(in: subview, color: color)
+        }
     }
 
     private func show<Content: View>(id: String, size: NSSize, @ViewBuilder content: () -> Content) {
