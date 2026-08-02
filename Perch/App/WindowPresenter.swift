@@ -97,6 +97,7 @@ final class WindowPresenter: NSObject, NSWindowDelegate {
         )
         window.title = "Settings"
         window.titlebarAppearsTransparent = true
+        window.titlebarSeparatorStyle = .none
         window.appearance = NSAppearance(named: .darkAqua)
         window.backgroundColor = NSColor(Color(hex: 0x0B0B0E))
         window.isReleasedWhenClosed = false
