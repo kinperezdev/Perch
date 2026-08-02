@@ -71,7 +71,8 @@ struct SettingsView: View {
         }
         .frame(minWidth: 720, minHeight: 520)
         .preferredColorScheme(.dark)
-        .toolbarBackground(.hidden, for: .windowToolbar)
+        .toolbarBackground(Color(hex: 0x0B0B0E), for: .windowToolbar)
+        .toolbarBackgroundVisibility(.visible, for: .windowToolbar)
         .task { sky.refreshIfNeeded() }
     }
 

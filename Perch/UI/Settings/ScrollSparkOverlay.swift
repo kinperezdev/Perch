@@ -5,6 +5,7 @@ struct ScrollSparkOverlay: View {
     @State private var sparks: [Spark] = []
     @State private var monitor: Any?
     @State private var progress: CGFloat = 0
+    @State private var lastSpawnAt: Date = .distantPast
 
     private struct Spark: Identifiable {
         let id = UUID()
@@ -45,7 +46,12 @@ struct ScrollSparkOverlay: View {
         let scrollingDown = deltaY < 0
         let trackTop: CGFloat = 20
         let trackHeight = max(size.height - 40, 1)
-        progress = min(max(progress - deltaY / 900, 0), 1)
+        progress = min(max(progress - deltaY / 2400, 0), 1)
+
+        let now = Date()
+        guard now.timeIntervalSince(lastSpawnAt) > 0.12 else { return }
+        lastSpawnAt = now
+
         let scrollbarX = size.width - 6
         let thumbY = trackTop + progress * trackHeight
         let tipOffset: CGFloat = scrollingDown ? 8 : -8
@@ -57,11 +63,11 @@ struct ScrollSparkOverlay: View {
         sparks.append(spark)
         let id = spark.id
         Task {
-            try? await Task.sleep(for: .seconds(0.45))
+            try? await Task.sleep(for: .seconds(0.5))
             sparks.removeAll { $0.id == id }
         }
-        if sparks.count > 20 {
-            sparks.removeFirst(sparks.count - 20)
+        if sparks.count > 12 {
+            sparks.removeFirst(sparks.count - 12)
         }
     }
 }
