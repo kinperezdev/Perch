@@ -69,7 +69,7 @@ final class PreferencesStore {
         personality = Personality(rawValue: defaults.string(forKey: "personality") ?? "") ?? .professional
 
         workStartMinutes = defaults.object(forKey: "workStartMinutes") as? Int ?? 9 * 60
-        workEndMinutes = defaults.object(forKey: "workEndMinutes") as? Int ?? 18 * 60
+        workEndMinutes = defaults.object(forKey: "workEndMinutes") as? Int ?? 20 * 60
         breakfastMinutes = defaults.object(forKey: "breakfastMinutes") as? Int ?? 7 * 60 + 30
         lunchMinutes = defaults.object(forKey: "lunchMinutes") as? Int ?? 12 * 60 + 30
         dinnerMinutes = defaults.object(forKey: "dinnerMinutes") as? Int ?? 19 * 60
