@@ -84,7 +84,7 @@ struct MenuBarContentView: View {
         return VStack(spacing: 7) {
             StatRow(
                 symbol: "flame.fill",
-                label: "Active today",
+                label: "Screen time",
                 value: shortDuration(seconds: today.activeSeconds)
             )
             StatRow(symbol: "drop.fill", label: "Water logged", value: "\(today.waterCount)")
@@ -99,8 +99,8 @@ struct MenuBarContentView: View {
     private var quickActions: some View {
         VStack(spacing: 8) {
             HStack(spacing: 8) {
-                actionButton("Check on me", symbol: "sparkles") {
-                    Task { await container.engine.forceCheckIn() }
+                actionButton("Do Not Disturb", symbol: container.prefs.doNotDisturb ? "moon.fill" : "moon") {
+                    container.prefs.doNotDisturb.toggle()
                 }
                 actionButton("Dashboard", symbol: "rectangle.grid.2x2.fill") {
                     WindowPresenter.shared.showDashboard(container)

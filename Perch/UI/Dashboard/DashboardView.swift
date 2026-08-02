@@ -124,7 +124,7 @@ struct DashboardView: View {
         let today = container.memory.today()
         return VStack(spacing: 10) {
             HStack(spacing: 10) {
-                statTile("Active", value: shortDuration(seconds: container.tracker.todayActiveSeconds), symbol: "flame.fill")
+                statTile("Screen time", value: shortDuration(seconds: container.tracker.todayActiveSeconds), symbol: "flame.fill")
                 statTile("Check-ins", value: "\(today.checkInsAccepted)", symbol: "checkmark.circle.fill")
                 statTile("Water", value: "\(today.waterCount)", symbol: "drop.fill")
             }
