@@ -54,6 +54,7 @@ struct SettingsView: View {
             .scrollContentBackground(.hidden)
             .overlay(alignment: .top) { edgeFade(.top) }
             .overlay(alignment: .bottom) { edgeFade(.bottom) }
+            .overlay { ScrollSparkOverlay() }
             .background(detailBackground)
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
