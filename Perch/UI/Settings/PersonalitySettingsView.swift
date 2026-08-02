@@ -150,10 +150,14 @@ struct PersonalityCard: View {
                     SkyTintOverlay(tint: personality.accentColors[0], height: 92)
                         .opacity(isSelected ? 1 : 0.65)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                    GroundShape()
+                        .fill(personality.groundColor.opacity(isSelected ? 0.5 : 0.34))
+                        .frame(height: 46)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
                     PersonalityMotif(personality: personality)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-                        .padding(.trailing, -6)
-                        .padding(.bottom, -6)
+                        .padding(.trailing, 4)
+                        .padding(.bottom, 8)
                 }
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             )
@@ -166,9 +170,9 @@ struct PersonalityCard: View {
     }
 }
 
-/// A small, low-opacity decorative motif in the bottom-right corner of each
-/// personality card, hinting at that personality's vibe (e.g. flowers for
-/// Mom) without competing with the card's text.
+/// A small, low-opacity decorative motif planted on the card's ground line,
+/// hinting at that personality's vibe (e.g. flowers growing out of Mom's
+/// grass) without competing with the card's text.
 private struct PersonalityMotif: View {
     let personality: Personality
 
@@ -177,26 +181,26 @@ private struct PersonalityMotif: View {
     var body: some View {
         Group {
             if personality == .mother {
-                ZStack {
-                    flower(size: 30).offset(x: 8, y: 6)
-                    flower(size: 18).offset(x: -16, y: 16)
+                ZStack(alignment: .bottom) {
+                    flower(size: 24).offset(x: 10)
+                    flower(size: 15).offset(x: -14, y: 3)
                 }
             } else {
                 ZStack {
                     Image(systemName: personality.symbolName)
-                        .font(.system(size: 34))
-                        .foregroundStyle(accent[0].opacity(0.14))
-                        .rotationEffect(.degrees(-8))
-                        .offset(x: 10, y: 8)
+                        .font(.system(size: 26))
+                        .foregroundStyle(accent[0].opacity(0.28))
+                        .rotationEffect(.degrees(-6))
+                        .offset(x: 6)
                     Image(systemName: personality.symbolName)
-                        .font(.system(size: 16))
-                        .foregroundStyle(accent[1].opacity(0.2))
-                        .rotationEffect(.degrees(12))
-                        .offset(x: -14, y: -4)
+                        .font(.system(size: 13))
+                        .foregroundStyle(accent[1].opacity(0.3))
+                        .rotationEffect(.degrees(10))
+                        .offset(x: -16, y: -10)
                 }
             }
         }
-        .frame(width: 56, height: 56, alignment: .bottomTrailing)
+        .frame(width: 48, height: 40, alignment: .bottom)
         .allowsHitTesting(false)
     }
 
@@ -204,15 +208,49 @@ private struct PersonalityMotif: View {
         ZStack {
             ForEach(0..<5, id: \.self) { i in
                 Capsule()
-                    .fill(accent[0].opacity(0.24))
+                    .fill(accent[0].opacity(0.5))
                     .frame(width: size * 0.34, height: size * 0.62)
                     .offset(y: -size * 0.31)
                     .rotationEffect(.degrees(Double(i) * 72))
             }
             Circle()
-                .fill(accent[1].opacity(0.32))
+                .fill(accent[1].opacity(0.6))
                 .frame(width: size * 0.26, height: size * 0.26)
         }
         .frame(width: size, height: size)
+    }
+}
+
+/// A gentle rising hill silhouette anchored to the bottom edge, giving each
+/// card a sense of ground/land for its motif to sit on instead of floating
+/// on a flat color field.
+private struct GroundShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: 0, y: rect.maxY))
+        path.addLine(to: CGPoint(x: 0, y: rect.maxY - rect.height * 0.22))
+        path.addQuadCurve(
+            to: CGPoint(x: rect.maxX, y: rect.maxY - rect.height * 0.7),
+            control: CGPoint(x: rect.maxX * 0.62, y: rect.minY)
+        )
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        path.closeSubpath()
+        return path
+    }
+}
+
+private extension Personality {
+    /// The "land" each personality's motif sits on, an environment tone
+    /// rather than the personality's own accent (grass reads as green
+    /// whether Mom's accent is pink or not).
+    var groundColor: Color {
+        switch self {
+        case .mother: Color(hex: 0x4CAF6D)
+        case .homie: Color(hex: 0x55606B)
+        case .professional: Color(hex: 0x3A4256)
+        case .mentor: Color(hex: 0x3B7A57)
+        case .coach: Color(hex: 0xB8461F)
+        case .playful: Color(hex: 0x4A3A78)
+        }
     }
 }
