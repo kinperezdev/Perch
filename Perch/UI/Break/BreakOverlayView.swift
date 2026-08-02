@@ -1,10 +1,5 @@
 import SwiftUI
 
-/// Full-screen "lock" takeover shown while an intentional break is running:
-/// a starfield night sky, Perch dancing to the lofi loop, and a countdown.
-/// This is Perch's own window (not the real macOS lock screen, which no
-/// third-party app can draw on) so the Mac stays awake and the music keeps
-/// playing while it's up.
 struct BreakOverlayView: View {
     @Environment(AppContainer.self) private var container
     var onEnd: () -> Void

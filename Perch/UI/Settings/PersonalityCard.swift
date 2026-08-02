@@ -55,12 +55,8 @@ struct PersonalityCard: View {
     }
 }
 
-/// The ground of each personality card is its own little place, not just a
-/// tinted hill: a grass field with flowers for Mom, a court for Homie, a
-/// skyline for the Assistant, mountains with a leaf for Mentor, a track for
-/// Coach, a starfield for Spark. Kept deliberately quiet (low opacity, one
-/// small accent at most) so it reads as scenery behind the text, not another
-/// row of icons competing with it.
+// MARK: - Scene
+
 private struct PersonalityScene: View {
     let personality: Personality
     let isSelected: Bool
@@ -73,22 +69,17 @@ private struct PersonalityScene: View {
     var body: some View {
         switch personality {
         case .mother:
-            ZStack(alignment: .bottom) {
+            ZStack(alignment: .bottomLeading) {
                 GroundShape().fill(tint.opacity(opacity))
-                flower(size: 16).offset(x: 8)
+                house(size: 22).padding(.leading, 10)
             }
         case .mentor:
-            ZStack(alignment: .bottom) {
-                MountainShape(peaks: 3).fill(tint.opacity(opacity))
-                Image(systemName: "leaf.fill")
-                    .font(.system(size: 11))
-                    .foregroundStyle(accent[0].opacity(lineOpacity + 0.1))
-                    .offset(x: 10, y: -6)
-            }
+            MountainShape(peaks: 3).fill(tint.opacity(opacity))
         case .homie:
-            ZStack(alignment: .bottom) {
+            ZStack(alignment: .bottomTrailing) {
                 Rectangle().fill(tint.opacity(opacity))
                 courtLines
+                hoop(size: 22).padding(.trailing, 10)
             }
         case .professional:
             SkylineShape()
@@ -101,25 +92,60 @@ private struct PersonalityScene: View {
         case .playful:
             ZStack(alignment: .bottom) {
                 GroundShape().fill(tint.opacity(opacity))
-                starScatter
+                windmill(size: 26)
             }
         }
     }
 
-    private func flower(size: CGFloat) -> some View {
-        ZStack {
-            ForEach(0..<5, id: \.self) { i in
-                Capsule()
-                    .fill(accent[0].opacity(0.4))
-                    .frame(width: size * 0.34, height: size * 0.62)
-                    .offset(y: -size * 0.31)
-                    .rotationEffect(.degrees(Double(i) * 72))
-            }
-            Circle()
-                .fill(accent[1].opacity(0.5))
-                .frame(width: size * 0.26, height: size * 0.26)
+    private func house(size: CGFloat) -> some View {
+        VStack(spacing: 0) {
+            Triangle()
+                .fill(accent[0].opacity(0.42))
+                .frame(width: size, height: size * 0.5)
+            Rectangle()
+                .fill(accent[1].opacity(0.34))
+                .frame(width: size * 0.76, height: size * 0.5)
         }
-        .frame(width: size, height: size)
+    }
+
+    private func hoop(size: CGFloat) -> some View {
+        VStack(spacing: 0) {
+            ZStack(alignment: .bottom) {
+                Rectangle()
+                    .fill(.white.opacity(lineOpacity + 0.1))
+                    .frame(width: size * 0.46, height: size * 0.3)
+                Capsule()
+                    .stroke(accent[0].opacity(0.45), lineWidth: 1.2)
+                    .frame(width: size * 0.24, height: size * 0.1)
+                    .offset(y: 4)
+            }
+            Rectangle()
+                .fill(.white.opacity(lineOpacity))
+                .frame(width: size * 0.05, height: size * 0.55)
+        }
+    }
+
+    private func windmill(size: CGFloat) -> some View {
+        VStack(spacing: 0) {
+            ZStack {
+                windmillBlade(color: accent[0], size: size, angle: 18)
+                windmillBlade(color: accent[1], size: size, angle: 108)
+                windmillBlade(color: accent[0], size: size, angle: 198)
+                windmillBlade(color: accent[1], size: size, angle: 288)
+            }
+            .frame(width: size, height: size * 0.8)
+            Rectangle()
+                .fill(accent[0].opacity(0.36))
+                .frame(width: size * 0.06, height: size * 0.5)
+        }
+    }
+
+    private func windmillBlade(color: Color, size: CGFloat, angle: Double) -> some View {
+        Capsule()
+            .fill(color.opacity(0.4))
+            .frame(width: size * 0.14, height: size * 0.5)
+            .offset(y: -size * 0.25)
+            .rotationEffect(.degrees(angle))
     }
 
     private var courtLines: some View {
@@ -136,28 +162,36 @@ private struct PersonalityScene: View {
     }
 
     private var trackLines: some View {
-        Capsule()
-            .stroke(.white.opacity(lineOpacity), lineWidth: 1)
-            .frame(width: 80, height: 18)
-            .offset(y: 6)
-    }
-
-    private var starScatter: some View {
-        ZStack {
-            ForEach(0..<3, id: \.self) { i in
-                Image(systemName: "sparkle")
-                    .font(.system(size: 5 + CGFloat(i) * 2))
-                    .foregroundStyle(.white.opacity(lineOpacity))
-                    .offset(x: CGFloat(-16 + i * 14), y: CGFloat(-2 - i * 3))
-            }
-        }
+        TrackArc()
+            .stroke(.white.opacity(lineOpacity), style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
+            .frame(height: 16)
+            .padding(.horizontal, 12)
+            .padding(.bottom, 6)
     }
 }
 
-/// A gentle rising hill silhouette anchored to the bottom edge, giving each
-/// card a sense of ground/land for its motif to sit on instead of floating
-/// on a flat color field. Also the degenerate (single-peak) case of
-/// `MountainShape`, which delegates here rather than duplicating the path.
+// MARK: - Shapes
+
+private struct Triangle: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.midX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+        path.closeSubpath()
+        return path
+    }
+}
+
+private struct TrackArc: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: 0, y: rect.maxY))
+        path.addQuadCurve(to: CGPoint(x: rect.maxX, y: rect.maxY), control: CGPoint(x: rect.midX, y: rect.minY))
+        return path
+    }
+}
+
 private struct GroundShape: Shape {
     func path(in rect: CGRect) -> Path {
         var path = Path()
@@ -173,21 +207,23 @@ private struct GroundShape: Shape {
     }
 }
 
-/// Overlapping triangular peaks anchored to the bottom edge: one low rise
-/// for Mom's grassy field (via `GroundShape`), three for Mentor's mountains.
 private struct MountainShape: Shape {
     var peaks: Int = 1
 
     func path(in rect: CGRect) -> Path {
         guard peaks > 1 else { return GroundShape().path(in: rect) }
         let heights: [CGFloat] = [0.55, 0.95, 0.7]
-        let width = rect.width / CGFloat(peaks)
+        let valley: CGFloat = 0.22
+        let segment = rect.width / CGFloat(peaks)
         var path = Path()
         path.move(to: CGPoint(x: 0, y: rect.maxY))
+        path.addLine(to: CGPoint(x: 0, y: rect.maxY - rect.height * valley))
         for i in 0..<peaks {
-            let peakX = width * (CGFloat(i) + 0.5)
+            let peakX = segment * (CGFloat(i) + 0.5)
             let peakY = rect.maxY - rect.height * heights[i % heights.count]
             path.addLine(to: CGPoint(x: peakX, y: peakY))
+            let valleyX = segment * CGFloat(i + 1)
+            path.addLine(to: CGPoint(x: valleyX, y: rect.maxY - rect.height * valley))
         }
         path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
         path.closeSubpath()
@@ -195,7 +231,6 @@ private struct MountainShape: Shape {
     }
 }
 
-/// A row of buildings of varying height, rising from the bottom edge.
 private struct SkylineShape: Shape {
     func path(in rect: CGRect) -> Path {
         let buildings: [(x: CGFloat, w: CGFloat, h: CGFloat)] = [
@@ -220,9 +255,6 @@ private struct SkylineShape: Shape {
 }
 
 private extension Personality {
-    /// The "land" each personality's motif sits on, an environment tone
-    /// rather than the personality's own accent (grass reads as green
-    /// whether Mom's accent is pink or not).
     var groundColor: Color {
         switch self {
         case .mother: Color(hex: 0x4CAF6D)
