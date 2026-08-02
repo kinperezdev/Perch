@@ -224,16 +224,16 @@ struct CompanionFaceView: View {
                     clockwise: false
                 )
             }
-            .stroke(Color.white.opacity(0.8), style: StrokeStyle(lineWidth: size * 0.08, lineCap: .round))
+            .stroke(Color.white, style: StrokeStyle(lineWidth: size * 0.08, lineCap: .round))
             .frame(width: size * 1.15, height: size * 0.6)
             .offset(y: -size * 0.15)
-            
+
             HStack(spacing: size * 0.82) {
                 Capsule()
-                    .fill(Color.white.opacity(0.95))
+                    .fill(Color.white)
                     .frame(width: size * 0.18, height: size * 0.45)
                 Capsule()
-                    .fill(Color.white.opacity(0.95))
+                    .fill(Color.white)
                     .frame(width: size * 0.18, height: size * 0.45)
             }
             .offset(y: size * 0.05)
