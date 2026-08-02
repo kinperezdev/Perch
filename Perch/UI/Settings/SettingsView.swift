@@ -55,31 +55,25 @@ struct SettingsView: View {
             .overlay(alignment: .top) { edgeFade(.top) }
             .overlay(alignment: .bottom) { edgeFade(.bottom) }
             .overlay { ScrollSparkOverlay() }
-            .overlay(alignment: .topTrailing) { sidebarToggleButton }
             .background(detailBackground)
-            .toolbar(.hidden, for: .windowToolbar)
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        withAnimation {
+                            columnVisibility = columnVisibility == .detailOnly ? .all : .detailOnly
+                        }
+                    } label: {
+                        Image(systemName: "sidebar.left")
+                    }
+                    .help("Show or hide the sidebar")
+                }
+            }
         }
         .frame(minWidth: 720, minHeight: 520)
         .preferredColorScheme(.dark)
+        .toolbarBackground(Color(hex: 0x0B0B0E), for: .windowToolbar)
+        .toolbarBackgroundVisibility(.visible, for: .windowToolbar)
         .task { sky.refreshIfNeeded() }
-    }
-
-    private var sidebarToggleButton: some View {
-        Button {
-            withAnimation {
-                columnVisibility = columnVisibility == .detailOnly ? .all : .detailOnly
-            }
-        } label: {
-            Image(systemName: "sidebar.left")
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(.white.opacity(0.85))
-                .frame(width: 28, height: 28)
-                .background(.white.opacity(0.08), in: Circle())
-        }
-        .buttonStyle(.plain)
-        .help("Show or hide the sidebar")
-        .padding(.top, 20)
-        .padding(.trailing, 20)
     }
 
     private var sidebarBackground: some View {
