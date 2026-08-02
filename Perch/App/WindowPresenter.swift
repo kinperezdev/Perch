@@ -100,6 +100,9 @@ final class WindowPresenter: NSObject, NSWindowDelegate {
         window.titlebarSeparatorStyle = .none
         window.appearance = NSAppearance(named: .darkAqua)
         window.backgroundColor = NSColor(hex: 0x0B0B0E)
+        window.collectionBehavior.remove(.fullScreenPrimary)
+        window.maxSize = NSSize(width: 960, height: 760)
+        window.standardWindowButton(.zoomButton)?.isEnabled = false
         window.isReleasedWhenClosed = false
         window.delegate = self
         window.contentView = NSHostingView(rootView: content().environment(\.dynamicTypeSize, .medium))
