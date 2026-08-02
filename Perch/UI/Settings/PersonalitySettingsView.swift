@@ -146,7 +146,10 @@ struct PersonalityCard: View {
             .background(
                 ZStack(alignment: .bottomTrailing) {
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(isSelected ? AnyShapeStyle(personality.accentColors[0].opacity(0.12)) : AnyShapeStyle(.quaternary.opacity(0.4)))
+                        .fill(.quaternary.opacity(0.4))
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(PerchStyle.accentGradient(personality.accentColors))
+                        .opacity(isSelected ? 0.18 : 0.09)
                     PersonalityMotif(personality: personality)
                         .padding(.trailing, -6)
                         .padding(.bottom, -6)
