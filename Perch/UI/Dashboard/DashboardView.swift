@@ -167,7 +167,10 @@ struct DashboardView: View {
         let maxLogs = max(week.days.map(\.totalLogs).max() ?? 1, 1)
         return VStack(alignment: .leading, spacing: 10) {
             sectionKicker("This week")
-                .padding(.bottom, 10)
+            Text("Your daily activities")
+                .font(.perchRounded(10.5))
+                .foregroundStyle(.secondary)
+                .padding(.bottom, 6)
             if container.subscriptions.gate.weeklySummary {
                 HStack(alignment: .bottom, spacing: 10) {
                     ForEach(week.days) { day in
