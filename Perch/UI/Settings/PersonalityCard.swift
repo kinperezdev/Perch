@@ -29,7 +29,7 @@ struct PersonalityCard: View {
                     .font(.system(size: 9.5, design: .rounded))
                     .italic()
                     .foregroundStyle(.tertiary)
-                    .lineLimit(3)
+                    .lineLimit(2)
             }
             .padding(10)
             .frame(maxWidth: .infinity, minHeight: 152, alignment: .topLeading)
@@ -41,12 +41,8 @@ struct PersonalityCard: View {
                         .opacity(isSelected ? 1 : 0.65)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                     PersonalityScene(personality: personality, isSelected: isSelected)
-                        .frame(height: 46)
+                        .frame(height: 36)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-                    PersonalityMotif(personality: personality)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-                        .padding(.trailing, 4)
-                        .padding(.bottom, 8)
                 }
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             )
@@ -59,87 +55,36 @@ struct PersonalityCard: View {
     }
 }
 
-/// A small, low-opacity decorative motif planted on the card's ground line,
-/// hinting at that personality's vibe (e.g. flowers growing out of Mom's
-/// grass) without competing with the card's text.
-private struct PersonalityMotif: View {
-    let personality: Personality
-
-    private var accent: [Color] { personality.accentColors }
-
-    /// A motif-specific icon, distinct from `symbolName` (used for
-    /// functional UI elsewhere), chosen to fit the scene it's planted on
-    /// rather than the personality in the abstract.
-    private var motifSymbolName: String {
-        switch personality {
-        case .mother: "leaf.fill"
-        case .homie: "basketball.fill"
-        case .professional: "building.2.fill"
-        case .mentor: "mountain.2.fill"
-        case .coach: "flag.checkered"
-        case .playful: "sparkles"
-        }
-    }
-
-    var body: some View {
-        Group {
-            if personality == .mother {
-                ZStack(alignment: .bottom) {
-                    flower(size: 24).offset(x: 10)
-                    flower(size: 15).offset(x: -14, y: 3)
-                }
-            } else {
-                ZStack {
-                    Image(systemName: motifSymbolName)
-                        .font(.system(size: 24))
-                        .foregroundStyle(accent[0].opacity(0.3))
-                        .rotationEffect(.degrees(-6))
-                        .offset(x: 4)
-                    Image(systemName: motifSymbolName)
-                        .font(.system(size: 12))
-                        .foregroundStyle(accent[1].opacity(0.32))
-                        .rotationEffect(.degrees(10))
-                        .offset(x: -16, y: -10)
-                }
-            }
-        }
-        .frame(width: 48, height: 40, alignment: .bottom)
-        .allowsHitTesting(false)
-    }
-
-    private func flower(size: CGFloat) -> some View {
-        ZStack {
-            ForEach(0..<5, id: \.self) { i in
-                Capsule()
-                    .fill(accent[0].opacity(0.5))
-                    .frame(width: size * 0.34, height: size * 0.62)
-                    .offset(y: -size * 0.31)
-                    .rotationEffect(.degrees(Double(i) * 72))
-            }
-            Circle()
-                .fill(accent[1].opacity(0.6))
-                .frame(width: size * 0.26, height: size * 0.26)
-        }
-        .frame(width: size, height: size)
-    }
-}
-
 /// The ground of each personality card is its own little place, not just a
-/// tinted hill: a grass field for Mom, a court for Homie, a skyline for the
-/// Assistant, mountains for Mentor, a track for Coach, a starfield for Spark.
+/// tinted hill: a grass field with flowers for Mom, a court for Homie, a
+/// skyline for the Assistant, mountains with a leaf for Mentor, a track for
+/// Coach, a starfield for Spark. Kept deliberately quiet (low opacity, one
+/// small accent at most) so it reads as scenery behind the text, not another
+/// row of icons competing with it.
 private struct PersonalityScene: View {
     let personality: Personality
     let isSelected: Bool
 
+    private var accent: [Color] { personality.accentColors }
     private var tint: Color { personality.groundColor }
-    private var opacity: Double { isSelected ? 0.5 : 0.34 }
-    private var lineOpacity: Double { isSelected ? 0.4 : 0.26 }
+    private var opacity: Double { isSelected ? 0.4 : 0.26 }
+    private var lineOpacity: Double { isSelected ? 0.3 : 0.18 }
 
     var body: some View {
         switch personality {
-        case .mother, .mentor:
-            MountainShape(peaks: personality == .mentor ? 3 : 1)
-                .fill(tint.opacity(opacity))
+        case .mother:
+            ZStack(alignment: .bottom) {
+                GroundShape().fill(tint.opacity(opacity))
+                flower(size: 16).offset(x: 8)
+            }
+        case .mentor:
+            ZStack(alignment: .bottom) {
+                MountainShape(peaks: 3).fill(tint.opacity(opacity))
+                Image(systemName: "leaf.fill")
+                    .font(.system(size: 11))
+                    .foregroundStyle(accent[0].opacity(lineOpacity + 0.1))
+                    .offset(x: 10, y: -6)
+            }
         case .homie:
             ZStack(alignment: .bottom) {
                 Rectangle().fill(tint.opacity(opacity))
@@ -161,34 +106,49 @@ private struct PersonalityScene: View {
         }
     }
 
+    private func flower(size: CGFloat) -> some View {
+        ZStack {
+            ForEach(0..<5, id: \.self) { i in
+                Capsule()
+                    .fill(accent[0].opacity(0.4))
+                    .frame(width: size * 0.34, height: size * 0.62)
+                    .offset(y: -size * 0.31)
+                    .rotationEffect(.degrees(Double(i) * 72))
+            }
+            Circle()
+                .fill(accent[1].opacity(0.5))
+                .frame(width: size * 0.26, height: size * 0.26)
+        }
+        .frame(width: size, height: size)
+    }
+
     private var courtLines: some View {
         ZStack {
             Rectangle()
                 .fill(.white.opacity(lineOpacity))
-                .frame(height: 1.2)
+                .frame(height: 1)
             Circle()
                 .trim(from: 0.5, to: 1.0)
-                .stroke(.white.opacity(lineOpacity), lineWidth: 1.2)
-                .frame(width: 34, height: 34)
-                .offset(y: -12)
+                .stroke(.white.opacity(lineOpacity), lineWidth: 1)
+                .frame(width: 26, height: 26)
+                .offset(y: -10)
         }
     }
 
     private var trackLines: some View {
-        ZStack {
-            Capsule().stroke(.white.opacity(lineOpacity), lineWidth: 1).frame(width: 90, height: 22)
-            Capsule().stroke(.white.opacity(lineOpacity * 0.7), lineWidth: 1).frame(width: 70, height: 14)
-        }
-        .offset(y: 4)
+        Capsule()
+            .stroke(.white.opacity(lineOpacity), lineWidth: 1)
+            .frame(width: 80, height: 18)
+            .offset(y: 6)
     }
 
     private var starScatter: some View {
         ZStack {
-            ForEach(0..<4, id: \.self) { i in
+            ForEach(0..<3, id: \.self) { i in
                 Image(systemName: "sparkle")
-                    .font(.system(size: 6 + CGFloat(i) * 2))
+                    .font(.system(size: 5 + CGFloat(i) * 2))
                     .foregroundStyle(.white.opacity(lineOpacity))
-                    .offset(x: CGFloat(-20 + i * 14), y: CGFloat(-2 - i * 4))
+                    .offset(x: CGFloat(-16 + i * 14), y: CGFloat(-2 - i * 3))
             }
         }
     }
