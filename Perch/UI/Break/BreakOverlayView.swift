@@ -35,7 +35,8 @@ struct BreakOverlayView: View {
                     state: .playing,
                     accent: accent,
                     size: 130,
-                    personality: container.prefs.activePersonality
+                    personality: container.prefs.activePersonality,
+                    glows: false
                 )
                 Text("\(container.personality.companionName) is taking five with you")
                     .font(.perchRounded(17, weight: .semibold))
