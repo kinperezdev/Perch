@@ -4,6 +4,7 @@ struct ActiveAppsSettingsView: View {
     @Environment(AppContainer.self) private var container
     @State private var apps: [AppEntry] = []
     @State private var searchText = ""
+    @FocusState private var searchFocused: Bool
 
     private var filteredApps: [AppEntry] {
         guard !searchText.isEmpty else { return apps }
@@ -13,13 +14,7 @@ struct ActiveAppsSettingsView: View {
     var body: some View {
         @Bindable var prefs = container.prefs
         Form {
-            Section("Where Perch watches") {
-                Picker("", selection: $prefs.focusAppMode) {
-                    Text("All apps").tag(FocusAppMode.allApps)
-                    Text("Specific apps only").tag(FocusAppMode.specificApps)
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
+            Section {
                 Text(
                     prefs.focusAppMode == .allApps
                         ? "Perch checks in no matter which app is in front."
@@ -27,6 +22,18 @@ struct ActiveAppsSettingsView: View {
                 )
                 .font(.caption)
                 .foregroundStyle(.secondary)
+            } header: {
+                HStack {
+                    Text("Where Perch watches")
+                    Spacer()
+                    Toggle("All apps", isOn: Binding(
+                        get: { prefs.focusAppMode == .allApps },
+                        set: { prefs.focusAppMode = $0 ? .allApps : .specificApps }
+                    ))
+                    .toggleStyle(.button)
+                    .controlSize(.small)
+                    .font(.caption)
+                }
             }
             if prefs.focusAppMode == .specificApps {
                 Section("Active apps") {
@@ -61,6 +68,7 @@ struct ActiveAppsSettingsView: View {
                 .foregroundStyle(.secondary)
             TextField("Search apps", text: $searchText)
                 .textFieldStyle(.plain)
+                .focused($searchFocused)
             if !searchText.isEmpty {
                 Button {
                     searchText = ""
@@ -71,6 +79,8 @@ struct ActiveAppsSettingsView: View {
                 .foregroundStyle(.secondary)
             }
         }
+        .contentShape(Rectangle())
+        .onTapGesture { searchFocused = true }
     }
 
     private func appRow(_ app: AppEntry, prefs: PreferencesStore) -> some View {
