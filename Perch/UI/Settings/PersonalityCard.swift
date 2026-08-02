@@ -71,7 +71,9 @@ private struct PersonalityScene: View {
         case .professional:
             AnyShape(SkylineShape()).fill(tint.opacity(opacity))
         case .mother:
-            symbol(FlowerShape(), width: 26, height: 26)
+            FlowerSymbol(tint: tint.opacity(opacity))
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                .padding(.bottom, 4)
         case .homie:
             symbol(HeadphonesShape(), width: 30, height: 26)
         case .coach:
@@ -106,33 +108,23 @@ private struct GroundShape: Shape {
     }
 }
 
-private struct FlowerShape: Shape {
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        let center = CGPoint(x: rect.midX, y: rect.midY)
-        let petalRadius = min(rect.width, rect.height) * 0.32
-        let distance = petalRadius * 0.85
-        for i in 0..<5 {
-            let angle = Double(i) / 5 * 2 * .pi - .pi / 2
-            let petalCenter = CGPoint(
-                x: center.x + CGFloat(cos(angle)) * distance,
-                y: center.y + CGFloat(sin(angle)) * distance
-            )
-            path.addEllipse(in: CGRect(
-                x: petalCenter.x - petalRadius,
-                y: petalCenter.y - petalRadius,
-                width: petalRadius * 2,
-                height: petalRadius * 2
-            ))
+private struct FlowerSymbol: View {
+    let tint: Color
+
+    var body: some View {
+        ZStack {
+            ForEach(0..<5, id: \.self) { i in
+                Ellipse()
+                    .fill(tint)
+                    .frame(width: 8, height: 12)
+                    .offset(y: -6)
+                    .rotationEffect(.degrees(Double(i) * 72))
+            }
+            Circle()
+                .fill(tint)
+                .frame(width: 7, height: 7)
         }
-        let centerRadius = petalRadius * 0.55
-        path.addEllipse(in: CGRect(
-            x: center.x - centerRadius,
-            y: center.y - centerRadius,
-            width: centerRadius * 2,
-            height: centerRadius * 2
-        ))
-        return path
+        .frame(width: 26, height: 26)
     }
 }
 
