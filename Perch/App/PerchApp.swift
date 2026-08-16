@@ -13,10 +13,5 @@ struct PerchApp: App {
             Image(systemName: "face.smiling.fill")
         }
         .menuBarExtraStyle(.window)
-
-        Settings {
-            SettingsView()
-                .environment(AppContainer.shared)
-        }
     }
 }

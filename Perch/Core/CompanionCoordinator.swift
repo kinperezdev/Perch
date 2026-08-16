@@ -22,6 +22,7 @@ final class CompanionCoordinator {
     var isHovering = false
 
     var applyResponse: ((ReminderKind, CheckInResponse, CheckInContext) -> Void)?
+    var presentBreakOverlay: ((Int, @escaping () -> Void) -> Void)?
 
     @ObservationIgnored private let prefs: PreferencesStore
     @ObservationIgnored private let memory: HabitMemoryStore
@@ -70,9 +71,11 @@ final class CompanionCoordinator {
     var companionName: String { personality.companionName }
     var gate: FeatureGate { subscriptions.gate }
     var isPresenting: Bool { phase != .hidden }
+    var isSpeaking: Bool { voice.isSpeaking }
     var todayLog: HabitMemoryStore.DayLog { memory.today() }
 
     func present(kind: ReminderKind, context: CheckInContext) async -> Bool {
+        guard !subscriptions.isLocked else { return false }
         guard phase == .hidden else { return false }
         let message = personality.templateLine(for: kind, context: context)
         guard phase == .hidden else { return false }
@@ -126,6 +129,20 @@ final class CompanionCoordinator {
         guard let current, phase == .message else { return }
         cancelTimeout()
         let seconds = current.computedTimerSeconds(prefs: prefs)
+
+        if let presentBreakOverlay {
+            let kind = current.kind
+            let context = current.context
+            lastCheckInAnswered = true
+            phase = .hidden
+            panel.hide(afterDelay: 0.2)
+            presentBreakOverlay(seconds) { [weak self] in
+                guard let self, kind.isTrackable else { return }
+                self.applyResponse?(kind, .timerCompleted, context)
+            }
+            return
+        }
+
         timerTotal = seconds
         timerRemaining = seconds
         tracker.beginRest()

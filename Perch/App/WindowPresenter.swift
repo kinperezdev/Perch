@@ -27,13 +27,28 @@ final class WindowPresenter: NSObject, NSWindowDelegate {
         }
     }
 
-    func showPaywall(_ container: AppContainer) {
-        show(id: "paywall", size: NSSize(width: 440 * PerchStyle.scale, height: 560 * PerchStyle.scale)) {
-            PerchPaywallView(onClose: { [weak self] in
-                self?.close(id: "paywall")
-            })
+    func showPaywall(_ container: AppContainer, dismissable: Bool = true, onPurchased: (() -> Void)? = nil) {
+        show(
+            id: "paywall",
+            size: NSSize(width: 440 * PerchStyle.scale, height: 560 * PerchStyle.scale),
+            closable: dismissable
+        ) {
+            PerchPaywallView(
+                dismissable: dismissable,
+                onClose: { [weak self] in self?.close(id: "paywall") },
+                onPurchased: onPurchased
+            )
             .environment(container)
         }
+    }
+
+    /// Closes the dashboard and forces the (non-dismissable) paywall the moment
+    /// the free trial runs out and no purchase has unlocked Pro.
+    func enforcePaywallIfLocked(_ container: AppContainer) {
+        guard container.subscriptions.isLocked else { return }
+        close(id: "dashboard")
+        guard windows["paywall"] == nil else { return }
+        showPaywall(container, dismissable: false)
     }
 
     func showDashboard(_ container: AppContainer) {
@@ -48,10 +63,12 @@ final class WindowPresenter: NSObject, NSWindowDelegate {
     }
 
     private static let breakOverlayID = "breakOverlay"
+    private var breakOverlayCompletion: (() -> Void)?
 
-    func showBreakOverlay(_ container: AppContainer) {
+    func showBreakOverlay(_ container: AppContainer, seconds: Int? = nil, onComplete: (() -> Void)? = nil) {
         guard windows[Self.breakOverlayID] == nil else { return }
         guard let screen = NSScreen.main else { return }
+        breakOverlayCompletion = onComplete
         let window = NSWindow(
             contentRect: screen.frame,
             styleMask: [.borderless],
@@ -63,9 +80,13 @@ final class WindowPresenter: NSObject, NSWindowDelegate {
         window.level = .floating
         window.isReleasedWhenClosed = false
         window.collectionBehavior = [.canJoinAllSpaces, .stationary]
+        window.appearance = NSAppearance(named: .darkAqua)
         window.delegate = self
         window.contentView = NSHostingView(
-            rootView: BreakOverlayView(onEnd: { [weak self] in self?.closeBreakOverlay() })
+            rootView: BreakOverlayView(
+                seconds: seconds ?? container.prefs.timerDurationMinutes * 60,
+                onEnd: { [weak self] in self?.closeBreakOverlay() }
+            )
                 .environment(container)
                 .environment(\.dynamicTypeSize, .medium)
         )
@@ -80,6 +101,9 @@ final class WindowPresenter: NSObject, NSWindowDelegate {
     func closeBreakOverlay() {
         NSApp.presentationOptions = []
         close(id: Self.breakOverlayID)
+        let completion = breakOverlayCompletion
+        breakOverlayCompletion = nil
+        completion?()
     }
 
     private func showStandardWindow<Content: View>(id: String, size: NSSize, @ViewBuilder content: () -> Content) {
@@ -134,16 +158,18 @@ final class WindowPresenter: NSObject, NSWindowDelegate {
         }
     }
 
-    private func show<Content: View>(id: String, size: NSSize, @ViewBuilder content: () -> Content) {
+    private func show<Content: View>(id: String, size: NSSize, closable: Bool = true, @ViewBuilder content: () -> Content) {
         if let existing = windows[id] {
             NSApp.activate(ignoringOtherApps: true)
             existing.makeKeyAndOrderFront(nil)
             existing.orderFrontRegardless()
             return
         }
+        var styleMask: NSWindow.StyleMask = [.titled, .fullSizeContentView]
+        if closable { styleMask.insert(.closable) }
         let window = NSWindow(
             contentRect: NSRect(origin: .zero, size: size),
-            styleMask: [.titled, .closable, .fullSizeContentView],
+            styleMask: styleMask,
             backing: .buffered,
             defer: false
         )
@@ -151,6 +177,7 @@ final class WindowPresenter: NSObject, NSWindowDelegate {
         window.titleVisibility = .hidden
         window.isMovableByWindowBackground = true
         window.isReleasedWhenClosed = false
+        window.appearance = NSAppearance(named: .darkAqua)
         window.delegate = self
         window.contentView = NSHostingView(rootView: content().environment(\.dynamicTypeSize, .medium))
         window.center()

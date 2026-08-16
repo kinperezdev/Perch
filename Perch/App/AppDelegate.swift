@@ -6,12 +6,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         let container = AppContainer.shared
         container.start()
-
-        if container.prefs.hasOnboarded {
-            WindowPresenter.shared.showDashboard(container)
-        } else {
-            WindowPresenter.shared.showOnboarding(container)
-        }
+        routeInitialWindow(container)
 
         NotificationCenter.default.addObserver(
             forName: NSApplication.didChangeScreenParametersNotification,
@@ -25,12 +20,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        let container = AppContainer.shared
-        if container.prefs.hasOnboarded {
-            WindowPresenter.shared.showDashboard(container)
-        } else {
-            WindowPresenter.shared.showOnboarding(container)
-        }
+        routeInitialWindow(AppContainer.shared)
         return false
     }
 
@@ -38,5 +28,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         AppContainer.shared.memory.flush()
         AppContainer.shared.brain.flush()
         AppContainer.shared.shortcuts.unregister()
+    }
+
+    /// Onboarding first, then the free trial gates everything: once it runs
+    /// out with no purchase, every launch/reopen lands on a paywall the user
+    /// can't dismiss instead of the dashboard.
+    private func routeInitialWindow(_ container: AppContainer) {
+        guard container.prefs.hasOnboarded else {
+            WindowPresenter.shared.showOnboarding(container)
+            return
+        }
+        if container.subscriptions.isLocked {
+            WindowPresenter.shared.showPaywall(container, dismissable: false)
+        } else {
+            WindowPresenter.shared.showDashboard(container)
+        }
     }
 }

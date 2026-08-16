@@ -9,9 +9,8 @@ struct BreakOverlayView: View {
     @State private var timerTask: Task<Void, Never>?
     @State private var notePulse = false
 
-    init(onEnd: @escaping () -> Void) {
+    init(seconds: Int, onEnd: @escaping () -> Void) {
         self.onEnd = onEnd
-        let seconds = ReminderKind.walk.timerSeconds
         _remaining = State(initialValue: seconds)
         _total = State(initialValue: seconds)
     }
@@ -21,7 +20,7 @@ struct BreakOverlayView: View {
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
-            SkyLayer(isNight: true, condition: .clear)
+            SkyLayer()
                 .ignoresSafeArea()
 
             VStack(spacing: 20) {
@@ -31,10 +30,9 @@ struct BreakOverlayView: View {
                     accent: accent,
                     size: 130,
                     personality: container.prefs.activePersonality,
-                    lookBias: .zero,
-                    glows: false
+                    lookBias: .zero
                 )
-                Text("\(container.personality.companionName) is taking five with you")
+                Text("\(container.personality.companionName) is taking a break with you")
                     .font(.perchRounded(17, weight: .semibold))
                     .foregroundStyle(.white)
                 Text(timeString)

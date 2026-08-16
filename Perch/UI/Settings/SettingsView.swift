@@ -5,7 +5,6 @@ struct SettingsView: View {
 
     @State private var selection: String? = "General"
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
-    @State private var sky = SkyService()
 
     private var appVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
@@ -26,7 +25,7 @@ struct SettingsView: View {
             .background(sidebarBackground)
             .safeAreaInset(edge: .bottom) {
                 VStack(spacing: 2) {
-                    Text("Perch")
+                    Text("Perchie")
                         .font(.perchRounded(11, weight: .semibold))
                         .foregroundStyle(.white.opacity(0.7))
                     Text("Version \(appVersion)")
@@ -56,7 +55,6 @@ struct SettingsView: View {
             .clipped()
             .overlay(alignment: .top) { edgeFade(.top) }
             .overlay(alignment: .bottom) { edgeFade(.bottom) }
-            .overlay { ScrollSparkOverlay() }
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button {
@@ -74,7 +72,6 @@ struct SettingsView: View {
         .preferredColorScheme(.dark)
         .toolbarBackground(Color(hex: 0x0B0B0E), for: .windowToolbar)
         .toolbarBackgroundVisibility(.visible, for: .windowToolbar)
-        .task { sky.refreshIfNeeded() }
     }
 
     private var sidebarBackground: some View {
@@ -84,9 +81,7 @@ struct SettingsView: View {
                 startPoint: .top,
                 endPoint: .bottom
             )
-            SkyTintOverlay(tint: sky.topTint, height: 140)
-                .allowsHitTesting(false)
-            SkyLayer(isNight: sky.isNight, condition: sky.condition)
+            SkyLayer()
                 .frame(height: 160)
                 .mask(
                     LinearGradient(

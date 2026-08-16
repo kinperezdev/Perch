@@ -178,7 +178,7 @@ final class PerchBrain {
         }
 
         if brain.lifetimeCheckIns > 0 {
-            lines.append("Perch has checked on them \(brain.lifetimeCheckIns) times across all sessions.")
+            lines.append("Perchie has checked on them \(brain.lifetimeCheckIns) times across all sessions.")
         }
 
         if brain.currentStreakDays > 1 {
@@ -232,13 +232,13 @@ final class PerchBrain {
 
     private func evaluateMilestones() {
         if brain.lifetimeWaterLogs == 100 {
-            upsertObservation("Milestone: they have logged 100 water reminders with Perch.", category: "milestone")
+            upsertObservation("Milestone: they have logged 100 water reminders with Perchie.", category: "milestone")
         }
         if brain.lifetimeBreaks == 50 {
             upsertObservation("Milestone: 50 real breaks taken. That is how long games are won.", category: "milestone")
         }
         if brain.lifetimePositiveResponses == 200 {
-            upsertObservation("Milestone: 200 positive responses. They trust Perch.", category: "milestone")
+            upsertObservation("Milestone: 200 positive responses. They trust Perchie.", category: "milestone")
         }
     }
 

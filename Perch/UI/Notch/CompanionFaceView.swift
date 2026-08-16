@@ -10,7 +10,7 @@ struct CompanionFaceView: View {
                 return .happy
             } else if lower.contains("sorry") || lower.contains("tough") || lower.contains("hard") || lower.contains("hug") || lower.contains("tired") || lower.contains("overwork") {
                 return .concerned
-            } else if lower.contains("think") || lower.contains("maybe") || lower.contains("?") {
+            } else if lower.contains("think") || lower.contains("maybe") {
                 return .thinking
             } else if lower.contains("sleep") || lower.contains("rest") || lower.contains("bed") || lower.contains("wind down") {
                 return .sleepy
@@ -25,7 +25,7 @@ struct CompanionFaceView: View {
     var showsMouth: Bool = true
     var personality: Personality? = nil
     var lookBias: CGSize? = nil
-    var glows: Bool = true
+    var isSpeaking: Bool = false
 
     @State private var blink = false
     @State private var pulse = false
@@ -82,7 +82,6 @@ struct CompanionFaceView: View {
                 )
             )
             .frame(width: size, height: size)
-            .shadow(color: glows ? (accent.first?.opacity(0.55) ?? .clear) : .clear, radius: size * 0.28)
     }
 
         // MARK: Features
@@ -173,35 +172,11 @@ struct CompanionFaceView: View {
 
     @ViewBuilder
     private func mouth(t: TimeInterval) -> some View {
-        let dark = Color.black.opacity(0.6)
-        switch state {
-        case .talking:
+        if isSpeaking {
             Capsule()
-                .fill(dark)
+                .fill(Color.black.opacity(0.6))
                 .frame(width: size * 0.2, height: talkingMouthHeight(t))
-        case .happy:
-            SmileShape()
-                .stroke(dark, style: StrokeStyle(lineWidth: size * 0.06, lineCap: .round))
-                .frame(width: size * 0.28, height: size * 0.18)
-        case .excited:
-            Ellipse()
-                .fill(dark)
-                .frame(width: size * 0.2, height: size * 0.16)
-        case .concerned:
-            SmileShape()
-                .stroke(dark, style: StrokeStyle(lineWidth: size * 0.045, lineCap: .round))
-                .frame(width: size * 0.2, height: size * 0.06)
-                .rotationEffect(.degrees(180))
-        case .sleepy:
-            Circle()
-                .fill(dark)
-                .frame(width: size * 0.08, height: size * 0.08)
-        case .thinking:
-            Capsule()
-                .fill(dark)
-                .frame(width: size * 0.1, height: size * 0.045)
-                .offset(x: size * 0.05)
-        case .idle, .listening, .playing:
+        } else {
             EmptyView()
         }
     }
@@ -238,6 +213,7 @@ struct CompanionFaceView: View {
             }
             .offset(y: size * 0.05)
         }
+        .offset(y: -size * 0.06)
     }
 
         // MARK: Personality accessories
@@ -320,6 +296,7 @@ struct CompanionFaceView: View {
         // Smaller eyes (sleepy, blinking) sit higher on the face, so lift the
         // glasses to match instead of letting them sag toward the mouth.
         let smallEyesLift = max(size * 0.24 - eyeOpenHeight, 0) * 0.6
+        let talkingLift = (isSpeaking && showsMouth) ? size * 0.08 : 0
         return HStack(spacing: size * 0.05) {
             Circle().stroke(Color.black.opacity(0.85), lineWidth: size * 0.028)
                 .frame(width: lensSize, height: lensSize)
@@ -331,7 +308,7 @@ struct CompanionFaceView: View {
                 .fill(Color.black.opacity(0.85))
                 .frame(width: size * 0.08, height: size * 0.022)
         )
-        .offset(x: look.width, y: featureOffsetY + look.height - smallEyesLift)
+        .offset(x: look.width, y: featureOffsetY + look.height - smallEyesLift - talkingLift - size * 0.045)
     }
 
     /// A whistle on a cord around the neck.
@@ -464,18 +441,6 @@ struct CompanionFaceView: View {
             try? await Task.sleep(nanoseconds: closedDuration)
             withAnimation(.easeIn(duration: 0.12)) { blink = false }
         }
-    }
-}
-
-struct SmileShape: Shape {
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        path.move(to: CGPoint(x: rect.minX, y: rect.minY))
-        path.addQuadCurve(
-            to: CGPoint(x: rect.maxX, y: rect.minY),
-            control: CGPoint(x: rect.midX, y: rect.maxY)
-        )
-        return path
     }
 }
 

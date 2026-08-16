@@ -7,8 +7,8 @@ struct SubscriptionSettingsView: View {
         Form {
             Section("Current plan") {
                 HStack(spacing: 10) {
-                    Image(systemName: container.subscriptions.tier == .free ? "leaf" : "crown.fill")
-                        .foregroundStyle(container.subscriptions.tier == .free ? .green : .yellow)
+                    Image(systemName: planSymbol)
+                        .foregroundStyle(planColor)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(container.subscriptions.currentPlanName)
                             .font(.perchRounded(14, weight: .semibold))
@@ -27,11 +27,11 @@ struct SubscriptionSettingsView: View {
                 Button("Restore purchases") {
                     Task { await container.subscriptions.restorePurchases() }
                 }
-                Text("Reinstalled Perch or switched Macs? Restore brings back a plan you already bought.")
+                Text("Reinstalled Perchie or switched Macs? Restore brings back a plan you already bought.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 if container.subscriptions.mode == .demo {
-                    Button("Reset demo plan to Free") {
+                    Button("Reset demo plan & trial") {
                         container.subscriptions.resetDemoTier()
                     }
                     Text("Demo mode is on. Purchases here aren't real yet.")
@@ -50,10 +50,26 @@ struct SubscriptionSettingsView: View {
         }
     }
 
+    private var planSymbol: String {
+        let subs = container.subscriptions
+        if subs.tier == .pro { return "crown.fill" }
+        return subs.isLocked ? "lock.fill" : "hourglass"
+    }
+
+    private var planColor: Color {
+        let subs = container.subscriptions
+        if subs.tier == .pro { return .yellow }
+        return subs.isLocked ? .red : .green
+    }
+
     private var planBlurb: String {
-        switch container.subscriptions.tier {
-        case .free: "Smart check ins, two personalities, manual habits"
-        case .pro: "Everything unlocked: memory, weekly insights, calendar, all personalities"
+        let subs = container.subscriptions
+        if subs.tier == .pro {
+            return "Everything unlocked: memory, weekly insights, calendar, all personalities"
         }
+        if subs.isLocked {
+            return "Your free trial ended. Unlock Perchie Pro to keep using Perchie."
+        }
+        return "Full access during your free trial, \(subs.trialDaysRemaining) day\(subs.trialDaysRemaining == 1 ? "" : "s") left"
     }
 }

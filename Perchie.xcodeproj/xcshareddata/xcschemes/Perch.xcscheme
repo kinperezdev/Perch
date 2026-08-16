@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "FAB1E5000000000000000060"
-               BuildableName = "Perch.app"
-               BlueprintName = "Perch"
-               ReferencedContainer = "container:Perch.xcodeproj">
+               BuildableName = "Perchie.app"
+               BlueprintName = "Perchie"
+               ReferencedContainer = "container:Perchie.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -44,11 +44,14 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "FAB1E5000000000000000060"
-            BuildableName = "Perch.app"
-            BlueprintName = "Perch"
-            ReferencedContainer = "container:Perch.xcodeproj">
+            BuildableName = "Perchie.app"
+            BlueprintName = "Perchie"
+            ReferencedContainer = "container:Perchie.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+      <StoreKitConfigurationFileReference
+         identifier = "../../Config/Perch.storekit">
+      </StoreKitConfigurationFileReference>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"
@@ -61,9 +64,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "FAB1E5000000000000000060"
-            BuildableName = "Perch.app"
-            BlueprintName = "Perch"
-            ReferencedContainer = "container:Perch.xcodeproj">
+            BuildableName = "Perchie.app"
+            BlueprintName = "Perchie"
+            ReferencedContainer = "container:Perchie.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

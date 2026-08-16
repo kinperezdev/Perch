@@ -38,6 +38,7 @@ final class NotchPanelController {
         panel.isReleasedWhenClosed = false
         panel.animationBehavior = .none
         panel.becomesKeyOnlyIfNeeded = true
+        panel.appearance = NSAppearance(named: .darkAqua)
 
         let hosting = NSHostingView(rootView: content.environment(\.dynamicTypeSize, .medium))
         hosting.frame = panel.contentLayoutRect

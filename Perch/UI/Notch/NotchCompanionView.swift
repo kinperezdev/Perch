@@ -3,9 +3,63 @@ import SwiftUI
 struct NotchCompanionView: View {
     let coordinator: CompanionCoordinator
     @Environment(PreferencesStore.self) private var prefs
-    @State private var sky = SkyService()
 
     private var accent: [Color] { coordinator.accentColors }
+
+    private static let waitingIdleStates: [CompanionFaceView.FaceState] = [.thinking, .sleepy, .idle]
+
+    @State private var isWaitingIdle = false
+    @State private var waitingIdleIndex = 0
+    @State private var isHoveringFace = false
+    @State private var isHoveringButtons = false
+    @State private var pacingOffsetX: CGFloat = 0
+    @State private var pacingLookBias: CGSize = .zero
+
+    private func displayedFaceState(for checkIn: CheckIn) -> CompanionFaceView.FaceState {
+        if coordinator.isSpeaking { return faceState(for: checkIn) }
+        if isHoveringButtons { return .thinking }
+        if isHoveringFace { return .idle }
+        if isWaitingIdle { return Self.waitingIdleStates[waitingIdleIndex % Self.waitingIdleStates.count] }
+        return faceState(for: checkIn)
+    }
+
+    private func runWaitingIdleLoop() async {
+        isWaitingIdle = false
+        waitingIdleIndex = 0
+        pacingOffsetX = 0
+        pacingLookBias = .zero
+        try? await Task.sleep(for: .seconds(5))
+        guard !Task.isCancelled else { return }
+        isWaitingIdle = true
+
+        for _ in 0..<2 {
+            try? await Task.sleep(for: .seconds(3.5))
+            guard !Task.isCancelled else { return }
+            waitingIdleIndex += 1
+        }
+
+        while !Task.isCancelled {
+            let stepDuration: Double
+            switch Self.waitingIdleStates[waitingIdleIndex % Self.waitingIdleStates.count] {
+            case .thinking:
+                stepDuration = 7
+                pacingLookBias = CGSize(width: 2.4, height: 0)
+                withAnimation(.easeInOut(duration: stepDuration)) {
+                    pacingOffsetX = CGFloat.random(in: 20...65)
+                }
+            case .idle:
+                stepDuration = 7
+                pacingLookBias = CGSize(width: -2.4, height: 0)
+                withAnimation(.easeInOut(duration: stepDuration)) { pacingOffsetX = 0 }
+            default:
+                stepDuration = 3
+                pacingLookBias = .zero
+            }
+            try? await Task.sleep(for: .seconds(stepDuration))
+            guard !Task.isCancelled else { return }
+            waitingIdleIndex += 1
+        }
+    }
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -16,7 +70,6 @@ struct NotchCompanionView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .animation(.spring(response: 0.4, dampingFraction: 1.0), value: coordinator.phase)
-        .task { sky.refreshIfNeeded() }
     }
 
         // MARK: Bubble chrome
@@ -46,11 +99,7 @@ struct NotchCompanionView: View {
         .background(
             ZStack {
                 shape.fill(LinearGradient(colors: [Color(hex: 0x0B0B0E), Color(hex: 0x121216)], startPoint: .top, endPoint: .bottom))
-                GeometryReader { geo in
-                    SkyTintOverlay(tint: sky.topTint, height: geo.size.height * 0.55)
-                }
-                .clipShape(shape)
-                SkyLayer(isNight: sky.isNight, condition: sky.condition)
+                SkyLayer()
                     .clipShape(shape)
                 LinearGradient(
                     colors: [.clear, .black.opacity(0.8), .black],
@@ -102,7 +151,10 @@ struct NotchCompanionView: View {
         return VStack(spacing: 8) {
             HStack(spacing: 0) {
                 HStack(spacing: 8) {
-                    CompanionFaceView(state: faceState(for: checkIn), accent: accent, size: 26, personality: coordinator.activePersonality)
+                    CompanionFaceView(state: displayedFaceState(for: checkIn), accent: accent, size: 26, personality: coordinator.activePersonality, lookBias: isHoveringFace ? .zero : pacingLookBias, isSpeaking: coordinator.isSpeaking)
+                        .offset(x: isHoveringFace ? 0 : pacingOffsetX)
+                        .animation(.easeInOut(duration: 0.2), value: isHoveringFace)
+                        .onHover { isHoveringFace = $0 }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -110,8 +162,8 @@ struct NotchCompanionView: View {
                     Color.clear.frame(width: metrics.notchWidth + 12, height: 1)
                 }
 
-                HStack(spacing: 6) {
-                    logMenu
+                HStack(spacing: 4) {
+                    quickLogButtons
                     dismissButton(for: checkIn)
                 }
                 .frame(maxWidth: .infinity, alignment: .trailing)
@@ -131,27 +183,27 @@ struct NotchCompanionView: View {
                     leftActions(for: checkIn)
                     rightActions(for: checkIn)
                 }
+                .onHover { isHoveringButtons = $0 }
             }
             .padding(.horizontal, 6)
         }
         .padding(.bottom, 4)
+        .task(id: checkIn.id) { await runWaitingIdleLoop() }
     }
 
-    private var logMenu: some View {
+    private var quickLogButtons: some View {
         let log = coordinator.todayLog
-        return Menu {
-            Button { coordinator.quickLog(.water) } label: { Label("Log water (\(log.waterCount))", systemImage: "drop.fill") }
-            Button { coordinator.quickLog(.meal) } label: { Label("Log a meal (\(log.mealsLogged))", systemImage: "fork.knife") }
-            Button { coordinator.quickLog(.breakTime) } label: { Label("Took a break (\(log.breaksTaken))", systemImage: "figure.walk") }
-            Button { coordinator.quickLog(.shower) } label: { Label("Showered\(log.showerLogged ? " (Yes)" : "")", systemImage: "shower.fill") }
-        } label: {
-            Image(systemName: "plus")
+        return HStack(spacing: 4) {
+            Button { coordinator.quickLog(.water) } label: { Image(systemName: "drop.fill") }
+                .help("Log water (\(log.waterCount))")
+            Button { coordinator.quickLog(.meal) } label: { Image(systemName: "fork.knife") }
+                .help("Log a meal (\(log.mealsLogged))")
+            Button { coordinator.quickLog(.breakTime) } label: { Image(systemName: "figure.walk") }
+                .help("Took a break (\(log.breaksTaken))")
+            Button { coordinator.quickLog(.shower) } label: { Image(systemName: "shower.fill") }
+                .help("Showered\(log.showerLogged ? " (Yes)" : "")")
         }
-        .menuStyle(.button)
-        .buttonStyle(IconPillButtonStyle())
-        .menuIndicator(.hidden)
-        .fixedSize()
-        .help("Log a habit without answering")
+        .buttonStyle(CompactIconPillButtonStyle())
     }
 
     private func dismissButton(for checkIn: CheckIn) -> some View {
@@ -186,13 +238,10 @@ struct NotchCompanionView: View {
                 .buttonStyle(GhostPillButtonStyle())
                 .keyboardShortcut("3", modifiers: [])
         case .sessionStart:
-            Button(action: { coordinator.respond(.ignored) }) { Text("Later") }
-                .buttonStyle(GhostPillButtonStyle())
-                .keyboardShortcut("3", modifiers: [])
             Button(action: { coordinator.respond(.snoozed(minutes: 10)) }) { Text("Not yet") }
                 .buttonStyle(GhostPillButtonStyle())
                 .keyboardShortcut("2", modifiers: [])
-        case .meal, .water, .shower, .sleep, .routine:
+        case .meal, .water, .shower, .routine:
             Button(action: { coordinator.respond(.snoozed(minutes: 10)) }) { Text("Later") }
                 .buttonStyle(GhostPillButtonStyle())
                 .keyboardShortcut("3", modifiers: [])
@@ -223,7 +272,7 @@ struct NotchCompanionView: View {
                 .buttonStyle(PillButtonStyle(accent: accent))
                 .keyboardShortcut("1", modifiers: [])
         case .sessionStart:
-            let isNowQuestion = checkIn.message.contains("Starting another session") || checkIn.message.contains("locking in") || checkIn.message.contains("Starting a focus session") || checkIn.message.contains("Ready") || checkIn.message.contains("Starting focus now")
+            let isNowQuestion = checkIn.message.contains("?")
             Button(action: { coordinator.respond(.done) }) { Text(isNowQuestion ? "Sure" : "Okay") }
                 .buttonStyle(PillButtonStyle(accent: accent))
                 .keyboardShortcut("1", modifiers: [])
@@ -344,7 +393,7 @@ struct NotchCompanionView: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
                 
-                CompanionFaceView(state: .playing, accent: accent, size: 28, personality: coordinator.activePersonality)
+                CompanionFaceView(state: .playing, accent: accent, size: 28, personality: coordinator.activePersonality, lookBias: .zero)
                     .padding(.top, 4)
             }
             .padding(.horizontal, 6)
@@ -365,7 +414,7 @@ struct NotchCompanionView: View {
         return VStack(spacing: 8) {
             HStack(spacing: 0) {
                 HStack(spacing: 8) {
-                    CompanionFaceView(state: .happy, accent: accent, size: 26, personality: coordinator.activePersonality)
+                    CompanionFaceView(state: .happy, accent: accent, size: 26, personality: coordinator.activePersonality, lookBias: .zero, isSpeaking: coordinator.isSpeaking)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 

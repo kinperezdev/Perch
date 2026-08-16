@@ -3,29 +3,58 @@ import SwiftUI
 struct MenuBarContentView: View {
     @Environment(AppContainer.self) private var container
     @Environment(\.dismiss) private var dismiss
-    @State private var sky = SkyService()
 
     private var accent: [Color] { container.prefs.activePersonality.accentColors }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            header
-            statsCard
-            if let hint = container.engine.nextHint() {
-                Label(hint, systemImage: "clock")
-                    .font(.perchRounded(10.5))
-                    .foregroundStyle(.secondary)
+        Group {
+            if container.subscriptions.isLocked {
+                lockedContent
+            } else {
+                VStack(alignment: .leading, spacing: 12) {
+                    header
+                    statsCard
+                    if let hint = container.engine.nextHint() {
+                        Label(hint, systemImage: "clock")
+                            .font(.perchRounded(10.5))
+                            .foregroundStyle(.secondary)
+                    }
+                    quickActions
+                    pauseRow
+                    Divider()
+                    footer
+                }
+                .padding(14)
             }
-            quickActions
-            pauseRow
-            Divider()
-            footer
         }
-        .padding(14)
         .frame(width: 330)
         .background(background)
         .preferredColorScheme(.dark)
-        .task { sky.refreshIfNeeded() }
+    }
+
+    private var lockedContent: some View {
+        VStack(spacing: 12) {
+            CompanionFaceView(state: .sleepy, accent: accent, size: 36, personality: container.prefs.activePersonality)
+            VStack(spacing: 3) {
+                Text("Your free trial ended")
+                    .font(.perchRounded(15, weight: .bold))
+                Text("Unlock Perchie Pro to keep check ins and habit tracking going.")
+                    .font(.perchRounded(10.5))
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            Button("Unlock Perchie Pro") {
+                WindowPresenter.shared.showPaywall(container, dismissable: false)
+                Task { @MainActor in dismiss() }
+            }
+            .buttonStyle(.glassProminent)
+            .tint(accent[0])
+            Button("Quit") { NSApp.terminate(nil) }
+                .buttonStyle(.plain)
+                .font(.perchRounded(11))
+                .foregroundStyle(.secondary)
+        }
+        .padding(20)
     }
 
     private var background: some View {
@@ -35,8 +64,7 @@ struct MenuBarContentView: View {
                 startPoint: .top,
                 endPoint: .bottom
             )
-            SkyTintOverlay(tint: sky.topTint, height: 180)
-            SkyLayer(isNight: sky.isNight, condition: sky.condition)
+            SkyLayer()
                 .frame(height: 140)
                 .mask(
                     LinearGradient(
@@ -114,7 +142,7 @@ struct MenuBarContentView: View {
                 actionButton("Log water", symbol: "drop.fill") {
                     container.memory.logWater()
                 }
-                actionButton("I took a break", symbol: "figure.walk") {
+                actionButton("Took a break", symbol: "figure.walk") {
                     container.tracker.creditBreak()
                     WindowPresenter.shared.showBreakOverlay(container)
                 }

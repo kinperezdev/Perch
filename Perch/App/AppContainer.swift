@@ -75,6 +75,10 @@ final class AppContainer {
         coordinator.applyResponse = { [weak engine] kind, response, context in
             engine?.applyResponse(kind: kind, response: response, context: context)
         }
+        coordinator.presentBreakOverlay = { [weak self] seconds, onComplete in
+            guard let self else { return }
+            WindowPresenter.shared.showBreakOverlay(self, seconds: seconds, onComplete: onComplete)
+        }
         shortcuts.onPressed = { [weak coordinator] in
             coordinator?.quickAnswerPressed()
         }
@@ -97,5 +101,21 @@ final class AppContainer {
         shortcuts.registerFromPrefs()
         calendar.start()
         brain.setUserName(prefs.userName)
+        watchTrialExpiry()
+    }
+
+    /// Perch is a menu bar app that can stay running across the trial's end;
+    /// this catches that moment and forces the paywall without waiting for
+    /// the next launch.
+    private func watchTrialExpiry() {
+        Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 60_000_000_000)
+                guard let self else { return }
+                if self.prefs.hasOnboarded {
+                    WindowPresenter.shared.enforcePaywallIfLocked(self)
+                }
+            }
+        }
     }
 }

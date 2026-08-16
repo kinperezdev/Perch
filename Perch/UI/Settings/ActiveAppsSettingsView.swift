@@ -17,14 +17,14 @@ struct ActiveAppsSettingsView: View {
             Section {
                 Text(
                     prefs.focusAppMode == .allApps
-                        ? "Perch checks in no matter which app is in front."
-                        : "Perch only checks in while one of the apps below is in front, like Terminal or Xcode while you're building."
+                        ? "Perchie checks in no matter which app is in front."
+                        : "Perchie only checks in while one of the apps below is in front, like Terminal or Xcode while you're building."
                 )
                 .font(.caption)
                 .foregroundStyle(.secondary)
             } header: {
                 HStack {
-                    Text("Where Perch watches")
+                    Text("Where Perchie watches")
                     Spacer()
                     Toggle("All apps", isOn: Binding(
                         get: { prefs.focusAppMode == .allApps },

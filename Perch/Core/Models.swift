@@ -152,7 +152,7 @@ enum ReminderKind: String, Codable, CaseIterable, Identifiable {
         case .posture: "Fixed it"
         case .meal: "I ate"
         case .meetingPrep: "Ready"
-        case .meetingRecovery: "Taking it"
+        case .meetingRecovery: "Resetting"
         case .windDown, .sleep: "Goodnight"
         case .status, .welcome, .sessionStart: "All good"
         case .routine: "Done"

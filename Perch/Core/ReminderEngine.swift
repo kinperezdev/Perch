@@ -73,7 +73,7 @@ final class ReminderEngine {
         tracker.update(delta: delta)
         resetDailyStateIfNeeded(now)
 
-        guard prefs.hasOnboarded, !prefs.isPaused(at: now), !prefs.isQuietHours(at: now) else {
+        guard prefs.hasOnboarded, !subscriptions.isLocked, !prefs.isPaused(at: now), !prefs.isQuietHours(at: now) else {
             pending = nil
             return
         }

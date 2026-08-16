@@ -8,7 +8,7 @@ struct PrivacySettingsView: View {
     var body: some View {
         @Bindable var prefs = container.prefs
         Form {
-            Section("What Perch can see") {
+            Section("What Perchie can see") {
                 Label("How long you've been actively working", systemImage: "clock")
                 Label("How long you've been idle", systemImage: "moon.zzz")
                 Label("Upcoming calendar events, only with permission", systemImage: "calendar")
@@ -30,7 +30,7 @@ struct PrivacySettingsView: View {
                         Label("Granted", systemImage: "checkmark.circle.fill")
                             .foregroundStyle(.green)
                     } else {
-                        Button(calendarRequested ? "Open System Settings" : "Allow calendar access") {
+                        Button(calendarRequested ? "Open System Settings" : "Continue") {
                             requestCalendar()
                         }
                     }
@@ -45,14 +45,14 @@ struct PrivacySettingsView: View {
                     .foregroundStyle(.secondary)
             }
             Section("Your memory") {
-                Text("Habit logs and what Perch has learned about your schedule stay in local files on this Mac. You can delete them at any time.")
+                Text("Habit logs and what Perchie has learned about your schedule stay in local files on this Mac. You can delete them at any time.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Button("Delete all memory", role: .destructive) {
                     showWipeConfirm = true
                 }
                 .confirmationDialog(
-                    "Delete everything Perch has learned about your habits?",
+                    "Delete everything Perchie has learned about your habits?",
                     isPresented: $showWipeConfirm
                 ) {
                     Button("Delete memory", role: .destructive) {

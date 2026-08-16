@@ -40,13 +40,13 @@ struct GeneralSettingsView: View {
                     Text("20 minutes").tag(20)
                 }
                 Toggle("Play lofi music during break timers", isOn: $prefs.breakMusicEnabled)
-                Text("Perch composes its own lofi beats: a different track fades in for every break and fades out when the timer ends. Silent during quiet hours.")
+                Text("Perchie composes its own lofi beats: a different track fades in for every break and fades out when the timer ends. Silent during quiet hours.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
             Section("System") {
                 Toggle("Auto-hide check-ins after 30 seconds", isOn: $prefs.autoHideMessages)
-                Toggle("Launch Perch at login", isOn: $launchAtLogin)
+                Toggle("Launch Perchie at login", isOn: $launchAtLogin)
                     .onChange(of: launchAtLogin) { _, enable in
                         updateLoginItem(enable)
                     }
@@ -56,7 +56,7 @@ struct GeneralSettingsView: View {
             }
             Section("Demo") {
                 Toggle("Demo mode (time runs 60x faster)", isOn: $prefs.demoMode)
-                Text("For trying Perch without waiting hours. One real second counts as one minute of focus.")
+                Text("For trying Perchie without waiting hours. One real second counts as one minute of focus.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

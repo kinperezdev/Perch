@@ -40,7 +40,10 @@ final class SubscriptionManager {
         return dict["RevenueCatAPIKey"] as? String
     }
 
-    static let perchProEntitlementID = "Perch Pro"
+    static let perchProEntitlementID = "Perchie Pro"
+
+    /// Length of the free trial, starting from first launch.
+    static let trialDurationDays = 3
 
     private(set) var mode: Mode
     private(set) var tier: PlanTier = .free
@@ -48,14 +51,45 @@ final class SubscriptionManager {
     private(set) var isWorking = false
     private(set) var lastError: String?
 
-    var gate: FeatureGate { FeatureGate(tier: tier) }
+    /// First-launch date, persisted so the trial window survives relaunches.
+    private var installDate: Date
+
+    private var trialEndDate: Date {
+        Calendar.current.date(byAdding: .day, value: Self.trialDurationDays, to: installDate) ?? installDate
+    }
+
+    var isTrialActive: Bool { Date() < trialEndDate }
+
+    var trialDaysRemaining: Int {
+        guard isTrialActive else { return 0 }
+        let seconds = trialEndDate.timeIntervalSince(Date())
+        return max(1, Int((seconds / 86400).rounded(.up)))
+    }
+
+    /// True once the trial has run out and no purchase has unlocked Pro:
+    /// the app should stop working entirely, not just hide extra features.
+    var isLocked: Bool { tier == .free && !isTrialActive }
+
+    /// The trial grants full Pro-level access while it's running.
+    private var effectiveTier: PlanTier { tier == .pro ? .pro : (isTrialActive ? .pro : .free) }
+
+    var gate: FeatureGate { FeatureGate(tier: effectiveTier) }
 
     var currentPlanName: String {
-        if tier == .free { return "Free" }
-        return mode == .revenueCat ? "Perch Pro" : tier.displayName
+        if tier == .pro { return mode == .revenueCat ? "Perchie Pro" : tier.displayName }
+        if isTrialActive { return "Free trial · \(trialDaysRemaining)d left" }
+        return "Trial ended"
     }
 
     init() {
+        if let stored = UserDefaults.standard.object(forKey: "installDate") as? Date {
+            installDate = stored
+        } else {
+            let now = Date()
+            UserDefaults.standard.set(now, forKey: "installDate")
+            installDate = now
+        }
+
         let key = Self.resolvedKey
         if key.isEmpty || key.hasPrefix("REPLACE") {
             mode = .demo
@@ -176,6 +210,9 @@ final class SubscriptionManager {
         guard mode == .demo else { return }
         tier = .free
         UserDefaults.standard.set(PlanTier.free.rawValue, forKey: "demoTier")
+        let now = Date()
+        installDate = now
+        UserDefaults.standard.set(now, forKey: "installDate")
     }
 
         // MARK: Static helpers
@@ -199,6 +236,6 @@ final class SubscriptionManager {
     }
 
     private static let demoPlans: [PlanOption] = [
-        PlanOption(id: "pro_unlock", tier: .pro, periodLabel: "One-time", priceLabel: "$10", note: "Pay once, unlock everything", introText: nil, package: nil),
+        PlanOption(id: "pro_unlock", tier: .pro, periodLabel: "One-time", priceLabel: "$9.99", note: "Pay once, unlock everything", introText: nil, package: nil),
     ]
 }

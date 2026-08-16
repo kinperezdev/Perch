@@ -106,7 +106,7 @@ final class PersonalityEngine {
         prefs.activePersonality
     }
 
-    var companionName: String { "Perch" }
+    var companionName: String { "Perchie" }
 
     func templateLine(for kind: ReminderKind, context: CheckInContext) -> String {
         if let custom = customLine(context: context) { return custom }

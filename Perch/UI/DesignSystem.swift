@@ -88,6 +88,18 @@ struct IconPillButtonStyle: ButtonStyle {
     }
 }
 
+struct CompactIconPillButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 9, weight: .semibold))
+            .foregroundStyle(.white.opacity(0.75))
+            .frame(width: 19, height: 19)
+            .background(.white.opacity(configuration.isPressed ? 0.22 : 0.1), in: Circle())
+            .scaleEffect(configuration.isPressed ? 0.92 : 1)
+            .animation(.spring(response: 0.25, dampingFraction: 0.7), value: configuration.isPressed)
+    }
+}
+
 struct BigActionButtonStyle: ButtonStyle {
     var accent: [Color]
 
@@ -99,7 +111,6 @@ struct BigActionButtonStyle: ButtonStyle {
             .padding(.horizontal, 28)
             .padding(.vertical, 11)
             .background(PerchStyle.accentGradient(accent), in: Capsule())
-            .shadow(color: accent.first?.opacity(0.35) ?? .clear, radius: 12, y: 4)
             .opacity(configuration.isPressed ? 0.75 : 1)
             .scaleEffect(configuration.isPressed ? 0.97 : 1)
             .animation(.spring(response: 0.25, dampingFraction: 0.7), value: configuration.isPressed)

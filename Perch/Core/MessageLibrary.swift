@@ -294,7 +294,7 @@ enum MessageLibrary {
             "New session, let's get started."]
         case (.sessionStart, .professional): return [
             "Starting a focus session?",
-            "You're in focus, {name}."]
+            "Ready to focus, {name}?"]
         case (.sessionStart, .mentor): return [
             "A fresh block begins, {name}. Ready to start?",
             "Back to the craft."]

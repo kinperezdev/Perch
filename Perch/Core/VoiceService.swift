@@ -4,13 +4,17 @@ import Observation
 
 @MainActor
 @Observable
-final class VoiceService {
+final class VoiceService: NSObject {
 
     @ObservationIgnored private let prefs: PreferencesStore
     @ObservationIgnored private let synthesizer = AVSpeechSynthesizer()
 
+    private(set) var isSpeaking = false
+
     init(prefs: PreferencesStore) {
         self.prefs = prefs
+        super.init()
+        synthesizer.delegate = self
     }
 
     func speakIfAllowed(_ text: String) {
@@ -39,7 +43,7 @@ final class VoiceService {
         }
     }
 
-    func preview(_ text: String = "Hi, I'm Perch. I'll speak up when it matters.", voiceIdentifier: String? = nil) {
+    func preview(_ text: String = "Hi, I'm Perchie. I'll speak up when it matters.", voiceIdentifier: String? = nil) {
         let cleaned = Self.spokenClip(text)
         guard !cleaned.isEmpty else { return }
         if synthesizer.isSpeaking {
@@ -97,5 +101,19 @@ final class VoiceService {
             return voice
         }
         return Self.bestNaturalVoice()
+    }
+}
+
+extension VoiceService: AVSpeechSynthesizerDelegate {
+    nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didStart utterance: AVSpeechUtterance) {
+        Task { @MainActor [weak self] in self?.isSpeaking = true }
+    }
+
+    nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
+        Task { @MainActor [weak self] in self?.isSpeaking = false }
+    }
+
+    nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
+        Task { @MainActor [weak self] in self?.isSpeaking = false }
     }
 }

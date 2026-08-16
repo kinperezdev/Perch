@@ -12,7 +12,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		FAB1E5000000000000000020 /* Perch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Perch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C28F4A0C3023197900835D56 /* Perch.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; name = Perch.storekit; path = Config/Perch.storekit; sourceTree = "<group>"; };
+		FAB1E5000000000000000020 /* Perchie.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Perchie.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -39,6 +40,7 @@
 		FAB1E5000000000000000040 = {
 			isa = PBXGroup;
 			children = (
+				C28F4A0C3023197900835D56 /* Perch.storekit */,
 				FAB1E5000000000000000010 /* Perch */,
 				FAB1E5000000000000000050 /* Products */,
 			);
@@ -47,7 +49,7 @@
 		FAB1E5000000000000000050 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				FAB1E5000000000000000020 /* Perch.app */,
+				FAB1E5000000000000000020 /* Perchie.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -55,9 +57,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		FAB1E5000000000000000060 /* Perch */ = {
+		FAB1E5000000000000000060 /* Perchie */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = FAB1E5000000000000000061 /* Build configuration list for PBXNativeTarget "Perch" */;
+			buildConfigurationList = FAB1E5000000000000000061 /* Build configuration list for PBXNativeTarget "Perchie" */;
 			buildPhases = (
 				FAB1E5000000000000000062 /* Sources */,
 				FAB1E5000000000000000030 /* Frameworks */,
@@ -70,13 +72,13 @@
 			fileSystemSynchronizedGroups = (
 				FAB1E5000000000000000010 /* Perch */,
 			);
-			name = Perch;
+			name = Perchie;
 			packageProductDependencies = (
 				FAB1E5000000000000000002 /* RevenueCat */,
 				FAB1E5000000000000000003 /* RevenueCatUI */,
 			);
 			productName = Perch;
-			productReference = FAB1E5000000000000000020 /* Perch.app */;
+			productReference = FAB1E5000000000000000020 /* Perchie.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -94,7 +96,7 @@
 					};
 				};
 			};
-			buildConfigurationList = FAB1E5000000000000000071 /* Build configuration list for PBXProject "Perch" */;
+			buildConfigurationList = FAB1E5000000000000000071 /* Build configuration list for PBXProject "Perchie" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -111,7 +113,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				FAB1E5000000000000000060 /* Perch */,
+				FAB1E5000000000000000060 /* Perchie */,
 			);
 		};
 /* End PBXProject section */
@@ -249,12 +251,13 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 4;
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Config/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Perchie;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -277,12 +280,13 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 4;
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Config/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Perchie;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -299,7 +303,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		FAB1E5000000000000000061 /* Build configuration list for PBXNativeTarget "Perch" */ = {
+		FAB1E5000000000000000061 /* Build configuration list for PBXNativeTarget "Perchie" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				FAB1E5000000000000000092 /* Debug */,
@@ -308,7 +312,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		FAB1E5000000000000000071 /* Build configuration list for PBXProject "Perch" */ = {
+		FAB1E5000000000000000071 /* Build configuration list for PBXProject "Perchie" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				FAB1E5000000000000000090 /* Debug */,

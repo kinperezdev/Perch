@@ -4,11 +4,8 @@ struct DashboardView: View {
     @Environment(AppContainer.self) private var container
     @Environment(\.openSettings) private var openSettings
     @State private var confirmedAction: String?
-    @State private var sky = SkyService()
 
     private var accent: [Color] { container.prefs.activePersonality.accentColors }
-
-    private let chartHeight: CGFloat = 64 * PerchStyle.scale
 
     private var contextualFaceState: CompanionFaceView.FaceState {
         if container.memory.today().checkInsAccepted > 0 { return .happy }
@@ -38,7 +35,6 @@ struct DashboardView: View {
         .frame(width: 720 * PerchStyle.scale, height: 510 * PerchStyle.scale)
         .preferredColorScheme(.dark)
         .trackCursorForCompanion()
-        .task { sky.refreshIfNeeded() }
     }
 
     private var background: some View {
@@ -48,9 +44,8 @@ struct DashboardView: View {
                 startPoint: .top,
                 endPoint: .bottom
             )
-            SkyTintOverlay(tint: sky.topTint, height: 160)
-            SkyLayer(isNight: sky.isNight, condition: sky.condition)
-                .frame(height: 220)
+            SkyLayer()
+                .frame(height: 140)
             Rectangle()
                 .fill(.white.opacity(0.06))
                 .frame(height: 1)
@@ -62,7 +57,7 @@ struct DashboardView: View {
 
     private var header: some View {
         HStack(spacing: 14) {
-            CompanionFaceView(state: contextualFaceState, accent: accent, size: 44, showsMouth: false, personality: container.prefs.activePersonality, glows: false)
+            CompanionFaceView(state: contextualFaceState, accent: accent, size: 44, showsMouth: false, personality: container.prefs.activePersonality, lookBias: .zero)
             VStack(alignment: .leading, spacing: 3) {
                 Text(greeting)
                     .font(.perchRounded(23, weight: .heavy))
@@ -172,12 +167,17 @@ struct DashboardView: View {
                 .foregroundStyle(.secondary)
                 .padding(.bottom, 6)
             if container.subscriptions.gate.weeklySummary {
-                HStack(alignment: .bottom, spacing: 10) {
-                    ForEach(week.days) { day in
-                        dayBar(day, maxLogs: maxLogs)
+                GeometryReader { geo in
+                    let letterReserve: CGFloat = 16
+                    let barSpace = max(geo.size.height - letterReserve, 20)
+                    HStack(alignment: .bottom, spacing: 18) {
+                        ForEach(week.days) { day in
+                            dayBar(day, maxLogs: maxLogs, chartHeight: barSpace)
+                        }
                     }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
                 }
-                .frame(height: chartHeight, alignment: .bottom)
+                .frame(maxHeight: .infinity)
                 HStack(alignment: .top, spacing: 8) {
                     Image(systemName: "lightbulb.fill")
                         .font(.system(size: 11))
@@ -185,8 +185,10 @@ struct DashboardView: View {
                     Text(week.insight)
                         .font(.perchRounded(11.5))
                         .foregroundStyle(.white.opacity(0.75))
-                        .fixedSize(horizontal: false, vertical: true)
+                        .lineLimit(2)
                 }
+                .frame(height: 32, alignment: .top)
+                .padding(.top, 12)
             } else {
                 HStack(spacing: 10) {
                     Image(systemName: "lock.fill")
@@ -205,15 +207,16 @@ struct DashboardView: View {
         .padding(.top, 22)
         .padding(.bottom, 26)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxHeight: .infinity, alignment: .top)
         .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
-    private func dayBar(_ day: HabitMemoryStore.DayLog, maxLogs: Int) -> some View {
+    private func dayBar(_ day: HabitMemoryStore.DayLog, maxLogs: Int, chartHeight: CGFloat) -> some View {
         let ratio = maxLogs > 0 ? sqrt(Double(day.totalLogs)) / sqrt(Double(maxLogs)) : 0
-        return VStack(spacing: 4) {
+        return VStack(spacing: 8) {
             Capsule()
                 .fill(PerchStyle.accentGradient(accent))
-                .frame(height: max(CGFloat(ratio) * chartHeight, 3))
+                .frame(height: max(CGFloat(ratio) * chartHeight, 10))
             Text(weekdayLetter(forDayKey: day.date))
                 .font(.system(size: 8.5, design: .rounded))
                 .foregroundStyle(.secondary)
@@ -242,7 +245,11 @@ struct DashboardView: View {
                 }
             }
         }
+        .padding(.horizontal, 14)
+        .padding(.top, 22)
+        .padding(.bottom, 26)
         .frame(width: 230 * PerchStyle.scale)
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
     private func actionButton(_ title: String, symbol: String, action: @escaping () -> Void) -> some View {
@@ -286,6 +293,7 @@ struct DashboardView: View {
                 .font(.perchRounded(10.5))
                 .foregroundStyle(.tertiary)
         }
+        .padding(.bottom, 8)
     }
 
     private func sectionKicker(_ text: String) -> some View {

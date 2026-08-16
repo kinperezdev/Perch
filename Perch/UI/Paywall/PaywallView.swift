@@ -2,22 +2,25 @@ import SwiftUI
 
 struct PerchPaywallView: View {
     @Environment(AppContainer.self) private var container
+    var dismissable: Bool = true
     let onClose: () -> Void
+    var onPurchased: (() -> Void)? = nil
 
     @State private var isLoadingOfferings = true
 
     private var accent: [Color] { container.personality.activePersonality.accentColors }
     private var option: SubscriptionManager.PlanOption? { container.subscriptions.planOptions.first }
+    private var isLocked: Bool { container.subscriptions.isLocked }
 
     var body: some View {
         ZStack {
             background
             VStack(spacing: 14) {
-                CompanionFaceView(state: .happy, accent: accent, size: 44, personality: container.personality.activePersonality)
+                CompanionFaceView(state: isLocked ? .sleepy : .happy, accent: accent, size: 44, personality: container.personality.activePersonality, lookBias: .zero)
                 VStack(spacing: 4) {
-                    Text("Perch Pro")
+                    Text(isLocked ? "Your free trial ended" : "Perchie Pro")
                         .font(.system(size: 28, weight: .heavy, design: .rounded))
-                    Text("I've got your back while you build.")
+                    Text(isLocked ? "Pay once, keep your companion for good." : "I've got your back, every day.")
                         .font(.perchRounded(12))
                         .foregroundStyle(.secondary)
                 }
@@ -62,7 +65,7 @@ struct PerchPaywallView: View {
                 startPoint: .top,
                 endPoint: .bottom
             )
-            SkyLayer(isNight: true, condition: .clear)
+            SkyLayer()
                 .frame(height: 200)
                 .mask(
                     LinearGradient(
@@ -90,6 +93,7 @@ struct PerchPaywallView: View {
             featureRow("Weekly wellbeing summary and insights")
             featureRow("Voice check ins, in your own voice or a style")
             featureRow("Up to 20 personal routines")
+            featureRow("And more")
         }
     }
 
@@ -137,6 +141,7 @@ struct PerchPaywallView: View {
                 await container.subscriptions.purchase(option)
                 if container.subscriptions.tier != .free {
                     try? await Task.sleep(nanoseconds: 400_000_000)
+                    onPurchased?()
                     onClose()
                 }
             }
@@ -145,7 +150,7 @@ struct PerchPaywallView: View {
                 if container.subscriptions.isWorking {
                     ProgressView().controlSize(.small)
                 }
-                Text("Unlock Perch Pro")
+                Text("Unlock Perchie Pro")
                     .frame(maxWidth: .infinity)
             }
         }
@@ -157,16 +162,29 @@ struct PerchPaywallView: View {
         VStack(spacing: 6) {
             HStack {
                 Button("Restore purchases") {
-                    Task { await container.subscriptions.restorePurchases() }
+                    Task {
+                        await container.subscriptions.restorePurchases()
+                        if container.subscriptions.tier != .free {
+                            onPurchased?()
+                            onClose()
+                        }
+                    }
                 }
                 .buttonStyle(.plain)
                 .font(.perchRounded(11))
                 .foregroundStyle(.secondary)
                 Spacer()
-                Button("Maybe later") { onClose() }
-                    .buttonStyle(.plain)
-                    .font(.perchRounded(11))
-                    .foregroundStyle(.secondary)
+                if dismissable {
+                    Button("Maybe later") { onClose() }
+                        .buttonStyle(.plain)
+                        .font(.perchRounded(11))
+                        .foregroundStyle(.secondary)
+                } else {
+                    Button("Quit Perchie") { NSApp.terminate(nil) }
+                        .buttonStyle(.plain)
+                        .font(.perchRounded(11))
+                        .foregroundStyle(.secondary)
+                }
             }
             if container.subscriptions.mode == .demo {
                 Text("Demo mode is on. Purchases here aren't real yet.")

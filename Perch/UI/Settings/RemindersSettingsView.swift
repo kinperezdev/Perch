@@ -55,9 +55,9 @@ struct RemindersSettingsView: View {
                 TextField(
                     "In your words",
                     text: $newRoutineMessage,
-                    prompt: Text("Optional: exactly what Perch should say")
+                    prompt: Text("Optional: exactly what Perchie should say")
                 )
-                Text("Leave it blank and Perch phrases the reminder in its own personality. Write it and Perch says your exact words. {name} becomes what Perch calls you.")
+                Text("Leave it blank and Perchie phrases the reminder in its own personality. Write it and Perchie says your exact words. {name} becomes what Perchie calls you.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 if prefs.routines.count >= container.subscriptions.gate.maxRoutines {

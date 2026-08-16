@@ -48,7 +48,7 @@ struct OnboardingView: View {
                 startPoint: .top,
                 endPoint: .bottom
             )
-            SkyLayer(isNight: true, condition: .clear)
+            SkyLayer()
                 .frame(height: 200)
                 .mask(
                     LinearGradient(
@@ -94,11 +94,11 @@ struct OnboardingView: View {
 
     private var welcomePage: some View {
         VStack(spacing: 16) {
-            Text("Perch")
+            Text("Perchie")
                 .font(.system(size: 42, weight: .heavy, design: .rounded))
                 .opacity(welcomeStage >= 2 ? 1 : 0)
                 .offset(y: welcomeStage >= 2 ? 0 : 12)
-            Text("I've got your back while you build.")
+            Text("I've got your back, every day.")
                 .font(.perchRounded(15, weight: .medium))
                 .foregroundStyle(.secondary)
                 .opacity(welcomeStage >= 3 ? 1 : 0)
@@ -180,8 +180,7 @@ struct OnboardingView: View {
                         size: headSize,
                         showsMouth: false,
                         personality: personality,
-                        lookBias: currentLookBias,
-                        glows: false
+                        lookBias: currentLookBias
                     )
                     .rotationEffect(.degrees(step(t: t).lean))
                     .offset(x: leaderProgress * trackWidth, y: step(t: t).bob)
@@ -604,14 +603,15 @@ struct OnboardingView: View {
                     symbol: "calendar",
                     title: "Calendar",
                     detail: "Meeting prep and recovery. Pro feature, read only",
-                    granted: container.calendar.isAuthorized
+                    granted: container.calendar.isAuthorized,
+                    buttonLabel: "Continue"
                 ) {
                     Task { _ = await container.calendar.requestAccess() }
                 }
                 permissionRow(
                     symbol: "macwindow",
                     title: "Launch at login",
-                    detail: "Start Perch automatically when you turn on your Mac",
+                    detail: "Start Perchie automatically when you turn on your Mac",
                     granted: launchAtLogin
                 ) {
                     try? SMAppService.mainApp.register()
@@ -708,12 +708,6 @@ struct OnboardingView: View {
             kicker("Ready")
             Text("I've got you, \(container.prefs.activePersonality.callName(userName: container.prefs.userName))")
                 .font(.perchRounded(24, weight: .bold))
-            Text("\"\(MessageLibrary.sample(personality: container.prefs.activePersonality))\"")
-                .font(.perchRounded(12.5))
-                .italic()
-                .foregroundStyle(.white.opacity(0.7))
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: 420)
             Text("Start free with smart check ins, or unlock adaptive memory, calendar awareness, and weekly insights with Pro.")
                 .font(.perchRounded(11.5))
                 .foregroundStyle(.secondary)
@@ -729,8 +723,7 @@ struct OnboardingView: View {
             }
             HStack(spacing: 12) {
                 Button("See Pro plans") {
-                    finish()
-                    WindowPresenter.shared.showPaywall(container)
+                    WindowPresenter.shared.showPaywall(container, onPurchased: { finish() })
                 }
                 .buttonStyle(.glass)
                 Button("Start free") { finish() }
