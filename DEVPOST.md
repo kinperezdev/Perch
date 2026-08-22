@@ -1,60 +1,51 @@
-# Perch - Protect the builder while they build.
+# Perchie - Protect the builder while they build.
 
 ## Inspiration
-I built Perch because I experienced this myself. I was getting sick chasing my dream. I would get so locked in and intensely focused on building that I completely forgot to take care of myself—skipping meals, ignoring hydration, and sitting in terrible postures for hours.
+I built Perchie because I lived it. Chasing this dream, I'd get so locked into building that I forgot to take care of myself. Skipped meals, ignored water, sat in the same terrible posture for hours.
 
-I don't want any builder to end up like me.
+I didn't want any other builder to end up like me.
 
-The tools currently available to us are either **productivity trackers** that induce anxiety by measuring output, or **task managers** that require context switching to use. I needed something that actively cared for my wellbeing without ever breaking my flow state.
+Everything out there measures output or demands attention. Productivity trackers make you anxious about numbers. Task managers make you stop and context-switch. I needed something that cared about me, not my metrics, without ever breaking my flow.
 
 ## What it does
-Perch is a tiny, beautiful AI wellbeing companion for macOS. It lives right near your MacBook notch.
-It quietly watches safe, private signals in the background (active session length, idle keyboard time, and calendar events) and proactively checks in at the exact right moments. 
+Perchie is a tiny AI wellbeing companion that lives right in your MacBook's notch. It quietly watches safe, private signals in the background: how long you've been focused, your idle time, your calendar, and checks in at the exact right moment. Not on a rigid timer. It waits for a natural pause in your work, then drops down from the notch to ask if you need water, a stretch, a meal, or a break.
 
-Instead of annoying, rigidly scheduled alarms, Perch waits for natural pauses in your typing to drop down smoothly from the notch and remind you to drink water, stretch, eat lunch, go to sleep when it's late, or physically step away when you are overworking yourself. Every check-in is answered with a single tap: quick-reply choices grounded in your actual day (water, meals, breaks, shower, focus time), so you never have to type or leave your flow.
+Every check-in is a single tap. No typing, no chatbot, no leaving your flow. Pick one of six personalities, Mom, Homie, Assistant, Mentor, Coach, or Spark, and Perchie talks to you the way you'd actually want to be talked to.
+
+It's not a productivity tracker. It's a companion looking out for you while you're locked in.
 
 ## How we built it
-Perch was built entirely natively for macOS using **Swift, SwiftUI, and AppKit**, targeting macOS Tahoe.
+Built entirely native for macOS with Swift, SwiftUI, and AppKit, targeting the newest OS.
 
-- **Design & UI**: We built a custom "Liquid Glass" design system to create fluid, beautiful `glassEffect` popovers and drop-down notch animations. We wanted Perch to feel like a premium, organic part of macOS.
-- **Intelligence**: We integrated **Apple Intelligence** (FoundationModels) to securely generate deeply personal check-in messages on-device, preserving full user privacy. If Apple Intelligence isn't available, it falls back to a locally hosted Ollama model or a curated message library, meaning the app *never* feels broken.
-- **The "PerchBrain"**: We built a local JSON memory store that tracks which reminders you dismiss and which ones you respond well to. The AI naturally adapts its personality and check-in frequency to match your specific rhythm.
-- **Monetization**: We natively integrated **RevenueCat** using StoreKit 2 to handle our "Perch Pro" subscription, providing seamless access to unlock all personalities, calendar awareness, spoken check-ins, and adaptive memory.
+- **Design**: A custom Liquid Glass system for the notch drop-down and dashboard, `glassEffect` throughout, built to feel like a real part of macOS rather than an overlay bolted on top.
+- **Intelligence**: On-device Apple Intelligence (FoundationModels) generates check-in lines with zero cloud calls. If it's unavailable, Perchie falls back to a local Ollama model, then to a curated message library, so it never feels broken.
+- **PerchBrain**: A local memory store that learns your habit timing (when you actually eat, drink, shower, focus) and feeds that back into every check-in so the companion sounds like it knows you.
+- **Monetization**: RevenueCat with StoreKit 2, a 3-day full-access trial with zero features held back, then a straightforward paywall.
+- **Shipping**: Full Mac App Store submission pipeline, including two rounds of App Review fixes.
 
 ## Challenges we ran into
-Building a global, always-on macOS menu bar app that doesn't consume extreme amounts of CPU was tough. We had to rely strictly on event timing and idle timers to determine if the user was focused, rather than polling the system. 
-Making the "Notch companion" drop down smoothly without interrupting the user's active window required deep AppKit and `NSPanel` integration to bypass standard window focus rules.
+Keeping an always-on menu bar app from eating CPU meant leaning entirely on event timing and idle detection instead of polling. Getting the notch panel to drop down without stealing window focus took real `NSPanel`/AppKit work most SwiftUI apps never touch.
+
+The harder challenge showed up after building: App Store Review. Our first submission got rejected for a leftover entitlement with no code behind it, and an unreviewed in-app purchase. We fixed both, resubmitted, and got rejected again, this time for permission-button wording that looked too close to the system dialog's own "Allow" button, and for black text on a dark background that only showed up under macOS Light Mode, something we never saw locally because the app forces dark mode everywhere. Chasing that one taught us that `.preferredColorScheme(.dark)` in SwiftUI doesn't fully reach AppKit-backed controls like `DatePicker` inside a `Form`. Every raw window in the app now sets its real `NSAppearance` explicitly.
+
+Late in the process we also cut WeatherKit and location-based sky entirely, in favor of a simple day/night-only sky. One less permission to ask for, one less thing that could break.
 
 ## Accomplishments that we're proud of
-1. **The Design**: The notch integration and liquid glass animations feel incredibly premium. We are extremely proud of how non-intrusive and visually stunning the companion feels. 
-2. **The "Non-Toxic" AI**: We successfully trained the system prompts to be entirely supportive. Perch will never lecture you or mention productivity metrics. It is strictly a wellbeing companion.
+1. **The design.** The notch integration and glass animations feel premium enough that people assume it's an Apple feature, not a hackathon build.
+2. **The non-toxic AI.** Perchie never lectures, never mentions productivity metrics, never guilt-trips. It's strictly on your side.
+3. **Getting through App Review.** Turning two rejections into fixes we could point to a specific guideline for, on our own, by reading the review notes closely instead of guessing.
 
 ## What we learned
-Building a non-intrusive companion requires incredible restraint. We learned how to build complex "delivery rules" in Swift to ensure Perch only talks to you during natural micro-pauses in your work, preventing it from ever being annoying.
+Small on-device models can't be trusted with logic, only with words. We once asked the model to judge "is it late right now" from a timestamp in the prompt. It couldn't, and told users to go to sleep at 2 PM. The fix: Swift decides every condition, the model only phrases the sentence. Decide in code, speak with AI.
 
-**Small on-device models can't be trusted with logic, only with words.** We originally asked the model to decide "is it late right now?" from a timestamp in the prompt. It couldn't, so it told users to go to sleep at 2 PM. The fix that stuck: Swift decides every condition (quiet hours, which habit is behind, what a reply means), and the model only phrases the sentence. Decide in code, speak with AI.
+Choices beat conversation for a reminder app. We built a full chatbot with dictation, then watched it pull people away from the one thing Perchie is for. Nobody deep in focus wants to compose a message. They want to tap "drank water" and get back to work. We deleted the entire chat path rather than leave it dormant behind the UI.
 
-**Never render raw model output in UI.** On-device models ignore formatting instructions often enough that "reply with only 4 options separated by |" comes back as "Sure, here are four short, distinct, natural replies: 1." Every string that reaches a button or a bubble now passes through a sanitizer that strips preambles and numbering, and rejects anything that still doesn't look like a short reply.
+App Review isn't adversarial, it's specific. Every rejection came with an exact guideline and an exact fix. Read it literally before assuming it's a design opinion.
 
-**Choices beat conversation for a reminder app.** We shipped a full free-text chat with dictation, then watched it pull us away from the thing Perch is actually for. A person deep in focus doesn't want to compose a message; they want to tap "Just drank some water" and get back to work. Every interaction is now a one-tap choice, answerable right from the notch.
+Dark mode in SwiftUI is a promise the framework makes, not a guarantee AppKit keeps. A `.preferredColorScheme(.dark)` on a view doesn't automatically reach a raw `NSWindow` hosting it. Set the real appearance yourself, every time.
 
-**Removing an entry point is not the same as removing a feature.** Replacing the final Talk shortcut with Dashboard made the product clearer, but it also exposed a deeper responsibility: the unreachable chat service, notch view, history storage, feature gates, AI methods, and plan copy still existed behind the interface. We removed that entire dead path instead of leaving dormant complexity in the app. The realization was simple: when the product promise becomes smaller and sharper, the architecture and documentation must become smaller and sharper with it.
-
-**Ground the companion in real data, not vibes.** Generic supportive lines feel hollow fast. Replies got noticeably better when we fed the model the same numbers the dashboard shows (focus minutes, water, meals, breaks, shower) and told it to praise what's logged and nudge only the one habit that's clearly behind.
-
-**Rest has to be a real state, not just a timer on screen.** Our first rest timer changed the notch UI but allowed focus and active-session totals to keep increasing underneath it. We fixed the tracker so starting a guided rest ends the current focus run and pauses both counters until the rest closes. Recovery time should never inflate the work data used to care for the user.
-
-## What we sacrificed
-**Inline Comments.** We made the deliberate decision to strip out all of our inline code comments right before submission, retaining only the structural `// MARK:` tags and professional `///` docstrings. The tradeoff was losing the historical "why" behind our complex hackathon workarounds, but the outcome is a highly professional, self-documenting architecture that senior engineers can read like a book using the Xcode minimap. It forced us to rely on clean code instead of messy explanations.
-
-**Cloud AI APIs.** We had working OpenAI, Gemini, and Claude integrations. But we removed all of them. This app is a companion, not an AI chatbot. Smarter replies weren't worth asking users for an API key, sending their private moments over the network, or maintaining three providers. To make everything work as expected and get the app to the stable, fast stage it is in now, we had to cut the cloud. Perch runs 100% on device.
-
-**Voice input.** Mic replies and dictation were genuinely cool in demos, but they needed two system permissions, an always-warm speech pipeline, and they were slower than tapping a button. We kept the part that matters (Perch can still speak to you, including in your own Personal Voice) and cut the part that didn't (Perch listening).
-
-**The chatbot.** This was the biggest tradeoff. A companion that chats feels more alive, but Perch's job is to remind you to take care of yourself, not to hold a conversation. By removing the chatbot, we ensured the app remains a true wellbeing companion rather than a distraction. Saying no to the chatbot and the API is what allowed us to get to this refined stage. We carried this principle through to the last detail: the dashboard's Quick Actions panel originally had a "Talk" button that opened the chat. We cut it. Every slot in that panel is now an instant habit log, not an invitation to a conversation. If a feature requires an API key or a keyboard, it does not belong in a one-tap wellbeing tool. The menu bar still had one final Talk shortcut, so we replaced it with Dashboard, giving users a direct route to the wellbeing overview instead of another conversation surface. Committing to that choice meant removing the full unused chat implementation, more than 800 lines across the service, notch interface, local history, AI hooks, and feature copy. We sacrificed a large demo-friendly feature, but gained a smaller, faster, more honest product whose code now matches what users actually see.
-
-## What's next for Perch
-We plan to release Perch on the Mac App Store officially! We want to expand the PerchBrain to sync securely via iCloud so your companion remembers your habits across multiple Macs.
+## What's next for Perchie
+Getting through App Review and live on the Mac App Store. After that, exploring iCloud sync for PerchBrain so your companion remembers you across every Mac you own, without ever leaving the device unencrypted or handing data to a server we control.
 
 ---
 *I built this for you, and I hope you take care of yourself now, future founder.*
