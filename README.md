@@ -1,19 +1,13 @@
 # Perchie
 
-**Protect the builder while they build.**
+**Your calm companion in the notch.**
 
-### Why this exists
-I built Perchie because I experienced this myself. I was getting sick chasing my dream. I would get so locked in and intensely focused on building that I completely forgot to take care of myself, skipping meals, ignoring hydration, and sitting in terrible postures for hours.
+Gentle nudges that help you stay focused, take breaks, and end your day without interrupting your flow.
 
-I don't want any builder to end up like me.
+I got sick chasing my dream, so locked in that I forgot to eat, drink water, or move. I didn't want any other builder to end up like me.
 
-Traditional productivity trackers only measure your output, which just induces more anxiety. Traditional task managers require you to switch contexts, which breaks your flow. I needed something different.
+Notifications interrupt you, so you ignore them. Perchie just sits where your eyes already go. Habit trackers make logging the whole point. Perchie reaches out first, logging is just a shortcut.
 
-Perchie is a tiny, beautiful wellbeing companion for macOS. It lives near the MacBook notch and quietly watches safe signals (active session length, idle time, and calendar). It checks in proactively at the right moments, reminding you to drink water, stretch, eat meals, go to sleep when it's late, and physically step away when you are overworking.
+It's not a productivity tracker. It's a companion looking out for you while you're locked in.
 
-Focus and active-session totals count only working time. When a guided rest is in progress, Perchie pauses both counters and resumes them after the rest ends.
-
-It's not a productivity tracker; it's a companion looking out for you while you are locked in.
-
----
 *I built this for you, and I hope you take care of yourself now, future founder.*
