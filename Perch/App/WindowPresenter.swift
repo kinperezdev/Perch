@@ -123,7 +123,7 @@ final class WindowPresenter: NSObject, NSWindowDelegate {
         window.titlebarAppearsTransparent = true
         window.titlebarSeparatorStyle = .none
         window.appearance = NSAppearance(named: .darkAqua)
-        window.backgroundColor = NSColor(hex: 0x0B0B0E)
+        window.backgroundColor = NSColor.black
         window.collectionBehavior.remove(.fullScreenPrimary)
         window.maxSize = NSSize(width: 960, height: 760)
         window.standardWindowButton(.zoomButton)?.isEnabled = false
@@ -131,14 +131,14 @@ final class WindowPresenter: NSObject, NSWindowDelegate {
         window.delegate = self
         window.contentView = NSHostingView(rootView: content().environment(\.dynamicTypeSize, .medium))
         window.contentView?.wantsLayer = true
-        window.contentView?.layer?.backgroundColor = NSColor(hex: 0x0B0B0E).cgColor
+        window.contentView?.layer?.backgroundColor = NSColor.black.cgColor
         window.center()
         windows[id] = window
         NSApp.activate(ignoringOtherApps: true)
         window.makeKeyAndOrderFront(nil)
         window.orderFrontRegardless()
         DispatchQueue.main.async {
-            self.flattenVibrancy(in: window, color: NSColor(hex: 0x0B0B0E))
+            self.flattenVibrancy(in: window, color: NSColor.black)
         }
     }
 

@@ -59,11 +59,7 @@ struct MenuBarContentView: View {
 
     private var background: some View {
         ZStack(alignment: .top) {
-            LinearGradient(
-                colors: [Color(hex: 0x0B0B0E), Color(hex: 0x121216)],
-                startPoint: .top,
-                endPoint: .bottom
-            )
+            Color.black
             SkyLayer()
                 .frame(height: 140)
                 .mask(

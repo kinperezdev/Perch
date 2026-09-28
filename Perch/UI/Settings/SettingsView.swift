@@ -70,17 +70,13 @@ struct SettingsView: View {
         }
         .frame(minWidth: 720, minHeight: 520)
         .preferredColorScheme(.dark)
-        .toolbarBackground(Color(hex: 0x0B0B0E), for: .windowToolbar)
+        .toolbarBackground(Color.black, for: .windowToolbar)
         .toolbarBackgroundVisibility(.visible, for: .windowToolbar)
     }
 
     private var sidebarBackground: some View {
         ZStack(alignment: .top) {
-            LinearGradient(
-                colors: [Color(hex: 0x0B0B0E), Color(hex: 0x121216)],
-                startPoint: .top,
-                endPoint: .bottom
-            )
+            Color.black
             SkyLayer()
                 .frame(height: 160)
                 .mask(
@@ -99,14 +95,14 @@ struct SettingsView: View {
     }
 
     private var detailBackground: some View {
-        Color(hex: 0x0B0B0E)
+        Color.black
     }
 
     private func edgeFade(_ edge: VerticalEdge) -> some View {
         LinearGradient(
             colors: edge == .top
-                ? [Color(hex: 0x0B0B0E), Color(hex: 0x0B0B0E).opacity(0)]
-                : [Color(hex: 0x0B0B0E).opacity(0), Color(hex: 0x0B0B0E)],
+                ? [Color.black, Color.black.opacity(0)]
+                : [Color.black.opacity(0), Color.black],
             startPoint: .top,
             endPoint: .bottom
         )

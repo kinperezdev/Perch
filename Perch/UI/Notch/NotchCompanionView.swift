@@ -98,7 +98,7 @@ struct NotchCompanionView: View {
         .frame(maxWidth: .infinity)
         .background(
             ZStack {
-                shape.fill(LinearGradient(colors: [Color(hex: 0x0B0B0E), Color(hex: 0x121216)], startPoint: .top, endPoint: .bottom))
+                shape.fill(Color.black)
                 SkyLayer()
                     .clipShape(shape)
                 LinearGradient(
