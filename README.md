@@ -22,9 +22,8 @@ cd Perch
 open Perchie.xcodeproj
 ```
 
-1. In Xcode, select the **Perch** target, open **Signing & Capabilities**, and pick your own **Team**. If Xcode complains about the bundle identifier, change it to anything unique, like `com.yourname.perchie`.
-2. Choose the **Perch** scheme and **My Mac**, then press **⌘R**.
-3. Perchie lives in your menu bar and your notch, not the Dock. Press **⌃⌥Space** to call it up.
+1. Choose the **Perch** scheme and **My Mac**, then press **⌘R**. No Apple account or signing setup needed.
+2. Perchie lives in your menu bar and your notch, not the Dock. Press **⌃⌥Space** to call it up.
 
 Built from source, Perchie runs in demo mode: the full 3 day trial works, and the Pro unlock is simulated, so no real payment happens.
 
