@@ -276,17 +276,18 @@ final class CompanionCoordinator {
     private static func size(for phase: Phase, metrics: NotchMetrics) -> CGSize {
         let anchor: CGFloat = metrics.hasNotch ? metrics.notchWidth : 185
         let notchMessageExtra: CGFloat = metrics.hasNotch ? 320 : 260
+        let otherAppsCover: CGFloat = metrics.hasNotch ? metrics.notchWidth + 300 : 0
         switch phase {
         case .hidden:
             return CGSize(width: max(anchor + 40, 250), height: 132)
         case .timer:
             if metrics.hasNotch {
-                return CGSize(width: metrics.notchWidth + 240, height: metrics.topInset + 90)
+                return CGSize(width: otherAppsCover, height: metrics.topInset + 90)
             } else {
                 return CGSize(width: 250, height: 140)
             }
         case .confirmation:
-            return CGSize(width: max(anchor + 120, 320), height: 76)
+            return CGSize(width: max(anchor + 120, 320, otherAppsCover), height: 76)
         case .message:
             return CGSize(width: max(anchor + notchMessageExtra, 520), height: 140)
         }
