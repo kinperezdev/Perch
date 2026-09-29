@@ -23,23 +23,25 @@ struct SubscriptionSettingsView: View {
                     }
                 }
             }
-            Section {
-                Button("Restore purchases") {
-                    Task { await container.subscriptions.restorePurchases() }
-                }
-                Text("Reinstalled Perchie or switched Macs? Restore brings back a plan you already bought.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                if container.subscriptions.mode == .demo {
-                    Button("Reset demo plan & trial") {
-                        container.subscriptions.resetDemoTier()
+            if !SubscriptionManager.isDirectDistribution {
+                Section {
+                    Button("Restore purchases") {
+                        Task { await container.subscriptions.restorePurchases() }
                     }
-                    Text("Demo mode is on. Purchases here aren't real yet.")
+                    Text("Reinstalled Perchie or switched Macs? Restore brings back a plan you already bought.")
                         .font(.caption)
-                        .foregroundStyle(.orange)
-                }
-                if let error = container.subscriptions.lastError {
-                    Text(error).font(.caption).foregroundStyle(.red)
+                        .foregroundStyle(.secondary)
+                    if container.subscriptions.mode == .demo {
+                        Button("Reset demo plan & trial") {
+                            container.subscriptions.resetDemoTier()
+                        }
+                        Text("Demo mode is on. Purchases here aren't real yet.")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                    }
+                    if let error = container.subscriptions.lastError {
+                        Text(error).font(.caption).foregroundStyle(.red)
+                    }
                 }
             }
         }

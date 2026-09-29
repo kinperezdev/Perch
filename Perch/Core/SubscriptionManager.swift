@@ -42,6 +42,12 @@ final class SubscriptionManager {
 
     static let perchProEntitlementID = "Perchie Pro"
 
+    #if DIRECT_DISTRIBUTION
+    static let isDirectDistribution = true
+    #else
+    static let isDirectDistribution = false
+    #endif
+
     /// Length of the free trial, starting from first launch.
     static let trialDurationDays = 3
 
@@ -76,7 +82,7 @@ final class SubscriptionManager {
     var gate: FeatureGate { FeatureGate(tier: effectiveTier) }
 
     var currentPlanName: String {
-        if tier == .pro { return mode == .revenueCat ? "Perchie Pro" : tier.displayName }
+        if tier == .pro { return mode == .revenueCat || Self.isDirectDistribution ? "Perchie Pro" : tier.displayName }
         if isTrialActive { return "Free trial · \(trialDaysRemaining)d left" }
         return "Trial ended"
     }
@@ -90,6 +96,10 @@ final class SubscriptionManager {
             installDate = now
         }
 
+        #if DIRECT_DISTRIBUTION
+        mode = .demo
+        tier = .pro
+        #else
         let key = Self.resolvedKey
         if key.isEmpty || key.hasPrefix("REPLACE") {
             mode = .demo
@@ -109,6 +119,7 @@ final class SubscriptionManager {
                 await loadOfferings()
             }
         }
+        #endif
     }
 
         // MARK: Customer info

@@ -704,7 +704,9 @@ struct OnboardingView: View {
             kicker("Ready")
             Text("I've got you, \(container.prefs.activePersonality.callName(userName: container.prefs.userName))")
                 .font(.perchRounded(24, weight: .bold))
-            Text("Start free with smart check ins, or unlock adaptive memory, calendar awareness, and weekly insights with Pro.")
+            Text(SubscriptionManager.isDirectDistribution
+                 ? "Everything is unlocked: smart check ins, adaptive memory, calendar awareness, and weekly insights."
+                 : "Start free with smart check ins, or unlock adaptive memory, calendar awareness, and weekly insights with Pro.")
                 .font(.perchRounded(11.5))
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -718,11 +720,13 @@ struct OnboardingView: View {
                     .foregroundStyle(.secondary)
             }
             HStack(spacing: 12) {
-                Button("See Pro plans") {
-                    WindowPresenter.shared.showPaywall(container, onPurchased: { finish() })
+                if !SubscriptionManager.isDirectDistribution {
+                    Button("See Pro plans") {
+                        WindowPresenter.shared.showPaywall(container, onPurchased: { finish() })
+                    }
+                    .buttonStyle(.glass)
                 }
-                .buttonStyle(.glass)
-                Button("Start free") { finish() }
+                Button(SubscriptionManager.isDirectDistribution ? "Let's go" : "Start free") { finish() }
                     .buttonStyle(BigActionButtonStyle(accent: accent))
             }
             .padding(.top, 6)
