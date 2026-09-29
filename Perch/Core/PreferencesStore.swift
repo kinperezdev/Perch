@@ -109,7 +109,7 @@ final class PreferencesStore {
         autoHideMessages = defaults.object(forKey: "autoHideMessages") as? Bool ?? true
         timerDurationMinutes = defaults.object(forKey: "timerDurationMinutes") as? Int ?? 5
     }
-    static let defaultModifiers: UInt = (1 << 18) | (1 << 19)
+    static let defaultModifiers: UInt = 1 << 18
 
     var demoTimeScale: Double { demoMode ? 60 : 1 }
 

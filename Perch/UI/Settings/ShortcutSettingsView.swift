@@ -33,7 +33,7 @@ struct ShortcutSettingsView: View {
                 Text("Click the shortcut, then press any keys with at least one modifier. Esc cancels recording.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                Button("Reset to Control + Option + Space") {
+                Button("Reset to Control + Space") {
                     container.prefs.shortcutKeyCode = 49
                     container.prefs.shortcutModifiers = PreferencesStore.defaultModifiers
                     container.shortcuts.registerFromPrefs()
