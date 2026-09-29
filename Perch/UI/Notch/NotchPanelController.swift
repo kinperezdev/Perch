@@ -31,7 +31,7 @@ final class NotchPanelController {
         panel.isOpaque = false
         panel.backgroundColor = .clear
         panel.hasShadow = false
-        panel.level = .statusBar
+        panel.level = .screenSaver
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
         panel.hidesOnDeactivate = false
         panel.isMovable = false
@@ -73,6 +73,7 @@ final class NotchPanelController {
                 context.timingFunction = CAMediaTimingFunction(name: .easeOut)
                 panel.animator().setFrame(frame, display: true)
             }
+            panel.orderFrontRegardless()
         } else {
             panel.setFrame(frame, display: true)
             panel.orderFrontRegardless()
