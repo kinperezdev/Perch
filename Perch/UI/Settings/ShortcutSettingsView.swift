@@ -57,6 +57,7 @@ struct ShortcutSettingsView: View {
 }
 
 struct ShortcutRecorderButton: View {
+    @Environment(AppContainer.self) private var container
     @Binding var isRecording: Bool
     let onRecorded: (Int, UInt) -> Void
     let currentLabel: () -> String
@@ -86,6 +87,7 @@ struct ShortcutRecorderButton: View {
 
     private func startRecording() {
         ShortcutRecordingCoordinator.shared.begin(stop: stopRecording)
+        container.shortcuts.unregister()
         isRecording = true
         liveModifiers = 0
         flagsMonitor = NSEvent.addLocalMonitorForEvents(matching: .flagsChanged) { event in
@@ -115,6 +117,7 @@ struct ShortcutRecorderButton: View {
         if let flagsMonitor { NSEvent.removeMonitor(flagsMonitor) }
         keyMonitor = nil
         flagsMonitor = nil
+        container.shortcuts.registerFromPrefs()
         ShortcutRecordingCoordinator.shared.end()
     }
 }
