@@ -28,6 +28,9 @@ final class WindowPresenter: NSObject, NSWindowDelegate {
     }
 
     func showPaywall(_ container: AppContainer, dismissable: Bool = true, onPurchased: (() -> Void)? = nil) {
+        let onPurchased = onPurchased ?? (dismissable ? nil : { [weak self] in
+            self?.showDashboard(container)
+        })
         show(
             id: "paywall",
             size: NSSize(width: 440 * PerchStyle.scale, height: 560 * PerchStyle.scale),
